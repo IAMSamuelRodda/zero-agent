@@ -48,9 +48,13 @@
 - ✅ Researched and documented Xero API integration (450+ lines)
 - ✅ Implemented Xero client wrapper with token management
 - ✅ Completed all 5 MCP invoice handlers with Xero API integration
+- ✅ Created main branch with protection rules (PR from dev only)
+- ✅ Configured dev branch protection (PR from feature branches only)
+- ✅ Added enforce-dev-pr-source.yml workflow
+- ✅ Created PR #149 (dev → main) following three-tier strategy
 
 **In Progress:**
-- 🔵 Infrastructure Foundation (GitHub Issue #1) - 80% complete
+- 🔵 PR #149 awaiting review/merge (Infrastructure Foundation 80% complete)
 
 **Next Up:**
 - [ ] Complete remaining MCP handlers (bank transactions, reporting, expenses)
