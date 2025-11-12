@@ -1,0 +1,1832 @@
+project_overview:
+  brief: "Xero Agent is an AI-powered accounting assistant that brings natural language interaction to Xero accounting software. It's a mobile-first Progressive Web App (PWA) that allows users to manage invoices, track expenses, generate reports, and reconcile accounts through conversational AI powered by Claude."
+  core_objectives:
+    - "Deliver a production-ready PWA enabling natural language accounting operations with Xero integration"
+    - "Achieve sub-3s conversation latency with offline-capable architecture (Lighthouse 95+, LCP <2.5s)"
+    - "Provide secure multi-tenant OAuth 2.0 authentication with encrypted token management"
+    - "Enable invoice, expense, reconciliation, and reporting capabilities via Claude Agent SDK orchestration"
+  complexity: "complex"
+  technology_stack:
+    frontend: "React + Vite (Mobile-first PWA)"
+    agent: "Claude Agent SDK (TypeScript)"
+    mcp: "@modelcontextprotocol/sdk + xero-node"
+    backend: "Firebase Functions (serverless)"
+    database: "Firestore"
+    auth: "Firebase Auth + Xero OAuth 2.0"
+    hosting: "Firebase Hosting"
+    package_manager: "pnpm (monorepo with workspaces)"
+    build_system: "Turbo"
+  constraints:
+    - "Node.js >= 20.0.0, pnpm >= 9.0.0"
+    - "Xero OAuth: Access tokens expire 30min, refresh tokens valid 30 days"
+    - "Required Xero scopes: accounting.transactions, accounting.contacts, accounting.settings, accounting.attachments, offline_access"
+
+architecture:
+  pattern: "vertical-slice"
+  rationale: "Vertical slicing by feature domain (invoicing, expenses, reconciliation, reports) enables parallel agent development with minimal cross-dependencies. Each package (mcp-xero-server, agent-core, pwa-app, backend/functions) is a self-contained vertical slice with clear boundaries, optimizing for concurrent work by specialized agents."
+  components:
+    - name: "packages/mcp-xero-server"
+      purpose: "MCP server exposing Xero API operations as tools for Claude agents"
+      boundaries: "IN: Tool definitions, Xero API client wrapper, response formatting. OUT: Agent orchestration, UI logic, authentication flows"
+      dependencies: ["@modelcontextprotocol/sdk", "xero-node"]
+      token_estimate: "<20k"
+
+    - name: "packages/agent-core"
+      purpose: "Claude Agent SDK wrapper with orchestrator-worker pattern for multi-agent coordination"
+      boundaries: "IN: Conversation state, tool routing, sub-agent delegation. OUT: MCP tool implementation, UI components, database operations"
+      dependencies: ["@anthropic-ai/claude-agent-sdk", "packages/mcp-xero-server"]
+      token_estimate: "<30k"
+
+    - name: "packages/pwa-app"
+      purpose: "Mobile-first Progressive Web App with offline support and app shell architecture"
+      boundaries: "IN: React components, service workers, IndexedDB, conversation UI. OUT: Agent logic, MCP tools, backend functions"
+      dependencies: ["React", "Vite", "packages/agent-core"]
+      token_estimate: "<40k"
+
+    - name: "backend/functions"
+      purpose: "Firebase Functions for OAuth flows, token management, and serverless backend operations"
+      boundaries: "IN: Xero OAuth callbacks, token encryption/refresh, webhook handlers. OUT: Frontend UI, agent orchestration"
+      dependencies: ["firebase-functions", "firebase-admin"]
+      token_estimate: "<15k"
+
+    - name: "backend/shared"
+      purpose: "Shared utilities for validation, error handling, and type definitions across backend"
+      boundaries: "IN: Common types, validators, constants. OUT: Business logic, API clients"
+      dependencies: []
+      token_estimate: "<5k"
+
+milestones:
+  milestone_1:
+    name: "v1.0 MVP Release - Core Accounting Operations"
+    timeline_weeks: "14-16"
+    description: "Production-ready PWA with invoice management, expense tracking, basic reconciliation, and P&L reporting via conversational AI"
+    success_criteria:
+      - "PWA installable on iOS/Android with offline support (Lighthouse 95+)"
+      - "OAuth 2.0 flow completed with encrypted token storage in Firestore"
+      - "Users can create/retrieve/update invoices through natural language with <3s latency"
+      - "Bank transaction reconciliation functional with manual matching support"
+      - "P&L and Balance Sheet reports generated on-demand with custom date ranges"
+      - "E2E tests passing for critical user journeys (auth, invoicing, reconciliation)"
+      - "Deployed to Firebase Hosting with CI/CD via GitHub Actions"
+
+    epics:
+      epic_1:
+        name: "Project Foundation & Infrastructure"
+        weeks: "1-2"
+        milestone: "Monorepo configured with pnpm workspaces, TypeScript, Firebase, and CI/CD pipeline operational"
+
+        feature_1_1:
+          name: "Monorepo Configuration & Build System"
+          complexity:
+            composite: 2.3
+            dimensions:
+              technical_complexity: 2
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 3
+          deliverables:
+            - "pnpm workspace configuration with packages/mcp-xero-server, agent-core, pwa-app, backend/functions"
+            - "Turbo build orchestration for parallel builds"
+            - "Root package.json with dev/build/test/lint scripts"
+            - "Shared tsconfig.json with strict mode enabled"
+
+          task_1_1_1:
+            name: "Initialize pnpm workspace structure"
+            complexity:
+              composite: 1.8
+            estimated_days: 1
+            deliverables:
+              - "pnpm-workspace.yaml with packages/** and backend/** patterns"
+              - "Root package.json with workspace protocol dependencies"
+              - "turbo.json with pipeline configuration for build/test/lint tasks"
+
+          task_1_1_2:
+            name: "Configure TypeScript for monorepo sharing"
+            complexity:
+              composite: 2.2
+            estimated_days: 1
+            deliverables:
+              - "Root tsconfig.json with paths for @xero-agent/* aliases"
+              - "Package-specific tsconfig.json extending root config"
+              - "Type declaration files for shared interfaces"
+
+          task_1_1_3:
+            name: "Set up development scripts and tooling"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "pnpm dev script running all packages concurrently"
+              - "ESLint + Prettier configuration shared across workspace"
+              - "Pre-commit hooks via husky for linting"
+
+        feature_1_2:
+          name: "Firebase Project Setup & Configuration"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 2
+          estimated_days: 4
+          deliverables:
+            - "Firebase project created with Firestore, Functions, Hosting, Auth enabled"
+            - "firebase.json and .firebaserc configuration files"
+            - "Firestore security rules for users, organizations, sessions, tokens, cache collections"
+            - "Firebase Functions deployed to us-central1 and europe-west1"
+            - "Environment variables configured for development/production"
+
+          task_1_2_1:
+            name: "Initialize Firebase project and enable services"
+            complexity:
+              composite: 2.0
+            estimated_days: 1
+            deliverables:
+              - "Firebase project created via console"
+              - "Firestore database provisioned in us-central1"
+              - "Firebase Auth enabled with email/password provider"
+              - "Firebase Hosting configured for PWA deployment"
+
+          task_1_2_2:
+            name: "Configure Firestore data model and security rules"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "Firestore collections: users, organizations, sessions, tokens, cache"
+              - "Security rules enforcing user-scoped access"
+              - "Index configurations for common queries"
+              - "firestore.rules and firestore.indexes.json files"
+
+          task_1_2_3:
+            name: "Set up Firebase Functions deployment configuration"
+            complexity:
+              composite: 2.3
+            estimated_days: 1
+            deliverables:
+              - "firebase.json with functions config for multi-region deployment"
+              - "Functions package.json with firebase-functions and firebase-admin"
+              - "Environment variable schema for API keys and secrets"
+
+        feature_1_3:
+          name: "CI/CD Pipeline with GitHub Actions"
+          complexity:
+            composite: 2.7
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 3
+              testing: 2
+          estimated_days: 3
+          deliverables:
+            - ".github/workflows/ci.yml for PR validation (lint, typecheck, test)"
+            - ".github/workflows/deploy.yml for Firebase deployment"
+            - "GitHub secrets configured for Firebase service account"
+            - "Deployment status checks integrated with PR workflow"
+
+          task_1_3_1:
+            name: "Create CI workflow for pull request validation"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - ".github/workflows/ci.yml running on pull_request events"
+              - "pnpm install, lint, typecheck, and test steps"
+              - "Cache configuration for pnpm store and turbo cache"
+
+          task_1_3_2:
+            name: "Create deployment workflow for production releases"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - ".github/workflows/deploy.yml triggered on main branch push"
+              - "Firebase deployment steps for hosting and functions"
+              - "Environment-specific configuration (staging/production)"
+              - "GitHub secrets: FIREBASE_SERVICE_ACCOUNT, FIREBASE_TOKEN"
+
+      epic_2:
+        name: "Authentication & Security Infrastructure"
+        weeks: "2-3"
+        milestone: "Xero OAuth 2.0 flow operational with encrypted token storage and automatic refresh"
+
+        feature_2_1:
+          name: "Xero OAuth 2.0 Integration"
+          complexity:
+            composite: 3.2
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 4
+              testing: 3
+          estimated_days: 6
+          deliverables:
+            - "Xero OAuth 2.0 authorization flow (3-legged)"
+            - "Token storage in Firestore with AES-256 encryption"
+            - "Automatic token refresh before 30-minute expiration"
+            - "Multi-tenant organization selection support"
+            - "Xero webhook endpoint for real-time updates"
+
+          task_2_1_1:
+            name: "Implement Xero OAuth callback handler in Firebase Functions"
+            complexity:
+              composite: 3.5
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (4) with OAuth flow intricacies and security requirements (4)"
+            status: "flagged_for_breakdown"
+            estimated_days: 3
+            deliverables:
+              - "Firebase Function handling /auth/xero/callback endpoint"
+              - "Authorization code exchange for access/refresh tokens"
+              - "Token encryption using Firebase KMS or crypto library"
+              - "Firestore write to tokens collection with userId mapping"
+
+          task_2_1_2:
+            name: "Build token refresh mechanism with expiry monitoring"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Scheduled Cloud Function checking token expiry (<5 min remaining)"
+              - "Refresh token exchange logic with Xero API"
+              - "Updated tokens stored in Firestore with new expiry timestamps"
+              - "Error handling for expired refresh tokens (re-auth required)"
+
+          task_2_1_3:
+            name: "Implement organization selection and storage"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Xero connections API call to retrieve user organizations"
+              - "Organization selection UI flow in PWA"
+              - "Selected tenantId stored in Firestore user profile"
+              - "Automatic tenant switching support"
+
+        feature_2_2:
+          name: "Firebase Authentication Integration"
+          complexity:
+            composite: 2.4
+            dimensions:
+              technical_complexity: 2
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Firebase Auth email/password sign-up and login flows"
+            - "User profile creation in Firestore on first auth"
+            - "Protected routes in PWA requiring authentication"
+            - "Session management with Firebase Auth state persistence"
+
+          task_2_2_1:
+            name: "Set up Firebase Auth providers and UI flows"
+            complexity:
+              composite: 2.2
+            estimated_days: 2
+            deliverables:
+              - "Firebase Auth initialized in PWA with email/password provider"
+              - "Sign-up component with email validation"
+              - "Login component with error handling"
+              - "Password reset flow via Firebase Auth"
+
+          task_2_2_2:
+            name: "Implement user profile management in Firestore"
+            complexity:
+              composite: 2.3
+            estimated_days: 1.5
+            deliverables:
+              - "Cloud Function trigger on Firebase Auth user creation"
+              - "Firestore user document created with userId, email, createdAt"
+              - "User profile retrieval in PWA on auth state change"
+
+          task_2_2_3:
+            name: "Configure protected routes and auth guards"
+            complexity:
+              composite: 2.5
+            estimated_days: 0.5
+            deliverables:
+              - "React Router auth guard HOC or component"
+              - "Redirect to login for unauthenticated users"
+              - "Auth state persistence in localStorage/IndexedDB"
+
+        feature_2_3:
+          name: "Security Hardening & Audit Logging"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 3
+              risk: 4
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Content Security Policy headers in Firebase Hosting"
+            - "Rate limiting on Firebase Functions endpoints"
+            - "Audit logging for sensitive operations (token refresh, invoice creation)"
+            - "HTTPS-only enforcement and CORS configuration"
+
+          task_2_3_1:
+            name: "Configure CSP headers and HTTPS enforcement"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "firebase.json headers with strict CSP policy"
+              - "HTTPS redirect rules in hosting config"
+              - "HSTS headers for security"
+
+          task_2_3_2:
+            name: "Implement rate limiting on Functions endpoints"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "Firebase Extensions or custom middleware for rate limiting"
+              - "Per-user and per-IP rate limits (100 req/min)"
+              - "429 Too Many Requests responses with Retry-After header"
+
+          task_2_3_3:
+            name: "Build audit logging system in Firestore"
+            complexity:
+              composite: 3.0
+            estimated_days: 1
+            deliverables:
+              - "Firestore audit_logs collection with userId, action, timestamp, metadata"
+              - "Logging for token refresh, OAuth callbacks, invoice mutations"
+              - "Log retention policy (90 days)"
+
+      epic_3:
+        name: "MCP Xero Server - Tool Infrastructure"
+        weeks: "3-5"
+        milestone: "MCP server exposing 15+ Xero API operations as Claude-compatible tools"
+
+        feature_3_1:
+          name: "MCP Server Foundation & Xero Client Integration"
+          complexity:
+            composite: 2.9
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 2
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "@modelcontextprotocol/sdk server initialized with stdio transport"
+            - "xero-node client wrapper with token injection from Firestore"
+            - "Tool registration system for Xero API operations"
+            - "Error handling and response formatting for Claude consumption"
+
+          task_3_1_1:
+            name: "Initialize MCP server with SDK and transport"
+            complexity:
+              composite: 2.5
+            estimated_days: 2
+            deliverables:
+              - "packages/mcp-xero-server/src/index.ts with MCP server setup"
+              - "Stdio transport configuration for Claude agent communication"
+              - "Server lifecycle handlers (start, stop, error)"
+              - "TypeScript types for tool schemas"
+
+          task_3_1_2:
+            name: "Integrate xero-node client with OAuth token management"
+            complexity:
+              composite: 3.2
+            estimated_days: 2
+            deliverables:
+              - "XeroClient wrapper class accepting access tokens"
+              - "Token retrieval from Firestore via userId context"
+              - "Automatic token refresh on 401 responses"
+              - "Multi-tenant support with tenantId selection"
+
+          task_3_1_3:
+            name: "Build tool registration and response formatting system"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "Tool registry pattern for adding new Xero operations"
+              - "JSON schema definitions for tool input parameters"
+              - "Response formatter converting Xero API responses to Claude-friendly format"
+              - "Error messages with actionable user guidance"
+
+        feature_3_2:
+          name: "Invoice Management Tools"
+          complexity:
+            composite: 2.6
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "create_invoice: Create draft/submitted invoices with line items"
+            - "get_invoice: Retrieve invoice by ID with full details"
+            - "update_invoice: Modify existing invoice (draft stage only)"
+            - "list_invoices: Query invoices with filters (status, date range, contact)"
+            - "send_invoice: Email invoice to customer via Xero"
+
+          task_3_2_1:
+            name: "Implement create_invoice tool"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "Tool schema with contact, lineItems, dueDate, status parameters"
+              - "Xero API call to POST /Invoices endpoint"
+              - "Validation for required fields (contact, lineItems, type)"
+              - "Response with invoice ID and status"
+
+          task_3_2_2:
+            name: "Implement get_invoice and list_invoices tools"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "get_invoice: Fetch by invoiceID with lineItems expanded"
+              - "list_invoices: Query with where clause (Status, Date filters)"
+              - "Pagination support for large result sets"
+
+          task_3_2_3:
+            name: "Implement update_invoice and send_invoice tools"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "update_invoice: PUT /Invoices with delta changes"
+              - "send_invoice: POST /Invoices/{id}/Email endpoint"
+              - "Status validation (can only update DRAFT invoices)"
+
+        feature_3_3:
+          name: "Bank Transaction & Reconciliation Tools"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 2
+              testing: 3
+          estimated_days: 6
+          deliverables:
+            - "get_bank_transactions: Retrieve transactions with date filters"
+            - "create_bank_transaction: Manual transaction entry"
+            - "reconcile_transaction: Match transaction to invoice/bill"
+            - "get_bank_summary: Account balances and recent activity"
+
+          task_3_3_1:
+            name: "Implement get_bank_transactions tool with filtering"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "GET /BankTransactions with date range, bankAccountID filters"
+              - "Pagination for large transaction sets"
+              - "Response formatting with amount, date, description, status"
+
+          task_3_3_2:
+            name: "Implement create_bank_transaction for manual entries"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "POST /BankTransactions with validation"
+              - "Support for spend/receive transaction types"
+              - "Line item allocation to accounts"
+
+          task_3_3_3:
+            name: "Implement reconcile_transaction tool"
+            complexity:
+              composite: 3.5
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (4) with matching logic and uncertainty (3) around edge cases"
+            status: "flagged_for_breakdown"
+            estimated_days: 2
+            deliverables:
+              - "Reconciliation logic matching transactions to invoices"
+              - "PUT /BankTransactions/{id} with IsReconciled flag"
+              - "Support for partial matches and discrepancies"
+
+        feature_3_4:
+          name: "Reporting Tools (P&L, Balance Sheet)"
+          complexity:
+            composite: 2.4
+            dimensions:
+              technical_complexity: 2
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "get_profit_loss: Generate P&L report for date range"
+            - "get_balance_sheet: Generate balance sheet as of date"
+            - "get_bank_summary: Bank account balances and summary"
+
+          task_3_4_1:
+            name: "Implement get_profit_loss tool"
+            complexity:
+              composite: 2.3
+            estimated_days: 1.5
+            deliverables:
+              - "GET /Reports/ProfitAndLoss with date parameters"
+              - "Response parsing with revenue, expenses, net profit"
+              - "Support for custom date ranges and comparison periods"
+
+          task_3_4_2:
+            name: "Implement get_balance_sheet tool"
+            complexity:
+              composite: 2.2
+            estimated_days: 1.5
+            deliverables:
+              - "GET /Reports/BalanceSheet with asOfDate parameter"
+              - "Assets, liabilities, equity breakdown"
+              - "Period comparison support"
+
+          task_3_4_3:
+            name: "Implement get_bank_summary tool"
+            complexity:
+              composite: 2.3
+            estimated_days: 1
+            deliverables:
+              - "GET /Reports/BankSummary with date range"
+              - "Per-account balances and transaction counts"
+              - "Reconciled vs unreconciled transaction breakdown"
+
+        feature_3_5:
+          name: "Expense & Contact Management Tools"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 2
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "create_expense: Record expense with category and receipt"
+            - "list_expenses: Query expenses with filters"
+            - "get_contacts: Retrieve customer/supplier contacts"
+            - "create_contact: Add new contact to Xero"
+
+          task_3_5_1:
+            name: "Implement create_expense and list_expenses tools"
+            complexity:
+              composite: 2.5
+            estimated_days: 2
+            deliverables:
+              - "create_expense: POST /BankTransactions (SPEND type)"
+              - "list_expenses: GET /BankTransactions filtered by Type=SPEND"
+              - "Category/account code assignment"
+
+          task_3_5_2:
+            name: "Implement contact management tools"
+            complexity:
+              composite: 2.5
+            estimated_days: 2
+            deliverables:
+              - "get_contacts: GET /Contacts with search/filter"
+              - "create_contact: POST /Contacts with validation"
+              - "Support for customer and supplier contact types"
+
+      epic_4:
+        name: "Claude Agent Core - Orchestration Layer"
+        weeks: "5-7"
+        milestone: "Multi-agent orchestrator operational with conversation state management and tool routing"
+
+        feature_4_1:
+          name: "Agent SDK Integration & Main Orchestrator"
+          complexity:
+            composite: 3.1
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 6
+          deliverables:
+            - "Claude Agent SDK client initialized with API key management"
+            - "Main orchestrator agent coordinating task delegation"
+            - "Conversation state management in Firestore sessions collection"
+            - "Tool routing logic to MCP Xero server"
+            - "Error handling and retry logic for API failures"
+
+          task_4_1_1:
+            name: "Initialize Claude Agent SDK client"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "packages/agent-core/src/client.ts with SDK setup"
+              - "Anthropic API key configuration from environment"
+              - "Model selection (claude-3-5-sonnet-20241022)"
+              - "Streaming response support"
+
+          task_4_1_2:
+            name: "Build main orchestrator agent with conversation management"
+            complexity:
+              composite: 3.5
+              needs_decomposition: true
+              decomposition_depth: 3
+              decomposition_reason: "High technical complexity (4) with state management and uncertainty (3) around conversation context"
+            status: "flagged_for_breakdown"
+            estimated_days: 3
+            deliverables:
+              - "Orchestrator class managing conversation threads"
+              - "Firestore sessions collection for conversation history"
+              - "Message history management with token limit handling"
+              - "Context window optimization (summarization for long conversations)"
+
+          task_4_1_3:
+            name: "Implement tool routing to MCP Xero server"
+            complexity:
+              composite: 3.0
+            estimated_days: 1
+            deliverables:
+              - "MCP server stdio transport connection"
+              - "Tool call interception and routing logic"
+              - "Response formatting from MCP to Claude format"
+              - "Error handling for MCP communication failures"
+
+        feature_4_2:
+          name: "Specialized Sub-Agents (Invoice, Reconciliation, Reports, Expenses)"
+          complexity:
+            composite: 2.9
+            dimensions:
+              technical_complexity: 3
+              scope_size: 4
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 7
+          deliverables:
+            - "Invoice Agent: Handles invoice creation, updates, queries with natural language"
+            - "Reconciliation Agent: Manages bank transaction matching and reconciliation flows"
+            - "Reports Agent: Generates and explains financial reports (P&L, Balance Sheet)"
+            - "Expenses Agent: Processes expense recording and categorization"
+
+          task_4_2_1:
+            name: "Build Invoice Agent with CRUD operations"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "Invoice agent system prompt with domain expertise"
+              - "Tool routing to create_invoice, get_invoice, update_invoice, list_invoices"
+              - "Natural language parsing for invoice parameters (contact, amounts, due dates)"
+              - "Confirmation flows for invoice submission"
+
+          task_4_2_2:
+            name: "Build Reconciliation Agent with matching logic"
+            complexity:
+              composite: 3.2
+            estimated_days: 2.5
+            deliverables:
+              - "Reconciliation agent with transaction matching heuristics"
+              - "Tool routing to get_bank_transactions, reconcile_transaction"
+              - "Discrepancy detection and user confirmation prompts"
+              - "Batch reconciliation support"
+
+          task_4_2_3:
+            name: "Build Reports Agent with financial analysis"
+            complexity:
+              composite: 2.7
+            estimated_days: 1.5
+            deliverables:
+              - "Reports agent with P&L and Balance Sheet expertise"
+              - "Tool routing to get_profit_loss, get_balance_sheet, get_bank_summary"
+              - "Natural language explanations of financial data"
+              - "Trend analysis and insights generation"
+
+          task_4_2_4:
+            name: "Build Expenses Agent with categorization"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "Expenses agent with account code knowledge"
+              - "Tool routing to create_expense, list_expenses"
+              - "Automatic categorization suggestions based on description"
+              - "Receipt attachment support (future enhancement placeholder)"
+
+        feature_4_3:
+          name: "Agent Delegation & Routing Logic"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 2
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Intent classification system routing user queries to specialized agents"
+            - "Agent handoff logic maintaining conversation context"
+            - "Parallel agent execution for complex multi-step requests"
+            - "Fallback to main orchestrator for ambiguous queries"
+
+          task_4_3_1:
+            name: "Implement intent classification for agent routing"
+            complexity:
+              composite: 3.2
+            estimated_days: 2.5
+            deliverables:
+              - "Prompt-based intent classifier (invoice, expense, reconciliation, report, general)"
+              - "Routing logic selecting appropriate sub-agent"
+              - "Confidence threshold for fallback to orchestrator"
+
+          task_4_3_2:
+            name: "Build agent handoff and context preservation"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Context passing between orchestrator and sub-agents"
+              - "Conversation history injection for sub-agents"
+              - "Return-to-orchestrator flows after task completion"
+
+          task_4_3_3:
+            name: "Implement parallel agent execution for complex queries"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "Task decomposition for multi-step requests"
+              - "Parallel execution of independent sub-tasks"
+              - "Result aggregation and response synthesis"
+
+      epic_5:
+        name: "Progressive Web App - User Interface"
+        weeks: "7-10"
+        milestone: "Mobile-first PWA with offline support, conversation UI, and Lighthouse 95+ score"
+
+        feature_5_1:
+          name: "PWA Foundation & App Shell Architecture"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 3
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "React + Vite project with PWA plugin configured"
+            - "Service worker with app shell caching strategy"
+            - "Web App Manifest for installability (iOS/Android)"
+            - "Offline fallback page and network detection"
+            - "IndexedDB setup for local conversation cache"
+
+          task_5_1_1:
+            name: "Initialize React + Vite project with PWA plugin"
+            complexity:
+              composite: 2.5
+            estimated_days: 2
+            deliverables:
+              - "packages/pwa-app scaffolded with Vite"
+              - "vite-plugin-pwa installed and configured"
+              - "manifest.json with app metadata (name, icons, theme_color)"
+              - "Service worker registration in main.tsx"
+
+          task_5_1_2:
+            name: "Implement app shell caching with service worker"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Workbox configuration for shell resources (HTML, CSS, JS bundles)"
+              - "Runtime caching for API responses (network-first strategy)"
+              - "Background sync for offline message queueing"
+
+          task_5_1_3:
+            name: "Set up IndexedDB for local state management"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "IndexedDB wrapper with conversations, messages, cache tables"
+              - "Offline message queue storage"
+              - "Sync logic pushing queued messages when online"
+
+        feature_5_2:
+          name: "Conversation UI & Real-Time Messaging"
+          complexity:
+            composite: 3.1
+            dimensions:
+              technical_complexity: 3
+              scope_size: 4
+              dependencies: 3
+              uncertainty: 3
+              risk: 2
+              testing: 4
+          estimated_days: 7
+          deliverables:
+            - "Chat interface with message bubbles (user/assistant)"
+            - "Streaming message support with real-time updates"
+            - "Typing indicators and loading states"
+            - "Message history persistence in IndexedDB"
+            - "Mobile-optimized touch interactions"
+
+          task_5_2_1:
+            name: "Build chat UI components (message list, input, bubbles)"
+            complexity:
+              composite: 2.8
+            estimated_days: 3
+            deliverables:
+              - "MessageList component with virtualized scrolling"
+              - "MessageBubble component with user/assistant variants"
+              - "MessageInput with send button and keyboard shortcuts"
+              - "Mobile-responsive layout with safe area insets"
+
+          task_5_2_2:
+            name: "Implement streaming message rendering"
+            complexity:
+              composite: 3.5
+            estimated_days: 2.5
+            deliverables:
+              - "WebSocket or SSE connection to agent-core streaming endpoint"
+              - "Token-by-token rendering with smooth animations"
+              - "Abort/stop generation button"
+              - "Error handling for stream interruptions"
+
+          task_5_2_3:
+            name: "Add conversation history and persistence"
+            complexity:
+              composite: 3.0
+            estimated_days: 1.5
+            deliverables:
+              - "Conversation list component with recent chats"
+              - "IndexedDB read/write for message history"
+              - "Infinite scroll for long conversations"
+              - "Search/filter for past messages"
+
+        feature_5_3:
+          name: "Authentication UI & User Profile"
+          complexity:
+            composite: 2.5
+            dimensions:
+              technical_complexity: 2
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Login/signup forms with Firebase Auth integration"
+            - "Xero OAuth connect button and authorization flow"
+            - "User profile page showing connected Xero organization"
+            - "Logout and disconnect Xero functionality"
+
+          task_5_3_1:
+            name: "Build login and signup forms"
+            complexity:
+              composite: 2.3
+            estimated_days: 1.5
+            deliverables:
+              - "LoginForm component with email/password fields"
+              - "SignupForm with validation (email format, password strength)"
+              - "Firebase Auth integration (signInWithEmailAndPassword, createUserWithEmailAndPassword)"
+              - "Error display for auth failures"
+
+          task_5_3_2:
+            name: "Implement Xero OAuth connection flow"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "Connect Xero button triggering OAuth redirect"
+              - "Callback page handling authorization code"
+              - "Organization selection UI after successful auth"
+              - "Connection status indicator in profile"
+
+          task_5_3_3:
+            name: "Build user profile and settings page"
+            complexity:
+              composite: 2.3
+            estimated_days: 0.5
+            deliverables:
+              - "Profile page showing user email and Xero org"
+              - "Disconnect Xero button with confirmation dialog"
+              - "Logout button clearing Firebase Auth session"
+
+        feature_5_4:
+          name: "Performance Optimization & Lighthouse Compliance"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 5
+          deliverables:
+            - "Lighthouse score 95+ (Performance, Accessibility, Best Practices, SEO)"
+            - "LCP < 2.5s, FID < 100ms, CLS < 0.1"
+            - "Code splitting and lazy loading for routes"
+            - "Image optimization and compression"
+            - "Bundle size optimization (Vite build analysis)"
+
+          task_5_4_1:
+            name: "Implement code splitting and lazy loading"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "React.lazy() for route components"
+              - "Dynamic imports for heavy dependencies"
+              - "Suspense boundaries with loading fallbacks"
+              - "Route-based chunk splitting"
+
+          task_5_4_2:
+            name: "Optimize assets and bundle size"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Image compression (WebP format, lazy loading)"
+              - "Tree-shaking unused dependencies"
+              - "Bundle analysis with vite-bundle-visualizer"
+              - "Critical CSS inlining"
+
+          task_5_4_3:
+            name: "Run Lighthouse audits and fix issues"
+            complexity:
+              composite: 3.5
+            estimated_days: 1
+            deliverables:
+              - "Lighthouse CI integration in GitHub Actions"
+              - "Performance budget enforcement"
+              - "Accessibility fixes (ARIA labels, keyboard navigation)"
+              - "SEO meta tags and structured data"
+
+        feature_5_5:
+          name: "Offline Support & Network Resilience"
+          complexity:
+            composite: 2.9
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 2
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "Offline mode detection with UI notification"
+            - "Message queueing for offline submissions"
+            - "Background sync when network restored"
+            - "Cached conversation access without network"
+
+          task_5_5_1:
+            name: "Implement offline detection and UI feedback"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "Network status hook using navigator.onLine"
+              - "Offline banner component with retry button"
+              - "Disable send button when offline"
+
+          task_5_5_2:
+            name: "Build message queue for offline submissions"
+            complexity:
+              composite: 3.2
+            estimated_days: 2
+            deliverables:
+              - "IndexedDB queue table for pending messages"
+              - "Queue processing on network restoration"
+              - "Optimistic UI updates for queued messages"
+              - "Conflict resolution for failed submissions"
+
+          task_5_5_3:
+            name: "Enable cached conversation access offline"
+            complexity:
+              composite: 2.8
+            estimated_days: 0.5
+            deliverables:
+              - "Service worker serving cached conversations"
+              - "IndexedDB read for conversation history"
+              - "Read-only mode indicator when offline"
+
+      epic_6:
+        name: "Backend Functions & API Layer"
+        weeks: "10-12"
+        milestone: "Firebase Functions handling OAuth, token management, webhooks, and agent API proxy"
+
+        feature_6_1:
+          name: "OAuth Callback & Token Management Functions"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 4
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "authXeroCallback: Handle OAuth redirect and token exchange"
+            - "refreshXeroToken: Scheduled function refreshing expiring tokens"
+            - "Token encryption/decryption utilities with Firebase KMS or crypto"
+            - "Multi-region deployment (us-central1, europe-west1)"
+
+          task_6_1_1:
+            name: "Implement authXeroCallback function"
+            complexity:
+              composite: 3.2
+            estimated_days: 2.5
+            deliverables:
+              - "backend/functions/src/auth/xeroCallback.ts"
+              - "Authorization code exchange with Xero token endpoint"
+              - "Token encryption before Firestore write"
+              - "Redirect to PWA with success/error status"
+
+          task_6_1_2:
+            name: "Build refreshXeroToken scheduled function"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Cloud Scheduler trigger (every 5 minutes)"
+              - "Query tokens collection for expiring tokens (<5 min remaining)"
+              - "Refresh token exchange logic"
+              - "Updated tokens written to Firestore"
+
+          task_6_1_3:
+            name: "Create token encryption utilities"
+            complexity:
+              composite: 2.8
+            estimated_days: 0.5
+            deliverables:
+              - "backend/shared/src/crypto.ts with encrypt/decrypt functions"
+              - "AES-256-GCM encryption using Firebase KMS or Node crypto"
+              - "Key management via environment variables"
+
+        feature_6_2:
+          name: "Agent API Proxy & Session Management"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 2
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "sendMessage: HTTPS endpoint receiving user messages and streaming agent responses"
+            - "Session creation and retrieval from Firestore"
+            - "User authentication verification via Firebase Auth tokens"
+            - "Rate limiting per user (100 req/min)"
+
+          task_6_2_1:
+            name: "Implement sendMessage function with streaming"
+            complexity:
+              composite: 3.0
+            estimated_days: 2.5
+            deliverables:
+              - "backend/functions/src/agent/sendMessage.ts"
+              - "HTTPS callable function with auth context"
+              - "Invoke agent-core orchestrator with user message"
+              - "Server-Sent Events (SSE) for streaming response"
+
+          task_6_2_2:
+            name: "Build session management logic"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "Session creation in Firestore on first message"
+              - "Session retrieval by sessionId with message history"
+              - "Session expiry after 24 hours of inactivity"
+
+          task_6_2_3:
+            name: "Add authentication and rate limiting middleware"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "Firebase Auth token verification middleware"
+              - "Rate limiting using Firestore counter (100 req/min per user)"
+              - "429 responses with Retry-After header"
+
+        feature_6_3:
+          name: "Xero Webhook Handler"
+          complexity:
+            composite: 2.7
+            dimensions:
+              technical_complexity: 3
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "xeroWebhook: HTTPS endpoint handling Xero webhook events"
+            - "Signature verification for webhook authenticity"
+            - "Event processing for invoice updates, payment received, etc."
+            - "Cache invalidation in Firestore on data changes"
+
+          task_6_3_1:
+            name: "Implement webhook endpoint with signature verification"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "backend/functions/src/webhooks/xeroWebhook.ts"
+              - "HMAC signature verification using Xero webhook key"
+              - "Event payload parsing and validation"
+
+          task_6_3_2:
+            name: "Build event processing and cache invalidation"
+            complexity:
+              composite: 2.5
+            estimated_days: 2
+            deliverables:
+              - "Event handlers for INVOICE.UPDATED, PAYMENT.RECEIVED, etc."
+              - "Firestore cache collection invalidation on entity changes"
+              - "Logging for webhook processing"
+
+      epic_7:
+        name: "Testing & Quality Assurance"
+        weeks: "12-14"
+        milestone: "Comprehensive test coverage with unit, integration, and E2E tests passing in CI"
+
+        feature_7_1:
+          name: "Unit Tests for Core Components"
+          complexity:
+            composite: 2.6
+            dimensions:
+              technical_complexity: 2
+              scope_size: 4
+              dependencies: 2
+              uncertainty: 2
+              risk: 2
+              testing: 4
+          estimated_days: 6
+          deliverables:
+            - "MCP Xero Server: Tool execution and response formatting tests"
+            - "Agent Core: Orchestration, routing, and state management tests"
+            - "PWA: Component rendering and user interaction tests"
+            - "Backend Functions: OAuth, token management, webhook tests"
+            - "80%+ code coverage across all packages"
+
+          task_7_1_1:
+            name: "Write unit tests for MCP Xero Server tools"
+            complexity:
+              composite: 2.5
+            estimated_days: 2
+            deliverables:
+              - "Vitest configuration for packages/mcp-xero-server"
+              - "Mock xero-node client for isolated testing"
+              - "Tests for all invoice, transaction, report, expense tools"
+              - "Edge case coverage (errors, invalid inputs)"
+
+          task_7_1_2:
+            name: "Write unit tests for Agent Core logic"
+            complexity:
+              composite: 2.8
+            estimated_days: 2
+            deliverables:
+              - "Tests for orchestrator conversation management"
+              - "Sub-agent routing and delegation tests"
+              - "Tool call interception and formatting tests"
+              - "Error handling and retry logic tests"
+
+          task_7_1_3:
+            name: "Write unit tests for PWA components and functions"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "React Testing Library tests for UI components"
+              - "Message rendering and streaming tests"
+              - "Auth flow and profile management tests"
+              - "Offline queue and sync tests"
+
+          task_7_1_4:
+            name: "Write unit tests for Backend Functions"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Firebase Functions test framework setup"
+              - "OAuth callback and token refresh tests"
+              - "Webhook signature verification tests"
+              - "Session management tests"
+
+        feature_7_2:
+          name: "Integration Tests for End-to-End Workflows"
+          complexity:
+            composite: 3.1
+            dimensions:
+              technical_complexity: 4
+              scope_size: 3
+              dependencies: 4
+              uncertainty: 3
+              risk: 3
+              testing: 4
+          estimated_days: 6
+          deliverables:
+            - "OAuth flow integration test (PWA → Functions → Xero → Firestore)"
+            - "Invoice creation workflow (PWA → Agent → MCP → Xero API)"
+            - "Bank reconciliation workflow with transaction matching"
+            - "Report generation and rendering test"
+
+          task_7_2_1:
+            name: "Build OAuth flow integration test"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Test initiating OAuth from PWA"
+              - "Mock Xero authorization server responses"
+              - "Verify token storage in Firestore with encryption"
+              - "Test token refresh workflow"
+
+          task_7_2_2:
+            name: "Build invoice creation integration test"
+            complexity:
+              composite: 3.2
+            estimated_days: 2
+            deliverables:
+              - "Test natural language invoice request in PWA"
+              - "Verify agent routing to Invoice Agent"
+              - "Mock MCP server responses"
+              - "Verify Xero API call with correct parameters"
+
+          task_7_2_3:
+            name: "Build reconciliation and reporting integration tests"
+            complexity:
+              composite: 3.0
+            estimated_days: 2
+            deliverables:
+              - "Test transaction retrieval and matching workflow"
+              - "Test P&L report generation and display"
+              - "Verify multi-step agent coordination"
+
+        feature_7_3:
+          name: "E2E Tests with Playwright"
+          complexity:
+            composite: 3.0
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 3
+              risk: 2
+              testing: 4
+          estimated_days: 5
+          deliverables:
+            - "Playwright test suite for critical user journeys"
+            - "Login/signup E2E test with Firebase Auth"
+            - "Xero OAuth connection E2E test"
+            - "Invoice creation conversation E2E test"
+            - "PWA installation and offline mode E2E test"
+
+          task_7_3_1:
+            name: "Set up Playwright test infrastructure"
+            complexity:
+              composite: 2.5
+            estimated_days: 1
+            deliverables:
+              - "Playwright installed and configured"
+              - "Test database setup for isolated E2E runs"
+              - "Mock Xero API server for deterministic tests"
+
+          task_7_3_2:
+            name: "Write authentication E2E tests"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "Test signup flow with email/password"
+              - "Test login flow and session persistence"
+              - "Test Xero OAuth connection (with mocked Xero)"
+
+          task_7_3_3:
+            name: "Write core feature E2E tests"
+            complexity:
+              composite: 3.5
+            estimated_days: 2.5
+            deliverables:
+              - "Test invoice creation conversation flow"
+              - "Test expense recording and retrieval"
+              - "Test report generation and viewing"
+              - "Test PWA installation prompt and offline mode"
+
+      epic_8:
+        name: "Deployment & Production Readiness"
+        weeks: "14-16"
+        milestone: "Application deployed to production with monitoring, logging, and documentation"
+
+        feature_8_1:
+          name: "Production Deployment Configuration"
+          complexity:
+            composite: 2.7
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 3
+              uncertainty: 2
+              risk: 4
+              testing: 2
+          estimated_days: 4
+          deliverables:
+            - "Firebase Hosting deployment with custom domain"
+            - "Firebase Functions deployed to us-central1 and europe-west1"
+            - "Environment-specific configuration (staging/production)"
+            - "SSL certificate and HTTPS enforcement"
+            - "CDN configuration for global distribution"
+
+          task_8_1_1:
+            name: "Configure Firebase Hosting for production"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "firebase.json with hosting config"
+              - "Custom domain setup and SSL certificate"
+              - "Redirect rules for SPA routing"
+              - "Cache headers for static assets"
+
+          task_8_1_2:
+            name: "Deploy Firebase Functions to multi-region"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "Functions deployed to us-central1 and europe-west1"
+              - "Load balancing configuration for regional routing"
+              - "Environment variables set in Firebase console"
+
+          task_8_1_3:
+            name: "Set up staging environment"
+            complexity:
+              composite: 2.8
+            estimated_days: 1
+            deliverables:
+              - "Separate Firebase project for staging"
+              - "Staging deployment workflow in GitHub Actions"
+              - "Environment variable separation (staging vs production)"
+
+        feature_8_2:
+          name: "Monitoring, Logging & Alerting"
+          complexity:
+            composite: 2.8
+            dimensions:
+              technical_complexity: 3
+              scope_size: 3
+              dependencies: 2
+              uncertainty: 3
+              risk: 3
+              testing: 2
+          estimated_days: 4
+          deliverables:
+            - "Firebase Performance Monitoring for PWA"
+            - "Cloud Logging for Functions with structured logs"
+            - "Error tracking with Firebase Crashlytics or Sentry"
+            - "Uptime monitoring and alerting (e.g., UptimeRobot)"
+            - "Dashboard for key metrics (latency, error rate, token refresh success)"
+
+          task_8_2_1:
+            name: "Set up Firebase Performance Monitoring"
+            complexity:
+              composite: 2.5
+            estimated_days: 1.5
+            deliverables:
+              - "Performance SDK integrated in PWA"
+              - "Custom traces for conversation latency, API calls"
+              - "Real-time performance dashboard in Firebase console"
+
+          task_8_2_2:
+            name: "Configure Cloud Logging and error tracking"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "Structured logging in all Functions (Winston or Bunyan)"
+              - "Error tracking with Sentry or Firebase Crashlytics"
+              - "Log-based metrics for OAuth failures, token refresh errors"
+
+          task_8_2_3:
+            name: "Set up uptime monitoring and alerting"
+            complexity:
+              composite: 3.0
+            estimated_days: 1
+            deliverables:
+              - "UptimeRobot or similar service monitoring PWA and Functions endpoints"
+              - "Alert notifications (email/Slack) for downtime"
+              - "Dashboard displaying uptime percentage and response times"
+
+        feature_8_3:
+          name: "Documentation & User Guides"
+          complexity:
+            composite: 2.4
+            dimensions:
+              technical_complexity: 2
+              scope_size: 3
+              dependencies: 1
+              uncertainty: 2
+              risk: 1
+              testing: 3
+          estimated_days: 4
+          deliverables:
+            - "README.md with project overview and setup instructions"
+            - "ARCHITECTURE.md documenting system design and components"
+            - "DEVELOPMENT.md with local development setup and workflows"
+            - "User guide for PWA installation and feature usage"
+            - "API documentation for MCP tools and agent capabilities"
+
+          task_8_3_1:
+            name: "Write project documentation (README, ARCHITECTURE, DEVELOPMENT)"
+            complexity:
+              composite: 2.5
+            estimated_days: 2.5
+            deliverables:
+              - "docs/README.md with project description, tech stack, getting started"
+              - "docs/ARCHITECTURE.md with component diagrams and data flow"
+              - "docs/DEVELOPMENT.md with setup steps, scripts, troubleshooting"
+
+          task_8_3_2:
+            name: "Create user guide and API documentation"
+            complexity:
+              composite: 2.2
+            estimated_days: 1.5
+            deliverables:
+              - "docs/USER_GUIDE.md with PWA installation, feature walkthroughs"
+              - "docs/API.md documenting MCP tools and agent interactions"
+              - "Video walkthrough (optional) demonstrating key features"
+
+        feature_8_4:
+          name: "Security Audit & Compliance"
+          complexity:
+            composite: 3.2
+            dimensions:
+              technical_complexity: 4
+              scope_size: 2
+              dependencies: 2
+              uncertainty: 4
+              risk: 5
+              testing: 3
+          estimated_days: 5
+          deliverables:
+            - "Security review of OAuth implementation and token management"
+            - "Penetration testing for authentication bypass attempts"
+            - "Dependency vulnerability scanning (npm audit, Snyk)"
+            - "Firestore security rules validation"
+            - "GDPR compliance review for user data handling"
+
+          task_8_4_1:
+            name: "Conduct OAuth and token management security review"
+            complexity:
+              composite: 3.5
+            estimated_days: 2
+            deliverables:
+              - "Code review of authXeroCallback and token refresh logic"
+              - "Verify token encryption strength (AES-256-GCM)"
+              - "Test token expiry and refresh edge cases"
+              - "Validate HTTPS-only enforcement"
+
+          task_8_4_2:
+            name: "Run dependency vulnerability scans"
+            complexity:
+              composite: 2.8
+            estimated_days: 1.5
+            deliverables:
+              - "npm audit run and vulnerabilities addressed"
+              - "Snyk or Dependabot integration for continuous scanning"
+              - "Update dependencies to latest secure versions"
+
+          task_8_4_3:
+            name: "Validate Firestore security rules and GDPR compliance"
+            complexity:
+              composite: 3.2
+            estimated_days: 1.5
+            deliverables:
+              - "Firestore rules unit tests (Firebase Emulator)"
+              - "Verify user-scoped access control"
+              - "GDPR review: data retention, deletion, export capabilities"
+              - "Privacy policy and terms of service drafts"
+
+agent_blueprint:
+  total_estimated: 12
+  parallel_capacity: 4
+  types_needed:
+    - type: "infrastructure-engineer"
+      count: 1
+      focus_areas: ["Firebase setup", "CI/CD", "monorepo configuration"]
+    - type: "backend-developer"
+      count: 3
+      focus_areas: ["MCP server", "Firebase Functions", "OAuth integration"]
+    - type: "agent-engineer"
+      count: 2
+      focus_areas: ["Claude Agent SDK", "orchestration", "sub-agents"]
+    - type: "frontend-developer"
+      count: 3
+      focus_areas: ["React PWA", "UI components", "performance optimization"]
+    - type: "qa-engineer"
+      count: 2
+      focus_areas: ["Unit tests", "integration tests", "E2E Playwright"]
+    - type: "devops-engineer"
+      count: 1
+      focus_areas: ["Deployment", "monitoring", "security hardening"]
+
+feature_specifications:
+  - feature: "Invoice Management via Natural Language"
+    description: "Users can create, update, and retrieve Xero invoices through conversational AI, eliminating manual form entry"
+    complexity: "medium"
+    assigned_agents: 2
+    acceptance_criteria:
+      - "User can say 'Create an invoice for Acme Corp for $1,500 due in 30 days' and invoice is created in Xero"
+      - "Agent confirms invoice details before submission"
+      - "User can query 'Show me unpaid invoices from last month' and receive formatted list"
+      - "Conversation latency <3 seconds for invoice operations"
+
+  - feature: "Bank Reconciliation Assistance"
+    description: "AI-powered matching of bank transactions to invoices and bills, with manual confirmation for ambiguous cases"
+    complexity: "high"
+    assigned_agents: 2
+    acceptance_criteria:
+      - "Agent retrieves unreconciled transactions on request"
+      - "Automatic matching suggestions with confidence scores"
+      - "User confirms matches before reconciliation applied"
+      - "Discrepancy detection with user guidance"
+
+  - feature: "Financial Report Generation"
+    description: "Generate and explain P&L statements, balance sheets, and bank summaries with natural language insights"
+    complexity: "medium"
+    assigned_agents: 2
+    acceptance_criteria:
+      - "User can request 'Show me P&L for Q4 2024' and receive formatted report"
+      - "Agent provides natural language explanation of key figures"
+      - "Support for custom date ranges and comparison periods"
+      - "Reports render correctly on mobile devices"
+
+  - feature: "Expense Tracking & Categorization"
+    description: "Record expenses conversationally with AI-suggested categorization based on description"
+    complexity: "medium"
+    assigned_agents: 2
+    acceptance_criteria:
+      - "User can say 'Record a $50 expense for office supplies' and it's created in Xero"
+      - "Agent suggests appropriate account code based on description"
+      - "User can query expenses by category or date range"
+      - "Support for expense claims (future enhancement placeholder)"
+
+  - feature: "Mobile-First PWA with Offline Support"
+    description: "Installable Progressive Web App optimized for mobile devices with offline conversation access"
+    complexity: "high"
+    assigned_agents: 3
+    acceptance_criteria:
+      - "PWA installable on iOS and Android via browser prompt"
+      - "Lighthouse score 95+ across all categories"
+      - "LCP <2.5s, FID <100ms, CLS <0.1"
+      - "Offline mode shows cached conversations (read-only)"
+      - "Messages queued when offline and sync when online"
+
+  - feature: "Secure OAuth 2.0 Authentication"
+    description: "Multi-tenant Xero OAuth flow with encrypted token storage and automatic refresh"
+    complexity: "high"
+    assigned_agents: 2
+    acceptance_criteria:
+      - "Users authenticate with Firebase Auth (email/password)"
+      - "Xero OAuth connection flow with organization selection"
+      - "Tokens encrypted with AES-256 before Firestore storage"
+      - "Automatic token refresh before 30-minute expiration"
+      - "No plaintext tokens in logs or client-side storage"
+
+testing_strategy:
+  levels:
+    - level: "unit"
+      scope: "Individual functions, components, and tools. Mock external dependencies (Xero API, Firestore, Claude API)"
+      framework: "Vitest (MCP, Agent, Functions), React Testing Library (PWA)"
+      coverage_target: "80%"
+
+    - level: "integration"
+      scope: "Workflows spanning multiple components (OAuth flow, invoice creation, reconciliation). Use Firebase Emulator for Functions/Firestore"
+      framework: "Vitest with Firebase Emulator Suite"
+      coverage_target: "Critical user paths (auth, invoicing, reconciliation, reports)"
+
+    - level: "e2e"
+      scope: "Full user journeys in browser environment (signup, Xero connect, conversation flows, offline mode)"
+      framework: "Playwright with mock Xero API server"
+      coverage_target: "Top 5 user journeys"
+
+    - level: "performance"
+      scope: "Lighthouse audits, conversation latency benchmarks, PWA metrics"
+      framework: "Lighthouse CI, custom latency tests"
+      targets: "Lighthouse 95+, LCP <2.5s, conversation response <3s"
+
+    - level: "security"
+      scope: "OAuth implementation, token management, Firestore rules, dependency vulnerabilities"
+      framework: "Manual review, npm audit, Snyk, Firebase Emulator rules tests"
+      targets: "Zero high/critical vulnerabilities, encrypted tokens, user-scoped access enforced"
+
+project_structure:
+  pattern: "vertical-slice"
+  directories:
+    - path: "specs/"
+      purpose: "Architectural documentation and blueprint files"
+
+    - path: "docs/"
+      purpose: "User-facing documentation (README, ARCHITECTURE, USER_GUIDE)"
+
+    - path: "packages/mcp-xero-server/"
+      purpose: "MCP server exposing Xero API tools (vertical slice: tool definitions, Xero client, formatters)"
+      key_files:
+        - "src/index.ts: MCP server initialization"
+        - "src/tools/: Tool definitions (invoices, transactions, reports, expenses)"
+        - "src/client/: xero-node wrapper"
+
+    - path: "packages/agent-core/"
+      purpose: "Claude Agent SDK orchestrator and sub-agents (vertical slice: conversation state, routing, delegation)"
+      key_files:
+        - "src/orchestrator.ts: Main agent coordinating tasks"
+        - "src/agents/: Sub-agents (invoice, reconciliation, reports, expenses)"
+        - "src/router.ts: Intent classification and agent routing"
+
+    - path: "packages/pwa-app/"
+      purpose: "React PWA with conversation UI and offline support (vertical slice: components, hooks, state)"
+      key_files:
+        - "src/components/: UI components (Chat, MessageList, Auth)"
+        - "src/hooks/: Custom hooks (useConversation, useAuth, useOffline)"
+        - "src/db/: IndexedDB wrapper"
+        - "public/manifest.json: PWA manifest"
+
+    - path: "backend/functions/"
+      purpose: "Firebase Functions for OAuth, token management, API proxy, webhooks"
+      key_files:
+        - "src/auth/: OAuth callback and token refresh"
+        - "src/agent/: sendMessage proxy to agent-core"
+        - "src/webhooks/: Xero webhook handler"
+
+    - path: "backend/shared/"
+      purpose: "Shared utilities and types across backend functions"
+      key_files:
+        - "src/crypto.ts: Token encryption/decryption"
+        - "src/types.ts: Shared type definitions"
+
+    - path: ".github/workflows/"
+      purpose: "CI/CD pipelines for testing and deployment"
+      key_files:
+        - "ci.yml: PR validation (lint, test, typecheck)"
+        - "deploy.yml: Firebase deployment (hosting, functions)"
+
+deployment_architecture:
+  hosting:
+    - service: "Firebase Hosting"
+      purpose: "PWA static assets with global CDN"
+      regions: "Global (multi-region CDN)"
+      configuration:
+        - "Custom domain with SSL"
+        - "SPA routing redirects"
+        - "Cache headers for static assets (1 year)"
+        - "CSP and HSTS headers"
+
+  functions:
+    - service: "Firebase Functions (2nd gen)"
+      purpose: "Serverless backend for OAuth, agent proxy, webhooks"
+      regions: ["us-central1", "europe-west1"]
+      configuration:
+        - "Node.js 20 runtime"
+        - "1GB memory for agent functions"
+        - "Concurrency: 80 requests per instance"
+        - "Environment variables for API keys"
+
+  database:
+    - service: "Firestore"
+      purpose: "User data, sessions, tokens, cache"
+      region: "us-central1 (multi-region replication)"
+      collections:
+        - "users: User profiles and Xero connection metadata"
+        - "organizations: Xero tenant information"
+        - "sessions: Conversation history and state"
+        - "tokens: Encrypted OAuth tokens"
+        - "cache: Xero API response cache (TTL: 5 min)"
+        - "audit_logs: Security audit trail (TTL: 90 days)"
+
+  ci_cd:
+    platform: "GitHub Actions"
+    workflows:
+      - "PR validation: lint, typecheck, test (unit + integration)"
+      - "Deployment: Build PWA, deploy Hosting + Functions"
+      - "Lighthouse CI: Performance monitoring on PRs"
+    secrets:
+      - "FIREBASE_SERVICE_ACCOUNT: GCP service account for deployments"
+      - "FIREBASE_TOKEN: Firebase CLI token"
+      - "ANTHROPIC_API_KEY: Claude API key"
+      - "XERO_CLIENT_ID and XERO_CLIENT_SECRET: OAuth credentials"
+
+future_enhancements:
+  - name: "Multi-Organization Support"
+    description: "Allow users to connect and switch between multiple Xero organizations"
+    complexity: "medium"
+    estimated_weeks: 2
+
+  - name: "AI-Powered Expense Categorization"
+    description: "Train model on historical expense data to auto-categorize new expenses"
+    complexity: "high"
+    estimated_weeks: 4
+
+  - name: "Predictive Cash Flow Analysis"
+    description: "Forecast cash flow based on invoice due dates, payment history, and expenses"
+    complexity: "high"
+    estimated_weeks: 5
+
+  - name: "Voice Interaction Support"
+    description: "Enable voice input for hands-free accounting operations via Web Speech API"
+    complexity: "medium"
+    estimated_weeks: 3
+
+  - name: "Native Mobile Apps (iOS/Android)"
+    description: "React Native apps with deeper OS integration (Face ID, push notifications)"
+    complexity: "high"
+    estimated_weeks: 8
+
+  - name: "Receipt OCR & Attachment Support"
+    description: "Extract expense details from receipt photos using OCR and attach to Xero records"
+    complexity: "high"
+    estimated_weeks: 4
+
+risk_mitigation:
+  - risk: "Xero API rate limiting during peak usage"
+    severity: "medium"
+    mitigation:
+      - "Implement request queueing and exponential backoff"
+      - "Cache frequent queries in Firestore with 5-min TTL"
+      - "Monitor rate limit headers and throttle requests proactively"
+
+  - risk: "OAuth token refresh failures causing user re-authentication"
+    severity: "high"
+    mitigation:
+      - "Refresh tokens proactively 5 minutes before expiration"
+      - "Retry refresh attempts with exponential backoff"
+      - "Alert monitoring for high refresh failure rates"
+      - "Graceful degradation with clear user messaging"
+
+  - risk: "Claude API latency degrading conversation experience"
+    severity: "medium"
+    mitigation:
+      - "Set aggressive timeout thresholds (10s max)"
+      - "Implement streaming responses for perceived speed"
+      - "Cache common queries and responses"
+      - "Fallback to simpler prompts if latency exceeds threshold"
+
+  - risk: "IndexedDB quota exceeded on devices with limited storage"
+    severity: "low"
+    mitigation:
+      - "Implement conversation pruning (keep last 50 messages locally)"
+      - "Detect quota exceeded errors and prompt user to clear old data"
+      - "Use Firestore as source of truth with IndexedDB as cache"
+
+  - risk: "Firebase Functions cold start latency affecting UX"
+    severity: "medium"
+    mitigation:
+      - "Use min instances (1) for critical functions (sendMessage)"
+      - "Implement warmup requests via scheduled function"
+      - "Optimize function bundle size to reduce cold start time"
+
+  - risk: "Security vulnerabilities in dependencies"
+    severity: "high"
+    mitigation:
+      - "Automated dependency scanning via Snyk/Dependabot"
+      - "Quarterly security audits and dependency updates"
+      - "Pin major versions and test updates in staging first"
