@@ -3,10 +3,10 @@
 > **Purpose**: Current work, active bugs, and recent changes (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-11-26
-**Current Phase**: CLI Chat Interface Ready! 🎉 Native tool calling working perfectly
+**Last Updated**: 2025-11-27
+**Current Phase**: VPS Migration 🚀 Moving from AWS Lambda to DigitalOcean VPS
 **Version**: 0.1.0-alpha (Pre-release)
-**AWS Status**: All resources cleaned up - ready for deployment with full stack
+**Infrastructure**: Migrating to VPS (AWS terminated to save $4/day)
 
 ---
 
@@ -47,18 +47,30 @@ Primary segments under consideration:
 | Aspect | Status | Notes |
 |--------|--------|-------|
 | Architecture | 🟢 | Open source platform, LLM + database agnostic |
-| Infrastructure | 🟢 | Terraform updated for Sydney region (ap-southeast-2) |
-| LLM Abstraction | 🟢 | Provider-agnostic interface integrated into agent-core |
-| Database Abstraction | 🟢 | SQLite + DynamoDB providers integrated and tested |
+| Infrastructure | 🔵 | **Migrating to VPS** - AWS terminated, `packages/server` created |
+| LLM Abstraction | 🟢 | Provider-agnostic interface (Anthropic + Ollama) |
+| Database Abstraction | 🟢 | SQLite (default) + DynamoDB providers |
 | Agent Foundation | 🟢 | Native tool calling + CLI chat interface working |
+| VPS Server | 🟢 | `packages/server` - unified Express server ready |
 | CLI Chat Interface | 🟢 | Interactive REPL ready - `pnpm chat` to start |
-| Self-Hosting | 🔵 | Core working with SQLite, Docker Compose + docs pending |
-| Managed Service | 🔵 | OAuth working locally - ready for AWS deployment |
-| CI/CD Pipeline | 🔵 | Branch protection configured |
+| Self-Hosting | 🔵 | Server package ready, deployment docs pending |
 | Test Coverage | ⚪ | No formal tests yet (manual testing only) |
-| Known Bugs | 🟢 | None (pre-implementation) |
+| Known Bugs | 🟢 | None |
 
 **Status Guide:** 🟢 Good | 🟡 Attention | 🔴 Critical | 🔵 In Progress | ⚪ Not Started
+
+### VPS Migration Status (2025-11-27)
+
+| Component | AWS (Old) | VPS (New) | Status |
+|-----------|-----------|-----------|--------|
+| Compute | Lambda x3 | Express server | ✅ Created `packages/server` |
+| Database | DynamoDB | SQLite | ✅ Already supported |
+| API Gateway | AWS API GW | Express routes | ✅ Implemented |
+| Auth | Cognito | Session/JWT | 🔵 Basic (needs expansion) |
+| OAuth | Lambda | Express routes | ✅ Implemented |
+| CDN | CloudFront | Caddy | ⚪ Deployment pending |
+
+**Cost Savings**: ~$120/month → ~$12/month (90% reduction)
 
 ---
 
