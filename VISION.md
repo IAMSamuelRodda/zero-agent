@@ -6,7 +6,9 @@ Ask questions about your business finances and get plain-English answers instant
 
 *Currently supports Xero. MYOB and QuickBooks planned (modular MCP architecture).*
 
-> **Rebrand note**: "Zero" sounds like "Xero" when spoken—brand collision risk. Keep name through validation, rebrand after. 
+> **Rebrand note**: "Zero" sounds like "Xero" when spoken—brand collision risk. Keep name through validation, rebrand after.
+>
+> **Leading candidate**: "Pip" / "Ask Pip" - friendly helper positioning, 1 syllable, works as verb ("Ask Pip about my GST"). Domain `askpip.au` secured (Black Friday 2024). See Joplin: "Rebranding Research: Naming Trends & Directions" for full analysis. 
 
 ## Philosophy
 

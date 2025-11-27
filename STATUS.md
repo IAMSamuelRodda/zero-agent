@@ -45,13 +45,13 @@
 |--------|--------|
 | pip.com | ❌ Taken |
 | pip.com.au | ❌ Taken |
-| pip.au | ⚠️ Check manually |
-| **askpip.com.au** | ✅ Likely available |
-| **heypip.com.au** | ✅ Likely available |
-| **withpip.com.au** | ✅ Likely available |
+| pip.au | ❌ Taken (no active site - potential future acquisition) |
+| **askpip.au** | ✅ **SECURED** (Black Friday 2024 - FREE) |
+| askpip.com.au | ✅ Available (FREE bundle) |
+| heypip.com.au | ✅ Available |
 | getpip.com | ❌ Taken (Python pip - avoid!) |
 
-**Recommendation**: Register `askpip.com.au` or `heypip.com.au`
+**Status**: `askpip.au` secured. Open to paying for premium domains if name wins in market research.
 
 **Rebrand from Zero**: "Zero" sounds like "Xero" when spoken—brand collision risk.
 
