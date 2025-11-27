@@ -214,5 +214,176 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
         };
       },
     },
+    {
+      name: "get_aged_receivables",
+      description:
+        "Get aged receivables report showing who owes money and how long invoices have been outstanding. Essential for understanding cash flow and overdue accounts.",
+      parameters: {
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            description: "Date for aging calculation in YYYY-MM-DD format (defaults to today)",
+          },
+        },
+      },
+      execute: async (params, userId) => {
+        const report = await xeroClient.getAgedReceivables(userId, params.date);
+
+        // Parse the report rows to extract useful data
+        const rows = report?.Rows || [];
+        const contacts: any[] = [];
+
+        // Find the data rows (skip header rows)
+        for (const row of rows) {
+          if (row.RowType === "Section" && row.Rows) {
+            for (const dataRow of row.Rows) {
+              if (dataRow.RowType === "Row" && dataRow.Cells) {
+                const cells = dataRow.Cells;
+                contacts.push({
+                  contact: cells[0]?.Value,
+                  current: cells[1]?.Value,
+                  days1to30: cells[2]?.Value,
+                  days31to60: cells[3]?.Value,
+                  days61to90: cells[4]?.Value,
+                  over90Days: cells[5]?.Value,
+                  total: cells[6]?.Value,
+                });
+              }
+            }
+          }
+        }
+
+        return {
+          reportName: report?.ReportName,
+          reportDate: report?.ReportDate,
+          contacts: contacts.slice(0, 20), // Limit to top 20
+          totalContacts: contacts.length,
+        };
+      },
+    },
+    {
+      name: "get_aged_payables",
+      description:
+        "Get aged payables report showing who you owe money to and how overdue the bills are.",
+      parameters: {
+        type: "object",
+        properties: {
+          date: {
+            type: "string",
+            description: "Date for aging calculation in YYYY-MM-DD format (defaults to today)",
+          },
+        },
+      },
+      execute: async (params, userId) => {
+        const report = await xeroClient.getAgedPayables(userId, params.date);
+
+        const rows = report?.Rows || [];
+        const suppliers: any[] = [];
+
+        for (const row of rows) {
+          if (row.RowType === "Section" && row.Rows) {
+            for (const dataRow of row.Rows) {
+              if (dataRow.RowType === "Row" && dataRow.Cells) {
+                const cells = dataRow.Cells;
+                suppliers.push({
+                  supplier: cells[0]?.Value,
+                  current: cells[1]?.Value,
+                  days1to30: cells[2]?.Value,
+                  days31to60: cells[3]?.Value,
+                  days61to90: cells[4]?.Value,
+                  over90Days: cells[5]?.Value,
+                  total: cells[6]?.Value,
+                });
+              }
+            }
+          }
+        }
+
+        return {
+          reportName: report?.ReportName,
+          reportDate: report?.ReportDate,
+          suppliers: suppliers.slice(0, 20),
+          totalSuppliers: suppliers.length,
+        };
+      },
+    },
+    {
+      name: "search_contacts",
+      description:
+        "Search for a customer or supplier by name. Use when user asks about a specific contact, patient, client, or supplier.",
+      parameters: {
+        type: "object",
+        properties: {
+          searchTerm: {
+            type: "string",
+            description: "Name or partial name to search for",
+          },
+        },
+        required: ["searchTerm"],
+      },
+      execute: async (params, userId) => {
+        const contacts = await xeroClient.searchContacts(userId, params.searchTerm);
+
+        return contacts.slice(0, 10).map((contact: any) => ({
+          name: contact.Name,
+          contactId: contact.ContactID,
+          emailAddress: contact.EmailAddress,
+          phoneNumber: contact.Phones?.find((p: any) => p.PhoneNumber)?.PhoneNumber,
+          isCustomer: contact.IsCustomer,
+          isSupplier: contact.IsSupplier,
+          accountsReceivableOutstanding: contact.Balances?.AccountsReceivable?.Outstanding,
+          accountsPayableOutstanding: contact.Balances?.AccountsPayable?.Outstanding,
+        }));
+      },
+    },
+    {
+      name: "get_bank_transactions",
+      description:
+        "Get recent bank transactions. Use when user asks about recent payments, bank activity, or money movement.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: {
+            type: "number",
+            description: "Maximum number of transactions to return (default: 10)",
+          },
+        },
+      },
+      execute: async (params, userId) => {
+        const transactions = await xeroClient.getBankTransactions(userId);
+
+        return transactions.slice(0, params.limit || 10).map((txn: any) => ({
+          type: txn.Type, // SPEND or RECEIVE
+          date: txn.Date,
+          contact: txn.Contact?.Name,
+          description: txn.LineItems?.[0]?.Description,
+          total: txn.Total,
+          status: txn.Status,
+          bankAccount: txn.BankAccount?.Name,
+          reference: txn.Reference,
+        }));
+      },
+    },
+    {
+      name: "get_bank_accounts",
+      description:
+        "Get list of bank accounts and their balances. Use when user asks about bank balances or cash position.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+      execute: async (params, userId) => {
+        const accounts = await xeroClient.getBankAccounts(userId);
+
+        return accounts.map((account: any) => ({
+          name: account.Name,
+          code: account.Code,
+          type: account.BankAccountType,
+          currencyCode: account.CurrencyCode,
+          balance: account.BankAccountBalance,
+        }));
+      },
+    },
   ];
 }

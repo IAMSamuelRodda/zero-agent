@@ -273,4 +273,47 @@ export class XeroClient {
     const response = await this.request(userId, endpoint);
     return response.Reports?.[0];
   }
+
+  /**
+   * Get aged receivables report (who owes money)
+   */
+  async getAgedReceivables(userId: string, date?: string) {
+    let endpoint = "Reports/AgedReceivablesByContact";
+    if (date) {
+      endpoint += `?date=${date}`;
+    }
+
+    const response = await this.request(userId, endpoint);
+    return response.Reports?.[0];
+  }
+
+  /**
+   * Get aged payables report (who we owe money to)
+   */
+  async getAgedPayables(userId: string, date?: string) {
+    let endpoint = "Reports/AgedPayablesByContact";
+    if (date) {
+      endpoint += `?date=${date}`;
+    }
+
+    const response = await this.request(userId, endpoint);
+    return response.Reports?.[0];
+  }
+
+  /**
+   * Search contacts by name
+   */
+  async searchContacts(userId: string, searchTerm: string) {
+    const endpoint = `Contacts?where=Name.Contains("${searchTerm}")`;
+    const response = await this.request(userId, endpoint);
+    return response.Contacts || [];
+  }
+
+  /**
+   * Get bank accounts
+   */
+  async getBankAccounts(userId: string) {
+    const response = await this.request(userId, 'Accounts?where=Type=="BANK"');
+    return response.Accounts || [];
+  }
 }

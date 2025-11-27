@@ -4,13 +4,45 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../store/chatStore';
+import { api } from '../api/client';
+
+interface AuthStatus {
+  connected: boolean;
+  tenantName?: string;
+}
 
 export function ChatPage() {
   const [input, setInput] = useState('');
+  const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { messages, isLoading, error, sendMessage, clearError } = useChatStore();
+
+  // Check auth status on mount and handle OAuth callback
+  useEffect(() => {
+    // Check for OAuth callback params
+    const params = new URLSearchParams(window.location.search);
+    const authResult = params.get('auth');
+    const orgName = params.get('org');
+    const authError = params.get('error');
+
+    if (authResult === 'success' && orgName) {
+      setAuthStatus({ connected: true, tenantName: orgName });
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (authError) {
+      // Show error in chat error area
+      useChatStore.getState().setError(`Xero connection failed: ${authError}`);
+      window.history.replaceState({}, '', window.location.pathname);
+    } else {
+      // Normal status check
+      api.getAuthStatus()
+        .then(setAuthStatus)
+        .catch(() => setAuthStatus({ connected: false }));
+    }
+  }, []);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -31,6 +63,12 @@ export function ChatPage() {
     await sendMessage(message);
   };
 
+  const handleConnectXero = () => {
+    setIsConnecting(true);
+    // Force full page navigation to the auth endpoint
+    window.location.href = api.getXeroAuthUrl();
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
@@ -42,12 +80,20 @@ export function ChatPage() {
             </div>
             <h1 className="text-lg font-semibold text-gray-900">Zero Agent</h1>
           </div>
-          <a
-            href="/auth/xero"
-            className="text-sm text-blue-600 hover:text-blue-800"
-          >
-            Connect Xero
-          </a>
+          {authStatus?.connected ? (
+            <span className="text-sm text-green-600 flex items-center gap-1">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              {authStatus.tenantName || 'Connected'}
+            </span>
+          ) : (
+            <button
+              onClick={handleConnectXero}
+              disabled={isConnecting}
+              className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+            >
+              {isConnecting ? 'Connecting...' : 'Connect Xero'}
+            </button>
+          )}
         </div>
       </header>
 

@@ -22,6 +22,7 @@ interface ChatState {
   sendMessage: (content: string) => Promise<void>;
   clearMessages: () => void;
   clearError: () => void;
+  setError: (error: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -70,4 +71,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   clearMessages: () => set({ messages: [], sessionId: null }),
 
   clearError: () => set({ error: null }),
+
+  setError: (error: string) => set({ error }),
 }));
