@@ -19,6 +19,20 @@ interface AuthStatus {
   tenantId?: string;
 }
 
+interface DocumentInfo {
+  name: string;
+  type: string;
+  chunks: number;
+  totalChars: number;
+}
+
+interface DocumentListItem {
+  docName: string;
+  docType: string;
+  chunkCount: number;
+  createdAt: number;
+}
+
 export const api = {
   /**
    * Send a chat message
@@ -64,5 +78,51 @@ export const api = {
   async health(): Promise<{ status: string; uptime: number }> {
     const response = await fetch(`${API_BASE}/health`);
     return response.json();
+  },
+
+  /**
+   * Upload a business context document
+   */
+  async uploadDocument(file: File, docType?: string): Promise<{ success: boolean; document: DocumentInfo }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (docType) {
+      formData.append('docType', docType);
+    }
+
+    const response = await fetch(`${API_BASE}/api/documents/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Upload failed' }));
+      throw new Error(error.error || 'Document upload failed');
+    }
+
+    return response.json();
+  },
+
+  /**
+   * List uploaded documents
+   */
+  async listDocuments(): Promise<{ documents: DocumentListItem[] }> {
+    const response = await fetch(`${API_BASE}/api/documents`);
+    if (!response.ok) {
+      throw new Error('Failed to list documents');
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a document
+   */
+  async deleteDocument(docName: string): Promise<void> {
+    const response = await fetch(`${API_BASE}/api/documents/${encodeURIComponent(docName)}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete document');
+    }
   },
 };

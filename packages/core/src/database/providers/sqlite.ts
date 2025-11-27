@@ -145,6 +145,25 @@ export class SQLiteProvider implements DatabaseProvider {
       );
       CREATE INDEX IF NOT EXISTS idx_oauth_tokens_expires_at ON oauth_tokens(expires_at);
     `);
+
+    // Business Context table (RAG-ready schema)
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS business_context (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        doc_type TEXT NOT NULL,           -- 'business_plan', 'kpi', 'strategy', 'notes'
+        doc_name TEXT NOT NULL,
+        chunk_index INTEGER NOT NULL,
+        content TEXT NOT NULL,            -- Chunk text (max 2000 chars)
+        summary TEXT,                     -- LLM-generated summary (Phase 2)
+        embedding BLOB,                   -- Vector as binary (Phase 2 - nullable for now)
+        metadata TEXT,                    -- JSON: headings, source page, etc.
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_context_user ON business_context(user_id);
+      CREATE INDEX IF NOT EXISTS idx_context_type ON business_context(user_id, doc_type);
+    `);
   }
 
   // ============================================================================
@@ -756,6 +775,174 @@ export class SQLiteProvider implements DatabaseProvider {
     } catch (error) {
       throw new DatabaseError(
         `Failed to delete OAuth tokens for user: ${userId}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  // ============================================================================
+  // Business Context Operations
+  // ============================================================================
+
+  async createBusinessContext(context: {
+    userId: string;
+    docType: string;
+    docName: string;
+    chunkIndex: number;
+    content: string;
+    summary?: string;
+    embedding?: number[];
+    metadata?: Record<string, any>;
+  }): Promise<{ id: string }> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      const id = crypto.randomUUID();
+      const now = Date.now();
+
+      const stmt = this.db.prepare(`
+        INSERT INTO business_context
+        (id, user_id, doc_type, doc_name, chunk_index, content, summary, embedding, metadata, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        id,
+        context.userId,
+        context.docType,
+        context.docName,
+        context.chunkIndex,
+        context.content,
+        context.summary || null,
+        context.embedding ? Buffer.from(new Float32Array(context.embedding).buffer) : null,
+        context.metadata ? JSON.stringify(context.metadata) : null,
+        now,
+        now
+      );
+
+      return { id };
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to create business context for user: ${context.userId}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  async getBusinessContext(userId: string, options?: {
+    docType?: string;
+    docName?: string;
+    limit?: number;
+  }): Promise<Array<{
+    id: string;
+    userId: string;
+    docType: string;
+    docName: string;
+    chunkIndex: number;
+    content: string;
+    summary?: string;
+    metadata?: Record<string, any>;
+    createdAt: number;
+  }>> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      let query = `SELECT * FROM business_context WHERE user_id = ?`;
+      const params: any[] = [userId];
+
+      if (options?.docType) {
+        query += ` AND doc_type = ?`;
+        params.push(options.docType);
+      }
+
+      if (options?.docName) {
+        query += ` AND doc_name = ?`;
+        params.push(options.docName);
+      }
+
+      query += ` ORDER BY doc_name, chunk_index ASC`;
+
+      if (options?.limit) {
+        query += ` LIMIT ?`;
+        params.push(options.limit);
+      }
+
+      const stmt = this.db.prepare(query);
+      const rows = stmt.all(...params) as any[];
+
+      return rows.map((row) => ({
+        id: row.id,
+        userId: row.user_id,
+        docType: row.doc_type,
+        docName: row.doc_name,
+        chunkIndex: row.chunk_index,
+        content: row.content,
+        summary: row.summary || undefined,
+        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+        createdAt: row.created_at,
+      }));
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to get business context for user: ${userId}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  async deleteBusinessContext(userId: string, docName?: string): Promise<void> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      let query = `DELETE FROM business_context WHERE user_id = ?`;
+      const params: any[] = [userId];
+
+      if (docName) {
+        query += ` AND doc_name = ?`;
+        params.push(docName);
+      }
+
+      const stmt = this.db.prepare(query);
+      stmt.run(...params);
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to delete business context for user: ${userId}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  async listBusinessDocuments(userId: string): Promise<Array<{
+    docName: string;
+    docType: string;
+    chunkCount: number;
+    createdAt: number;
+  }>> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      const stmt = this.db.prepare(`
+        SELECT doc_name, doc_type, COUNT(*) as chunk_count, MIN(created_at) as created_at
+        FROM business_context
+        WHERE user_id = ?
+        GROUP BY doc_name, doc_type
+        ORDER BY created_at DESC
+      `);
+
+      const rows = stmt.all(userId) as any[];
+
+      return rows.map((row) => ({
+        docName: row.doc_name,
+        docType: row.doc_type,
+        chunkCount: row.chunk_count,
+        createdAt: row.created_at,
+      }));
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to list business documents for user: ${userId}`,
         this.name,
         error as Error
       );

@@ -26,6 +26,7 @@ import { createChatRoutes } from './routes/chat.js';
 import { createAuthRoutes } from './routes/auth.js';
 import { createSessionRoutes } from './routes/sessions.js';
 import { createHealthRoutes } from './routes/health.js';
+import { createDocumentRoutes } from './routes/documents.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Load environment variables
@@ -89,6 +90,7 @@ async function createApp(db: DatabaseProvider): Promise<express.Application> {
   // API Routes
   app.use('/api/chat', createChatRoutes(db));
   app.use('/api/sessions', createSessionRoutes(db));
+  app.use('/api/documents', createDocumentRoutes(db));
   app.use('/auth', createAuthRoutes(db));
   app.use('/health', createHealthRoutes(db));
 
@@ -132,10 +134,11 @@ async function start(): Promise<void> {
       console.log(`   Port: ${PORT}`);
       console.log(`   Database: ${db.name}`);
       console.log(`\n📍 Endpoints:`);
-      console.log(`   Chat:     POST http://localhost:${PORT}/api/chat`);
-      console.log(`   Sessions: GET  http://localhost:${PORT}/api/sessions`);
-      console.log(`   Auth:     GET  http://localhost:${PORT}/auth/xero`);
-      console.log(`   Health:   GET  http://localhost:${PORT}/health`);
+      console.log(`   Chat:      POST http://localhost:${PORT}/api/chat`);
+      console.log(`   Sessions:  GET  http://localhost:${PORT}/api/sessions`);
+      console.log(`   Documents: POST http://localhost:${PORT}/api/documents/upload`);
+      console.log(`   Auth:      GET  http://localhost:${PORT}/auth/xero`);
+      console.log(`   Health:    GET  http://localhost:${PORT}/health`);
       if (NODE_ENV === 'production') {
         console.log(`   PWA:      GET  http://localhost:${PORT}/`);
       }

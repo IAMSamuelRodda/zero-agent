@@ -360,7 +360,232 @@ Zero Agent (rebranding to "Pip") is an AI bookkeeping assistant that combines fi
 
 ---
 
+## Research Spikes
+
+### 2025-11-28 - Multi-Model & Multimodal Architecture Research
+
+**Sources Investigated:**
+- `/repos/codeforge` - Production multi-provider model orchestration system
+- `/repos/arcforge-business-planning/ai-model-providers.md` - Comprehensive provider analysis (950 lines)
+
+#### Key Findings: Model Orchestration (from codeforge)
+
+**Three-Layer Provider Abstraction:**
+1. **Configuration Layer** - Pre-configured profiles for 8+ models across 4 providers
+2. **Adapter Layer** - Abstract base class with provider-specific implementations (Ollama, OpenAI, Anthropic, xAI)
+3. **Routing Layer** - Intelligent model selection based on task requirements
+
+**Capability-Based Routing:**
+```typescript
+interface TaskContext {
+  complexity?: number;       // 0-1 scale triggers model upgrade
+  requiresVision?: boolean;  // Routes to GPT-4o/Claude
+  requiresThinking?: boolean;// Routes to DeepSeek-R1
+  specialization?: string;   // frontend/backend/database
+  maxCost?: number;
+}
+```
+
+**Four Orchestration Patterns:**
+| Pattern | Use Case | Cost Impact |
+|---------|----------|-------------|
+| Speed Ladder | Try fast→slow, escalate on failure | 98% savings vs all-cloud |
+| Planner-Executor | Thinking model plans, fast model executes | Reduces complex task tokens |
+| Specialist Routing | Route to model with best capability | Maximizes quality |
+| Hybrid Local/Cloud | Local for privacy, cloud for vision | 90% code never leaves machine |
+
+#### Key Findings: Provider Analysis
+
+**Voice/TTS Rankings (Quality):**
+| Rank | Model | Note |
+|------|-------|------|
+| 1 | ElevenLabs v3 | Industry standard, $5-330/mo |
+| 2 | Fish Audio / Open Audio S1 | #1 TTS-Arena, 1/30th ElevenLabs cost |
+| 3 | **Chatterbox** | FREE (MIT), 63.8% preferred over ElevenLabs in blind tests |
+
+**Vision Models for Document Analysis:**
+| Model | Provider | Strength |
+|-------|----------|----------|
+| GPT-4o | OpenAI | Best instruction following, 128K context |
+| Gemini 2.5 Pro | Google | 2M context, multimodal native |
+| Claude Sonnet 4.5 | Anthropic | Extended thinking + vision |
+
+**Embeddings for RAG:**
+| Rank | Model | Note |
+|------|-------|------|
+| 1 | Qwen3-Embedding 8B | #1 MTEB multilingual + code, FREE |
+| 2 | BGE-Large | Production-proven, FREE |
+| 3 | NV-Embed-v2 | Best quality, requires GPU |
+
+**Cost Optimization (General LLM):**
+| Model | Price/1M tokens | Note |
+|-------|-----------------|------|
+| DeepSeek-V3 | $0.07-0.28 in | 20-50x cheaper than competitors |
+| Gemini 2.0 Flash | $0.10 in | Google's budget option |
+| Ollama (local) | $0 | Privacy + speed, limited capabilities |
+
+#### Applicability to Pip
+
+**Immediate Impact (Demo Critical Path):**
+
+| Feature | Research Finding | Action |
+|---------|-----------------|--------|
+| feature_1_1 (Document Ingestion) | Vision models can OCR PDFs directly | Consider GPT-4o for PDF screenshots |
+| feature_1_2 (Chunking) | Qwen3-Embedding FREE + excellent | Use for semantic similarity chunking |
+| feature_1_3 (Context Injection) | Gemini 2.5 Pro has 2M context | Consider for large document sets |
+
+**Voice Mode (Epic 3):**
+
+| Feature | Research Finding | Decision |
+|---------|-----------------|----------|
+| feature_3_1 (STT) | Whisper remains best, OpenAI API or self-hosted | Keep current plan |
+| feature_3_2 (TTS) | Chatterbox beats ElevenLabs at $0 cost | **Validated** - proceed with Chatterbox |
+
+**Future Optimization:**
+
+| Opportunity | Implementation | Expected Impact |
+|-------------|----------------|-----------------|
+| Speed Ladder | Local DeepSeek → Cloud Claude fallback | 90%+ cost reduction |
+| Capability Routing | Add vision flag to TaskContext | Better PDF handling |
+| Hybrid Privacy | Route Xero data through local only | Compliance ready |
+
+#### Decision: Architecture Enhancement
+
+**Current state**: Zero Agent has LLM abstraction (Anthropic + Ollama) but no capability routing.
+
+**Recommended enhancement** (post-demo):
+1. Add `capabilities` field to model configs (vision, thinking, maxContext)
+2. Add `TaskContext` to request pipeline
+3. Implement simple capability routing (vision → GPT-4o, default → local)
+4. Defer full Speed Ladder pattern until after Milestone 1
+
+**Priority**: MEDIUM (not blocking demo, but enables better document handling)
+
+---
+
+### 2025-11-28 - Cost-First MVP Strategy (Consolidated)
+
+**Sources Consolidated:**
+- Context Management Research (`docs/CONTEXT_MANAGEMENT_RESEARCH.md` - 757 lines)
+- Multi-Model Research (above)
+- codeforge provider analysis
+
+#### $0 MVP Stack (Demo Critical Path)
+
+| Layer | Component | Solution | Cost | Notes |
+|-------|-----------|----------|------|-------|
+| **LLM (reasoning)** | Complex queries | Claude Haiku | ~$0.25/1M | Only for "Can I afford to hire?" type |
+| **LLM (simple)** | Basic Xero lookups | Ollama (llama3.2/mistral) | **$0** | Route 80% of queries locally |
+| **Embeddings** | Semantic search | Ollama `nomic-embed-text` | **$0** | 768-dim, 50-100ms latency |
+| **Vector DB** | Similarity search | SQLite + client-side cosine | **$0** | <100ms for 1-100 users |
+| **Document parsing** | PDF/TXT/MD/DOCX | `pdf-parse` + `mammoth` | **$0** | Text extraction only |
+| **TTS** | Voice output | Chatterbox (self-hosted) | **$0** | Beats ElevenLabs in blind tests |
+| **STT** | Voice input | Whisper.cpp via Ollama | **$0** | Self-hosted transcription |
+| **Storage** | All data | SQLite | **$0** | RAG-ready schema |
+| **Compute** | Server | Existing VPS | **$0** | Shared with do-vps-prod |
+
+**Total MVP Infrastructure Cost: $0/month**
+**Per-Query Cost: ~$0.00003** (Claude Haiku for complex queries only)
+
+#### Cost Comparison: Original vs Optimized
+
+| Scenario | Original Estimate | Optimized | Savings |
+|----------|------------------|-----------|---------|
+| 25 users × 10 queries/day × 30 days | $1.88/mo (all Claude) | **$0.38/mo** (80% local) | 80% |
+| Vision-based PDF processing | $2.50/1M tokens | **$0** (text extraction) | 100% |
+| Embeddings (OpenAI) | $0.10/1M tokens | **$0** (Ollama) | 100% |
+| TTS (ElevenLabs) | $5-330/mo | **$0** (Chatterbox) | 100% |
+
+#### Implementation Priority (Cost-First)
+
+**Phase 1: Demo MVP ($0 infrastructure)**
+
+| Task | Solution | Why |
+|------|----------|-----|
+| Document upload | Express endpoint + `pdf-parse` | Simple, no external APIs |
+| Text extraction | `pdf-parse` (PDF), `mammoth` (DOCX), raw (TXT/MD) | All $0 libraries |
+| Storage | SQLite `business_context` table | Already have SQLite |
+| Context injection | Simple recency-based retrieval | No embeddings needed yet |
+| LLM reasoning | Claude Haiku (sparingly) | Cheapest quality option |
+
+**Phase 2: RAG Spike ($0 infrastructure)**
+
+| Task | Solution | Why |
+|------|----------|-----|
+| Embeddings | Ollama `nomic-embed-text` | $0, runs on VPS |
+| Vector search | Client-side cosine similarity | $0, <100ms latency |
+| Chunking | 2000 char chunks with overlap | Simple, proven approach |
+
+**Phase 3: Voice Mode ($0 infrastructure)**
+
+| Task | Solution | Why |
+|------|----------|-----|
+| TTS | Chatterbox (self-hosted) | $0, validated quality |
+| STT | Whisper.cpp via Ollama | $0, self-hosted |
+| Streaming | WebSocket | Already have Express |
+
+#### What We're NOT Using (Too Expensive for MVP)
+
+| Feature | Expensive Option | Why Skipped |
+|---------|------------------|-------------|
+| Vision/OCR | GPT-4o ($2.50/1M+) | Use text extraction instead |
+| Cloud embeddings | OpenAI ada-002 ($0.10/1M) | Use Ollama instead |
+| Cloud TTS | ElevenLabs ($5-330/mo) | Use Chatterbox instead |
+| Cloud STT | OpenAI Whisper API ($0.006/min) | Use Whisper.cpp instead |
+| Capability routing | Multi-model orchestration | Over-engineering for 25 users |
+| Agent SDK | Anthropic SDK | Direct API is cheaper/simpler |
+
+#### Decision: Cost-First MVP
+
+**Rationale**: 25 beta users = negligible scale. Optimize for $0 infrastructure, prove business value first, then optimize for quality/features.
+
+**Target monthly cost**: **< $1/month** (achieved with 80% local routing)
+
+**When to add paid services**:
+1. After product-market fit validated
+2. When local quality becomes a bottleneck
+3. When scale exceeds 100+ users
+
+#### Updated Feature Dependencies
+
+```
+feature_1_1 (Document Ingestion)
+├── pdf-parse ($0)
+├── mammoth ($0)
+└── SQLite storage ($0)
+
+feature_1_2 (Chunking & Summarization)
+├── Simple 2000-char chunking ($0)
+└── Claude Haiku summaries (~$0.01/doc)
+
+feature_1_3 (Context Injection)
+├── Phase 1: Recency-based retrieval ($0)
+└── Phase 2: nomic-embed-text + cosine ($0)
+
+feature_3_1 (STT)
+└── Whisper.cpp via Ollama ($0)
+
+feature_3_2 (TTS)
+└── Chatterbox self-hosted ($0)
+```
+
+---
+
 ## Progress Changelog
+
+### 2025-11-28 - Cost-First MVP Strategy Consolidation
+- Consolidated multimodal research with context management research
+- Defined $0 MVP stack: Ollama (LLM + embeddings), pdf-parse, Chatterbox, Whisper.cpp
+- Target: <$1/month with 80% local query routing
+- Documented what we're NOT using (GPT-4o vision, cloud embeddings, ElevenLabs)
+- Created phased implementation plan with cost justification
+
+### 2025-11-28 - Multimodal Research Spike
+- Researched codeforge multi-provider orchestration patterns
+- Analyzed AI model provider landscape (40+ providers)
+- Validated Chatterbox for TTS (FREE, high quality)
+- Identified capability routing as future enhancement
+- Updated PROGRESS.md with research findings
 
 ### 2025-11-27 - Blueprint Created
 - Created comprehensive blueprint at `specs/BLUEPRINT.yaml`

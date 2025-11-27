@@ -106,8 +106,11 @@ export class AgentOrchestrator {
       // 2. Load user memory (preferences, relationship stage)
       const memory = await this.memoryManager!.getCoreMemory(userId);
 
-      // 3. Build conversation context with system prompt and history
-      const systemPrompt = this.buildSystemPrompt(memory);
+      // 3. Load business context (uploaded documents)
+      const businessContext = await this.getBusinessContext(userId);
+
+      // 4. Build conversation context with system prompt and history
+      const systemPrompt = this.buildSystemPrompt(memory, businessContext);
       const conversationHistory = [
         { role: 'system' as const, content: systemPrompt },
         ...(session?.messages || []),
@@ -191,29 +194,73 @@ export class AgentOrchestrator {
   }
 
   /**
+   * Retrieve business context for user (simple recency-based for MVP)
+   * Phase 1: Get most recent documents
+   * Phase 2: Will use embeddings for semantic retrieval
+   */
+  private async getBusinessContext(userId: string): Promise<string> {
+    try {
+      const contexts = await (this.dbProvider as any).getBusinessContext(userId, { limit: 10 });
+
+      if (!contexts || contexts.length === 0) {
+        return '';
+      }
+
+      // Group by document for better organization
+      const byDoc = new Map<string, { type: string; chunks: string[] }>();
+      for (const ctx of contexts) {
+        if (!byDoc.has(ctx.docName)) {
+          byDoc.set(ctx.docName, { type: ctx.docType, chunks: [] });
+        }
+        byDoc.get(ctx.docName)!.chunks.push(ctx.content);
+      }
+
+      // Format for injection into prompt
+      const sections: string[] = [];
+      for (const [docName, data] of byDoc) {
+        const content = data.chunks.join('\n\n');
+        sections.push(`### ${docName} (${data.type})\n${content}`);
+      }
+
+      return sections.join('\n\n---\n\n');
+    } catch (error) {
+      console.error('Error retrieving business context:', error);
+      return '';
+    }
+  }
+
+  /**
    * Build system prompt with user context and memory
    */
-  private buildSystemPrompt(memory: any): string {
+  private buildSystemPrompt(memory: any, businessContext: string = ''): string {
     const relationshipContext = memory?.relationshipStage
       ? `Your relationship with this user is at the "${memory.relationshipStage}" stage.`
       : 'This is your first conversation with this user.';
 
-    return `You are a helpful AI assistant for Xero accounting software.
+    const businessSection = businessContext
+      ? `\n\n## Business Context\nThe user has provided the following business documents and context. Use this information to provide more personalized and context-aware advice:\n\n${businessContext}\n`
+      : '';
+
+    return `You are Pip, a friendly AI bookkeeping assistant for small business owners.
 
 ${relationshipContext}
-
+${businessSection}
 Your capabilities:
 - Access and query Xero data using the available tools
+- Answer questions about the business's financial situation
+- Provide advice based on uploaded business plans, KPIs, and documents
 - Create and manage invoices
 - Reconcile bank transactions
 - Generate financial reports
 - Track and categorize expenses
-- Answer questions about Xero features
 
-When the user asks about their Xero data, use the appropriate tools to fetch the information.
-Always provide clear, natural responses based on the real data from Xero.
+When the user asks about their finances, combine:
+1. Live data from Xero (use tools to fetch current numbers)
+2. Business context (goals, KPIs, plans from uploaded documents)
 
-Communication style: Be helpful, professional, and concise. Use Australian English spelling and terminology.`;
+Example: "Can I afford to hire someone?" → Check P&L from Xero + compare against hiring budget from business plan.
+
+Communication style: Be helpful, approachable, and concise. Use plain English. Use Australian spelling and terminology. You're like a trusted colleague who happens to know accounting.`;
   }
 
   /**
