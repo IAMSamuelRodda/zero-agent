@@ -45,6 +45,14 @@ export function createAuthRoutes(db: DatabaseProvider): Router {
   const REDIRECT_URI = `${BASE_URL}/auth/callback`;
   const FRONTEND_URL = process.env.FRONTEND_URL || BASE_URL;
 
+  // Log configuration on startup for debugging
+  console.log(`🔧 Auth routes configured:`);
+  console.log(`   BASE_URL: ${BASE_URL}`);
+  console.log(`   REDIRECT_URI: ${REDIRECT_URI}`);
+  console.log(`   FRONTEND_URL: ${FRONTEND_URL}`);
+  console.log(`   XERO_CLIENT_ID: ${XERO_CLIENT_ID ? '✓ Set' : '✗ Missing'}`);
+  console.log(`   XERO_CLIENT_SECRET: ${XERO_CLIENT_SECRET ? '✓ Set' : '✗ Missing'}`);
+
   /**
    * GET /auth/xero
    * Initiate OAuth flow - redirect to Xero
@@ -79,23 +87,54 @@ export function createAuthRoutes(db: DatabaseProvider): Router {
   router.get('/callback', async (req, res) => {
     const { code, state, error } = req.query;
 
+    // Helper to show error page instead of blank screen
+    const showError = (title: string, message: string, details?: string) => {
+      console.error(`❌ OAuth error: ${title} - ${message}`);
+      res.status(400).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>OAuth Error</title>
+            <style>
+              body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+              .error { background: #fee; border: 1px solid #fcc; padding: 20px; border-radius: 8px; }
+              .details { background: #f5f5f5; padding: 10px; margin-top: 10px; font-family: monospace; font-size: 12px; overflow-x: auto; }
+              button { margin-top: 20px; padding: 10px 20px; cursor: pointer; }
+            </style>
+          </head>
+          <body>
+            <div class="error">
+              <h2>❌ ${title}</h2>
+              <p>${message}</p>
+              ${details ? `<div class="details">${details}</div>` : ''}
+            </div>
+            <button onclick="window.location.href='/auth/xero'">Try Again</button>
+            <button onclick="window.location.href='/'">Go Home</button>
+          </body>
+        </html>
+      `);
+    };
+
     if (error) {
-      console.error(`❌ OAuth error: ${error}`);
-      return res.redirect(`${FRONTEND_URL}?error=${encodeURIComponent(String(error))}`);
+      return showError('Xero Authorization Failed', `Xero returned an error: ${error}`);
     }
 
     if (!code) {
-      return res.status(400).json({ error: 'Missing authorization code' });
+      return showError('Missing Authorization Code', 'No authorization code received from Xero.');
     }
 
     if (!XERO_CLIENT_ID || !XERO_CLIENT_SECRET) {
-      return res.status(500).json({ error: 'Xero OAuth not configured' });
+      return showError('Server Configuration Error', 'Xero OAuth credentials not configured.',
+        'Missing XERO_CLIENT_ID or XERO_CLIENT_SECRET environment variables.');
     }
 
     try {
       console.log(`🔄 Exchanging authorization code for tokens...`);
+      console.log(`   Using REDIRECT_URI: ${REDIRECT_URI}`);
 
-      // Exchange code for tokens
+      // Exchange code for tokens with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
       const tokenResponse = await fetch(XERO_TOKEN_URL, {
         method: 'POST',
         headers: {
@@ -107,11 +146,18 @@ export function createAuthRoutes(db: DatabaseProvider): Router {
           code: String(code),
           redirect_uri: REDIRECT_URI,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
-        throw new Error(`Token exchange failed: ${errorText}`);
+        console.error(`Token exchange failed (${tokenResponse.status}): ${errorText}`);
+        return showError(
+          'Token Exchange Failed',
+          'Failed to exchange authorization code for tokens.',
+          `Status: ${tokenResponse.status}<br>REDIRECT_URI: ${REDIRECT_URI}<br>Response: ${errorText}`
+        );
       }
 
       const tokenData = await tokenResponse.json() as XeroTokenResponse;
@@ -125,13 +171,24 @@ export function createAuthRoutes(db: DatabaseProvider): Router {
         },
       });
 
+      if (!connectionsResponse.ok) {
+        const errorText = await connectionsResponse.text();
+        return showError('Failed to Get Xero Organizations',
+          'Could not retrieve connected organizations.',
+          errorText);
+      }
+
       const connections = await connectionsResponse.json() as XeroTenant[];
       const tenant = connections[0]; // Use first connected organization
 
-      console.log(`✅ Connected to tenant: ${tenant?.tenantName || 'Unknown'}`);
+      if (!tenant) {
+        return showError('No Xero Organization Found',
+          'You need to connect at least one Xero organization to use this app.');
+      }
+
+      console.log(`✅ Connected to tenant: ${tenant.tenantName}`);
 
       // Save tokens to database
-      // TODO: Get userId from session/auth
       const userId = 'default-user';
       const tokens: OAuthTokens = {
         userId,
@@ -141,8 +198,8 @@ export function createAuthRoutes(db: DatabaseProvider): Router {
         tokenType: tokenData.token_type,
         expiresAt: Date.now() + tokenData.expires_in * 1000,
         scopes: tokenData.scope.split(' '),
-        tenantId: tenant?.tenantId,
-        tenantName: tenant?.tenantName,
+        tenantId: tenant.tenantId,
+        tenantName: tenant.tenantName,
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
@@ -151,11 +208,14 @@ export function createAuthRoutes(db: DatabaseProvider): Router {
       console.log(`✅ Tokens saved to database`);
 
       // Redirect to frontend with success
-      res.redirect(`${FRONTEND_URL}?auth=success&org=${encodeURIComponent(tenant?.tenantName || 'Connected')}`);
+      res.redirect(`${FRONTEND_URL}?auth=success&org=${encodeURIComponent(tenant.tenantName)}`);
 
     } catch (error: any) {
       console.error(`❌ OAuth callback error:`, error);
-      res.redirect(`${FRONTEND_URL}?error=${encodeURIComponent(error.message)}`);
+      if (error.name === 'AbortError') {
+        return showError('Request Timeout', 'The request to Xero timed out. Please try again.');
+      }
+      return showError('OAuth Error', error.message || 'An unexpected error occurred.');
     }
   });
 
