@@ -12,6 +12,15 @@ import { config } from "dotenv";
 import { createDatabaseProviderFromEnv } from "@zero-agent/core";
 import type { DatabaseProvider, OAuthTokens } from "@zero-agent/core";
 
+// Xero OAuth token response type
+interface XeroTokenResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  scope: string;
+}
+
 // Load environment variables
 config();
 
@@ -175,7 +184,7 @@ app.get("/auth/callback", async (req, res) => {
       throw new Error(`Token exchange failed: ${errorText}`);
     }
 
-    const tokenData = await tokenResponse.json();
+    const tokenData = await tokenResponse.json() as XeroTokenResponse;
     console.log(`✅ Tokens received`);
 
     // Get tenant (organization) information
@@ -313,7 +322,7 @@ async function refreshAccessToken(tokens: OAuthTokens): Promise<OAuthTokens> {
     throw new Error(`Token refresh failed: ${errorText}`);
   }
 
-  const tokenData = await tokenResponse.json();
+  const tokenData = await tokenResponse.json() as XeroTokenResponse;
 
   const updatedTokens: OAuthTokens = {
     ...tokens,

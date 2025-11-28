@@ -1,0 +1,121 @@
+# Acme Dental Practice - Business Plan 2025
+
+## Business Overview
+Acme Dental Practice is a general dental clinic in suburban Sydney.
+Owner-operated by Dr. Sarah Mitchell with 2 part-time staff.
+- 1 dental hygienist (3 days/week)
+- 1 receptionist (4 days/week)
+
+Established: 2021
+Location: Parramatta, NSW
+Operating hours: Mon-Fri 8am-5pm
+
+## Financial Goals for 2025
+
+### Revenue Targets
+- Annual Revenue Target: $450,000
+- Monthly Revenue Target: $37,500
+- Quarterly Revenue Target: $112,500
+
+### Profit Goals
+- Target Profit Margin: 25% ($112,500 annual profit)
+- Monthly Profit Target: $9,375
+
+### Cost Structure (Monthly)
+- Rent & utilities: $4,500
+- Staff wages: $12,000
+- Supplies & consumables: $3,500
+- Insurance: $800
+- Marketing: $1,000
+- Other overheads: $2,700
+- Total Fixed Costs: ~$24,500/month
+
+## Key Performance Indicators (KPIs)
+
+### Patient Metrics
+- New patients per month: 15 (target)
+- Patient retention rate: 85% (target)
+- Active patient base: 800 (current), 1000 (target by Dec)
+
+### Revenue Metrics
+- Average treatment value: $350
+- Revenue per chair hour: $180
+- Chair utilization rate: 75% (target)
+
+### Operational Metrics
+- Appointment no-show rate: <10%
+- Same-day treatment acceptance: 60%
+
+## Hiring Plan
+
+### When to Hire a Dental Assistant
+We will hire a full-time dental assistant when ALL of these conditions are met:
+1. Monthly revenue exceeds $40,000 for 3 consecutive months
+2. Chair utilization consistently above 80%
+3. Waitlist for appointments exceeds 2 weeks
+
+### Budget for New Hire
+- Salary: $50,000/year
+- Superannuation: $5,500/year (11%)
+- Total cost: $55,000/year ($4,583/month)
+- Break-even requirement: Additional $5,000/month revenue to cover cost
+
+### Impact Assessment
+A dental assistant would:
+- Increase chair time efficiency by 20%
+- Allow Dr. Mitchell to see 2 more patients/day
+- Potential additional revenue: $8,000-10,000/month
+
+## Cash Flow Requirements
+
+### Minimum Operating Cash
+- Required buffer: $30,000 (covers ~5 weeks of expenses)
+- Current target: Maintain $35,000-50,000 in operating account
+
+### Reserve Funds
+- Equipment replacement fund: $5,000/quarter ($20,000/year)
+- Emergency fund: $25,000 (6 months of minimal operations)
+
+### Major Upcoming Expenses
+- New dental chair (Q3 2025): $15,000
+- Digital X-ray upgrade (Q4 2025): $12,000
+- Office renovation (2026): $40,000
+
+## Growth Strategy
+
+### Q1-Q2 2025: Consolidation
+- Focus on patient retention
+- Optimize scheduling efficiency
+- Build cash reserves
+
+### Q3 2025: Expansion Preparation
+- If revenue targets met: hire dental assistant
+- Extend to Saturday hours (if demand supports)
+- Upgrade digital X-ray
+
+### Q4 2025: Service Expansion
+- Add orthodontic services (Invisalign)
+- Partner with local specialists for referrals
+- Target: 20% revenue growth year-over-year
+
+## Risk Factors
+
+### Financial Risks
+- Economic downturn reducing discretionary dental spending
+- Rising supply costs (materials up 15% in 2024)
+- Staff turnover/sick leave
+
+### Mitigation Strategies
+- Maintain 3+ months cash buffer
+- Diversify services (cosmetic, orthodontics)
+- Competitive staff compensation
+
+## Success Metrics for 2025
+
+| Metric | Current | Target | Stretch |
+|--------|---------|--------|---------|
+| Annual Revenue | $380,000 | $450,000 | $500,000 |
+| Profit Margin | 20% | 25% | 30% |
+| Active Patients | 800 | 1,000 | 1,200 |
+| New Patients/Month | 12 | 15 | 20 |
+| Chair Utilization | 68% | 75% | 85% |
