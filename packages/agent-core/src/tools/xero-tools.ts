@@ -44,18 +44,36 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
 
         // Limit results
         const limited = invoices.slice(0, params.limit || 10);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-        // Simplify response for LLM
-        return limited.map((inv: any) => ({
-          invoiceNumber: inv.InvoiceNumber,
-          contact: inv.Contact?.Name,
-          date: inv.Date,
-          dueDate: inv.DueDate,
-          status: inv.Status,
-          total: inv.Total,
-          amountDue: inv.AmountDue,
-          currencyCode: inv.CurrencyCode,
-        }));
+        // Simplify response for LLM with overdue calculation
+        return limited.map((inv: any) => {
+          const dueDate = inv.DueDate ? new Date(inv.DueDate) : null;
+          let isOverdue = false;
+          let daysOverdue = 0;
+
+          if (dueDate && inv.Status === 'AUTHORISED') {
+            dueDate.setHours(0, 0, 0, 0);
+            isOverdue = dueDate < today;
+            if (isOverdue) {
+              daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+            }
+          }
+
+          return {
+            invoiceNumber: inv.InvoiceNumber,
+            contact: inv.Contact?.Name,
+            date: inv.Date,
+            dueDate: inv.DueDate,
+            isOverdue,
+            daysOverdue: isOverdue ? daysOverdue : 0,
+            status: inv.Status,
+            total: inv.Total,
+            amountDue: inv.AmountDue,
+            currencyCode: inv.CurrencyCode,
+          };
+        });
       },
     },
     {
