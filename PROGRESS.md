@@ -573,6 +573,23 @@ feature_3_2 (TTS)
 
 ## Progress Changelog
 
+### 2025-11-28 - User Authentication Implementation
+- **User Authentication COMPLETE**: Full auth system for 25 beta testers
+  - Added `users` and `invite_codes` tables to SQLite database
+  - Implemented auth service with bcrypt password hashing and JWT tokens
+  - Created signup endpoint with invite code validation
+  - Created login endpoint with email/password authentication
+  - Added `requireAuth` middleware to protect all API routes
+  - Updated chat, sessions, documents routes for per-user data isolation
+  - Updated Xero OAuth to link tokens to authenticated users
+  - Created Zustand auth store with persistence for frontend
+  - Added LoginPage and SignupPage with Arc Forge dark theme
+  - Added ProtectedRoute component for route protection
+  - Created admin CLI (`pnpm admin`) for managing invite codes
+- **Deployment**
+  - Committed and pushed to GitHub (24 files, 1969 lines added)
+  - Ready for VPS deployment
+
 ### 2025-11-28 - Demo Preparation & UX Enhancements
 - **task_1_4_2 COMPLETE**: Demo Test Cases & Validation
   - Created `docs/DEMO_TEST_CASES.md` with 7 demo scenarios

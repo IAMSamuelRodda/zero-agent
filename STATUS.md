@@ -126,7 +126,7 @@ Status: Pending validation at Thursday demo
 | Compute | Lambda x3 | Express server | ✅ Created `packages/server` |
 | Database | DynamoDB | SQLite | ✅ Already supported |
 | API Gateway | AWS API GW | Express routes | ✅ Implemented |
-| Auth | Cognito | Session/JWT | 🔵 Plan ready (`specs/PLAN-user-authentication.md`) |
+| Auth | Cognito | Session/JWT | ✅ Implemented (email + password + invite codes) |
 | OAuth | Lambda | Express routes | ✅ Implemented |
 | CDN | CloudFront | Caddy | ✅ Working |
 
@@ -394,10 +394,13 @@ Status: Pending validation at Thursday demo
   - Terminal-style input with `>` prefix
   - Updated header branding with "Pip by Arc Forge"
 
-**Security Planning** (2025-11-28):
-- 🔵 User authentication plan created (`specs/PLAN-user-authentication.md`)
-- Approach: Email + Password with invite codes for beta access
-- Enables 25 beta users with isolated accounts, Xero connections, documents
+**User Authentication COMPLETE** (2025-11-28):
+- ✅ User authentication implemented (`specs/PLAN-user-authentication.md`)
+- Email + Password with invite codes for beta access
+- Per-user data isolation (sessions, documents, Xero connections)
+- JWT tokens with bcrypt password hashing
+- Admin CLI for invite code management (`pnpm admin`)
+- 25 beta users can now sign up with invite codes
 
 ---
 
@@ -491,11 +494,11 @@ Technical debt:
 | Test with real business plan | HIGH | ⚪ Pending |
 | PWA polish (loading states, error handling) | MEDIUM | ⚪ Pending |
 
-### Immediate Priority: User Authentication
-- 🔵 **Plan ready**: `specs/PLAN-user-authentication.md`
+### ✅ User Authentication (Complete)
+- ✅ **Implemented**: `specs/PLAN-user-authentication.md`
 - Method: Email + Password with invite codes
-- Enables: 25 beta users with isolated accounts
-- Estimated: 2-3 days implementation
+- Features: Per-user sessions, documents, Xero connections
+- Admin CLI: `pnpm admin generate-codes 25`
 
 ### Future (Post-Milestone 2)
 - MCP Distribution Research
