@@ -43,6 +43,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Don't intercept auth routes - let server handle OAuth callbacks
+        navigateFallbackDenylist: [/^\/auth/, /^\/api/, /^\/health/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.execute-api\..*\.amazonaws\.com\/.*/i,
