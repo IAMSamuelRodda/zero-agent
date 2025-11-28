@@ -22,14 +22,14 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
     {
       name: "get_invoices",
       description:
-        "Get invoices from Xero. Can filter by status (DRAFT, AUTHORISED, PAID, VOIDED). Use this when user asks about invoices, bills, or outstanding payments.",
+        "Get invoices from Xero. IMPORTANT: For unpaid/outstanding invoices, use status 'AUTHORISED' (not SUBMITTED). Status meanings: DRAFT=not sent, AUTHORISED=sent but unpaid, PAID=fully paid, VOIDED=cancelled.",
       parameters: {
         type: "object",
         properties: {
           status: {
             type: "string",
-            enum: ["DRAFT", "SUBMITTED", "AUTHORISED", "PAID", "VOIDED"],
-            description: "Filter by invoice status",
+            enum: ["DRAFT", "AUTHORISED", "PAID", "VOIDED"],
+            description: "Filter by status. Use AUTHORISED for unpaid invoices.",
           },
           limit: {
             type: "number",
