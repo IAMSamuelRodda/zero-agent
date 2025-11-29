@@ -851,11 +851,16 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
     invalid_email: "Please enter a valid email address.",
     invalid_password: "Please enter your password.",
     invalid_credentials: "Invalid email or password. Please try again.",
+    invalid_invite: "Invalid or expired invite code.",
+    invite_used: "This invite code has already been used.",
+    email_exists: "This email is already registered. Please sign in.",
+    password_weak: "Password must be at least 8 characters.",
     server_error: "An error occurred. Please try again.",
   };
   const errorMessage = error ? errorMessages[error as string] || "An error occurred." : null;
+  const mode = req.query.mode === "signup" ? "signup" : "signin";
 
-  // Show login page
+  // Show login/signup page with tabs
   const loginHtml = `
 <!DOCTYPE html>
 <html lang="en">
@@ -887,10 +892,31 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
       margin-bottom: 0.5rem;
       font-size: 1.5rem;
     }
-    p {
+    .subtitle {
       color: #999;
       margin-bottom: 1.5rem;
       font-size: 0.9rem;
+    }
+    .tabs {
+      display: flex;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid #333;
+    }
+    .tab {
+      flex: 1;
+      padding: 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      color: #999;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover {
+      color: #ccc;
+    }
+    .tab.active {
+      color: #7eb88e;
+      border-bottom-color: #7eb88e;
     }
     .form-group {
       margin-bottom: 1rem;
@@ -933,7 +959,9 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
       color: #e57373;
       font-size: 0.85rem;
       margin-top: 0.5rem;
-      display: none;
+      padding: 0.5rem;
+      background: rgba(229, 115, 115, 0.1);
+      border-radius: 4px;
     }
     .logo {
       text-align: center;
@@ -942,28 +970,84 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
     .logo span {
       font-size: 2rem;
     }
+    .form-panel {
+      display: none;
+    }
+    .form-panel.active {
+      display: block;
+    }
+    .hint {
+      color: #666;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo"><span>🤖</span></div>
     <h1>Connect Pip to Claude</h1>
-    <p>Sign in with your Pip account to give Claude access to your Xero data.</p>
-    <form id="loginForm" method="POST" action="/oauth/authorize/submit">
-      <input type="hidden" name="redirect_uri" value="${redirect_uri || ""}">
-      <input type="hidden" name="state" value="${state || ""}">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required placeholder="you@example.com">
-      </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" required placeholder="Your password">
-      </div>
-      ${errorMessage ? `<div class="error" style="display: block;">${errorMessage}</div>` : '<div class="error" id="error"></div>'}
-      <button type="submit">Connect to Claude</button>
-    </form>
+    <p class="subtitle">Access your Xero data through Claude</p>
+
+    <div class="tabs">
+      <div class="tab ${mode === "signin" ? "active" : ""}" onclick="switchTab('signin')">Sign In</div>
+      <div class="tab ${mode === "signup" ? "active" : ""}" onclick="switchTab('signup')">Sign Up</div>
+    </div>
+
+    ${errorMessage ? `<div class="error">${errorMessage}</div>` : ""}
+
+    <!-- Sign In Form -->
+    <div id="signin-panel" class="form-panel ${mode === "signin" ? "active" : ""}">
+      <form method="POST" action="/oauth/authorize/submit">
+        <input type="hidden" name="redirect_uri" value="${redirect_uri || ""}">
+        <input type="hidden" name="state" value="${state || ""}">
+        <div class="form-group">
+          <label for="signin-email">Email</label>
+          <input type="email" id="signin-email" name="email" required placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="signin-password">Password</label>
+          <input type="password" id="signin-password" name="password" required placeholder="Your password">
+        </div>
+        <button type="submit">Sign In & Connect</button>
+      </form>
+    </div>
+
+    <!-- Sign Up Form -->
+    <div id="signup-panel" class="form-panel ${mode === "signup" ? "active" : ""}">
+      <form method="POST" action="/oauth/register/submit">
+        <input type="hidden" name="redirect_uri" value="${redirect_uri || ""}">
+        <input type="hidden" name="state" value="${state || ""}">
+        <div class="form-group">
+          <label for="signup-email">Email</label>
+          <input type="email" id="signup-email" name="email" required placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="signup-name">Name (optional)</label>
+          <input type="text" id="signup-name" name="name" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label for="signup-password">Password</label>
+          <input type="password" id="signup-password" name="password" required placeholder="Min 8 characters">
+        </div>
+        <div class="form-group">
+          <label for="signup-invite">Invite Code</label>
+          <input type="text" id="signup-invite" name="inviteCode" required placeholder="Enter your invite code">
+          <p class="hint">Pip is in private beta. You need an invite code to sign up.</p>
+        </div>
+        <button type="submit">Sign Up & Connect</button>
+      </form>
+    </div>
   </div>
+
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+      document.querySelector('.tab:' + (tab === 'signin' ? 'first-child' : 'last-child')).classList.add('active');
+      document.getElementById(tab + '-panel').classList.add('active');
+    }
+  </script>
 </body>
 </html>
   `;
@@ -1060,6 +1144,104 @@ app.post("/oauth/authorize/submit", express.urlencoded({ extended: true }), asyn
   } catch (error) {
     console.error("OAuth login error:", error);
     res.redirect(`/oauth/authorize?error=server_error&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
+  }
+});
+
+/**
+ * OAuth Registration Submit
+ * Handles new user signup with invite code validation
+ */
+app.post("/oauth/register/submit", express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+  const { email, password, name, inviteCode, redirect_uri, state } = req.body;
+
+  console.log("OAuth registration attempt:", { email, inviteCode, redirect_uri });
+
+  const redirectWithError = (error: string) => {
+    res.redirect(`/oauth/authorize?mode=signup&error=${error}&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
+  };
+
+  try {
+    const { getDb } = await import("./services/xero.js");
+    const bcrypt = await import("bcryptjs");
+    const db = await getDb();
+
+    // Validate email format
+    if (!email || !email.includes("@")) {
+      redirectWithError("invalid_email");
+      return;
+    }
+
+    // Validate password strength (min 8 characters)
+    if (!password || password.length < 8) {
+      redirectWithError("password_weak");
+      return;
+    }
+
+    // Validate invite code provided
+    if (!inviteCode || inviteCode.trim() === "") {
+      redirectWithError("invalid_invite");
+      return;
+    }
+
+    // Check invite code validity
+    const code = await db.getInviteCode(inviteCode.trim());
+    if (!code) {
+      console.log("Registration failed: invalid invite code:", inviteCode);
+      redirectWithError("invalid_invite");
+      return;
+    }
+
+    if (code.usedBy) {
+      console.log("Registration failed: invite code already used:", inviteCode);
+      redirectWithError("invite_used");
+      return;
+    }
+
+    if (code.expiresAt && code.expiresAt < Date.now()) {
+      console.log("Registration failed: invite code expired:", inviteCode);
+      redirectWithError("invalid_invite");
+      return;
+    }
+
+    // Check if email already registered
+    const existingUser = await db.getUserByEmail(email);
+    if (existingUser) {
+      console.log("Registration failed: email already exists:", email);
+      redirectWithError("email_exists");
+      return;
+    }
+
+    // Hash password and create user
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await db.createUser({
+      email,
+      passwordHash,
+      name: name || undefined,
+      isAdmin: false,
+    });
+
+    // Mark invite code as used (one-time use)
+    await db.useInviteCode(inviteCode.trim(), user.id);
+
+    console.log("New user registered via OAuth:", user.id, email);
+
+    // Now continue with OAuth flow - redirect to Xero OAuth
+    const flowId = crypto.randomUUID();
+
+    pendingOAuthFlows.set(flowId, {
+      userId: user.id,
+      redirectUri: redirect_uri,
+      state: state || "",
+      expiresAt: Date.now() + 30 * 60 * 1000,
+    });
+
+    console.log("New user needs Xero connection, starting Xero OAuth. Flow ID:", flowId);
+
+    // Redirect to Xero OAuth with flow_id
+    res.redirect(`/auth/xero?flow_id=${flowId}`);
+  } catch (error) {
+    console.error("OAuth registration error:", error);
+    redirectWithError("server_error");
   }
 });
 
