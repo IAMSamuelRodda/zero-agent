@@ -77,12 +77,22 @@ const PIP_SYSTEM_PROMPT = `You are Pip, a friendly AI bookkeeping assistant for 
 - search_contacts: Find a specific customer/supplier
 - get_bank_accounts: Get bank balances`;
 
-// Tool definitions (subset for MVP - full tools come from shared package)
-const tools: Tool[] = [
+// ===========================================
+// Lazy-Loading Tool Registry
+// Tools organized by category for context efficiency
+// ===========================================
+
+interface ToolDefinition extends Tool {
+  category: string;
+}
+
+// Tool registry with categories
+const toolRegistry: ToolDefinition[] = [
+  // INVOICES category
   {
+    category: "invoices",
     name: "get_invoices",
-    description:
-      "Get invoices from Xero. Use status 'AUTHORISED' for unpaid invoices, 'PAID' for paid ones.",
+    description: "Get invoices from Xero. Use status 'AUTHORISED' for unpaid, 'PAID' for paid.",
     inputSchema: {
       type: "object",
       properties: {
@@ -91,123 +101,154 @@ const tools: Tool[] = [
           enum: ["DRAFT", "AUTHORISED", "PAID", "VOIDED"],
           description: "Filter by status. AUTHORISED = unpaid, PAID = paid",
         },
-        limit: {
-          type: "number",
-          description: "Max invoices to return (default: 10)",
-        },
+        limit: { type: "number", description: "Max invoices to return (default: 10)" },
       },
     },
   },
   {
-    name: "get_profit_and_loss",
-    description: "Get profit & loss report for a date range",
-    inputSchema: {
-      type: "object",
-      properties: {
-        fromDate: {
-          type: "string",
-          description: "Start date (YYYY-MM-DD)",
-        },
-        toDate: {
-          type: "string",
-          description: "End date (YYYY-MM-DD)",
-        },
-      },
-    },
-  },
-  {
-    name: "get_balance_sheet",
-    description: "Get balance sheet as of a specific date",
-    inputSchema: {
-      type: "object",
-      properties: {
-        date: {
-          type: "string",
-          description: "Date (YYYY-MM-DD), defaults to today",
-        },
-      },
-    },
-  },
-  {
-    name: "get_bank_accounts",
-    description: "Get bank accounts and their current balances",
-    inputSchema: {
-      type: "object",
-      properties: {},
-    },
-  },
-  {
-    name: "get_bank_transactions",
-    description: "Get recent bank transactions",
-    inputSchema: {
-      type: "object",
-      properties: {
-        limit: {
-          type: "number",
-          description: "Max transactions to return (default: 10)",
-        },
-      },
-    },
-  },
-  {
-    name: "get_contacts",
-    description: "Get customers and suppliers",
-    inputSchema: {
-      type: "object",
-      properties: {
-        limit: {
-          type: "number",
-          description: "Max contacts to return (default: 10)",
-        },
-      },
-    },
-  },
-  {
-    name: "get_organisation",
-    description: "Get company details from Xero",
-    inputSchema: {
-      type: "object",
-      properties: {},
-    },
-  },
-  {
+    category: "invoices",
     name: "get_aged_receivables",
     description: "Get aged receivables - who owes you money and how overdue",
     inputSchema: {
       type: "object",
       properties: {
-        date: {
-          type: "string",
-          description: "Date for aging (YYYY-MM-DD), defaults to today",
-        },
+        date: { type: "string", description: "Date for aging (YYYY-MM-DD), defaults to today" },
       },
     },
   },
   {
+    category: "invoices",
     name: "get_aged_payables",
     description: "Get aged payables - who you owe money to and how overdue",
     inputSchema: {
       type: "object",
       properties: {
-        date: {
-          type: "string",
-          description: "Date for aging (YYYY-MM-DD), defaults to today",
-        },
+        date: { type: "string", description: "Date for aging (YYYY-MM-DD), defaults to today" },
+      },
+    },
+  },
+
+  // REPORTS category
+  {
+    category: "reports",
+    name: "get_profit_and_loss",
+    description: "Get profit & loss report for a date range",
+    inputSchema: {
+      type: "object",
+      properties: {
+        fromDate: { type: "string", description: "Start date (YYYY-MM-DD)" },
+        toDate: { type: "string", description: "End date (YYYY-MM-DD)" },
       },
     },
   },
   {
+    category: "reports",
+    name: "get_balance_sheet",
+    description: "Get balance sheet as of a specific date",
+    inputSchema: {
+      type: "object",
+      properties: {
+        date: { type: "string", description: "Date (YYYY-MM-DD), defaults to today" },
+      },
+    },
+  },
+
+  // BANKING category
+  {
+    category: "banking",
+    name: "get_bank_accounts",
+    description: "Get bank accounts and their current balances",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
+    category: "banking",
+    name: "get_bank_transactions",
+    description: "Get recent bank transactions",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "number", description: "Max transactions to return (default: 10)" },
+      },
+    },
+  },
+
+  // CONTACTS category
+  {
+    category: "contacts",
+    name: "get_contacts",
+    description: "Get customers and suppliers",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "number", description: "Max contacts to return (default: 10)" },
+      },
+    },
+  },
+  {
+    category: "contacts",
     name: "search_contacts",
     description: "Search for a customer or supplier by name",
     inputSchema: {
       type: "object",
       properties: {
-        searchTerm: {
-          type: "string",
-          description: "Name to search for",
-        },
+        searchTerm: { type: "string", description: "Name to search for" },
       },
       required: ["searchTerm"],
+    },
+  },
+
+  // ORGANISATION category
+  {
+    category: "organisation",
+    name: "get_organisation",
+    description: "Get company details from Xero",
+    inputSchema: { type: "object", properties: {} },
+  },
+];
+
+// Get unique categories with tool counts
+const categories = [...new Set(toolRegistry.map((t) => t.category))];
+const categoryOverview = categories
+  .map((cat) => {
+    const tools = toolRegistry.filter((t) => t.category === cat);
+    return `${cat} (${tools.length} tools)`;
+  })
+  .join(", ");
+
+// Meta-tools for lazy loading (only these are exposed initially)
+const metaTools: Tool[] = [
+  {
+    name: "get_tools_in_category",
+    description: `Get available Xero tools by category. Categories: ${categoryOverview}. Call this first to discover what tools are available, then use execute_tool to run them.`,
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          enum: categories,
+          description: "The category of tools to list",
+        },
+      },
+      required: ["category"],
+    },
+  },
+  {
+    name: "execute_tool",
+    description:
+      "Execute a Xero tool by name. First use get_tools_in_category to discover available tools and their parameters.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tool_name: {
+          type: "string",
+          description: "The name of the tool to execute (e.g., 'get_invoices')",
+        },
+        arguments: {
+          type: "object",
+          description: "Arguments to pass to the tool",
+        },
+      },
+      required: ["tool_name"],
     },
   },
 ];
@@ -251,9 +292,9 @@ function createMcpServer(userId?: string): Server {
     }
   );
 
-  // List available tools
+  // List available tools (only meta-tools for lazy loading)
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return { tools };
+    return { tools: metaTools };
   });
 
   // List available prompts
@@ -282,77 +323,163 @@ function createMcpServer(userId?: string): Server {
     throw new Error(`Unknown prompt: ${name}`);
   });
 
-  // Handle tool calls with real Xero integration
+  // Handle tool calls with lazy-loading support
   server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
     const { name, arguments: args } = request.params;
 
-    // Check if user is authenticated
-    if (!userId) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `To use Pip, please authenticate first. Add your auth token to the SSE connection URL: /sse?token=YOUR_TOKEN`,
-          },
-        ],
-      };
-    }
+    // Meta-tool: get_tools_in_category (doesn't require auth)
+    if (name === "get_tools_in_category") {
+      const category = (args as { category: string }).category;
+      const categoryTools = toolRegistry.filter((t) => t.category === category);
 
-    try {
-      // Route to appropriate handler
-      switch (name) {
-        case "get_invoices":
-          return await xeroTools.getInvoices(userId, args as { status?: string; limit?: number });
-
-        case "get_profit_and_loss":
-          return await xeroTools.getProfitAndLoss(userId, args as { fromDate?: string; toDate?: string });
-
-        case "get_balance_sheet":
-          return await xeroTools.getBalanceSheet(userId, args as { date?: string });
-
-        case "get_bank_accounts":
-          return await xeroTools.getBankAccounts(userId);
-
-        case "get_bank_transactions":
-          return await xeroTools.getBankTransactions(userId, args as { limit?: number });
-
-        case "get_contacts":
-          return await xeroTools.getContacts(userId, args as { limit?: number });
-
-        case "get_organisation":
-          return await xeroTools.getOrganisation(userId);
-
-        case "get_aged_receivables":
-          return await xeroTools.getAgedReceivables(userId, args as { date?: string });
-
-        case "get_aged_payables":
-          return await xeroTools.getAgedPayables(userId, args as { date?: string });
-
-        case "search_contacts":
-          return await xeroTools.searchContacts(userId, args as { searchTerm: string });
-
-        default:
-          return {
-            content: [{ type: "text", text: `Unknown tool: ${name}` }],
-            isError: true,
-          };
+      if (categoryTools.length === 0) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Unknown category: ${category}. Available categories: ${categories.join(", ")}`,
+            },
+          ],
+          isError: true,
+        };
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error(`Error executing ${name}:`, error);
+
+      // Return tool definitions for this category
+      const toolList = categoryTools.map((t) => ({
+        name: t.name,
+        description: t.description,
+        parameters: t.inputSchema,
+      }));
+
       return {
         content: [
           {
             type: "text",
-            text: `Error executing ${name}: ${errorMessage}`,
+            text: JSON.stringify(
+              {
+                category,
+                tools: toolList,
+                usage: "Use execute_tool with tool_name and arguments to run these tools",
+              },
+              null,
+              2
+            ),
           },
         ],
-        isError: true,
       };
     }
+
+    // Meta-tool: execute_tool
+    if (name === "execute_tool") {
+      const { tool_name, arguments: toolArgs } = args as {
+        tool_name: string;
+        arguments?: Record<string, unknown>;
+      };
+
+      // Verify tool exists in registry
+      const tool = toolRegistry.find((t) => t.name === tool_name);
+      if (!tool) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Unknown tool: ${tool_name}. Use get_tools_in_category first to discover available tools.`,
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      // Check if user is authenticated for actual Xero tools
+      if (!userId) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `To use Xero tools, please authenticate first. Add your auth token to the SSE connection URL: /sse?token=YOUR_TOKEN`,
+            },
+          ],
+        };
+      }
+
+      // Execute the actual tool
+      return await executeXeroTool(userId, tool_name, toolArgs || {});
+    }
+
+    // Unknown meta-tool
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Unknown tool: ${name}. Available tools: get_tools_in_category, execute_tool`,
+        },
+      ],
+      isError: true,
+    };
   });
 
   return server;
+}
+
+/**
+ * Execute a Xero tool by name
+ */
+async function executeXeroTool(
+  userId: string,
+  toolName: string,
+  args: Record<string, unknown>
+): Promise<CallToolResult> {
+  try {
+    switch (toolName) {
+      case "get_invoices":
+        return await xeroTools.getInvoices(userId, args as { status?: string; limit?: number });
+
+      case "get_profit_and_loss":
+        return await xeroTools.getProfitAndLoss(userId, args as { fromDate?: string; toDate?: string });
+
+      case "get_balance_sheet":
+        return await xeroTools.getBalanceSheet(userId, args as { date?: string });
+
+      case "get_bank_accounts":
+        return await xeroTools.getBankAccounts(userId);
+
+      case "get_bank_transactions":
+        return await xeroTools.getBankTransactions(userId, args as { limit?: number });
+
+      case "get_contacts":
+        return await xeroTools.getContacts(userId, args as { limit?: number });
+
+      case "get_organisation":
+        return await xeroTools.getOrganisation(userId);
+
+      case "get_aged_receivables":
+        return await xeroTools.getAgedReceivables(userId, args as { date?: string });
+
+      case "get_aged_payables":
+        return await xeroTools.getAgedPayables(userId, args as { date?: string });
+
+      case "search_contacts":
+        return await xeroTools.searchContacts(userId, args as { searchTerm: string });
+
+      default:
+        return {
+          content: [{ type: "text", text: `Tool not implemented: ${toolName}` }],
+          isError: true,
+        };
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error(`Error executing ${toolName}:`, error);
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Error executing ${toolName}: ${errorMessage}`,
+        },
+      ],
+      isError: true,
+    };
+  }
 }
 
 // Create Express app
