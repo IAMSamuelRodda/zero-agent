@@ -49,7 +49,7 @@
 
 ### Epic 1.1: Claude.ai Integration
 
-**Status**: 🔵 In Progress
+**Status**: ✅ Complete (validated working)
 **Priority**: HIGH (do this first)
 
 #### feature_1_1_1: MCP Remote Server
@@ -75,14 +75,27 @@
 | Bearer token in SSE | ✅ | Authorization header support |
 
 #### feature_1_1_3: Validation & Testing
-**Status**: 🔵 In Progress
+**Status**: ✅ Complete (basic) / 🔵 Comprehensive testing pending
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Test with Claude.ai | 🔵 Pending | Need Pro account |
-| Verify all 10 tools work | ⚪ Pending | After connection works |
-| Test Xero data retrieval | ⚪ Pending | Real invoices, P&L, etc. |
-| Document issues/fixes | ⚪ Pending | If any arise |
+| Test with Claude.ai | ✅ Done | OAuth flow working |
+| Verify all 10 tools work | ✅ Done | Tools audited and fixed |
+| Test Xero data retrieval | ✅ Done | $1,500 overdue invoice found |
+| Document issues/fixes | ✅ Done | See ISSUES.md |
+| **Comprehensive tool testing** | ⚪ Future | Test all tools with edge cases |
+
+**Comprehensive Testing Checklist** (deferred):
+- [ ] `get_invoices`: Test all status filters (DRAFT, AUTHORISED, PAID, VOIDED)
+- [ ] `get_aged_receivables`: Test with 0, 1, many invoices
+- [ ] `get_aged_payables`: Test with 0, 1, many bills
+- [ ] `get_profit_and_loss`: Test date ranges, empty periods
+- [ ] `get_balance_sheet`: Test different dates
+- [ ] `get_bank_accounts`: Test with 0, 1, many accounts
+- [ ] `get_bank_transactions`: Test limits, empty results
+- [ ] `get_contacts`: Test limits, pagination
+- [ ] `search_contacts`: Test partial matches, no matches, special chars
+- [ ] `get_organisation`: Basic validation
 
 #### feature_1_1_4: User Documentation
 **Status**: ⚪ Not Started
@@ -97,15 +110,27 @@
 
 ### Epic 1.2: ChatGPT Integration
 
-**Status**: ⚪ Not Started (After Claude.ai)
-**Priority**: HIGH (but do after Claude works)
+**Status**: 🔵 In Progress (Claude.ai validated, now ChatGPT)
+**Priority**: HIGH (current focus)
+
+**Subscription Requirements** (researched 2025-11-29):
+- **Minimum**: ChatGPT Plus ($20/month) - has Developer Mode with MCP support
+- ChatGPT Pro ($200/month) - also has MCP support
+- ChatGPT Team/Enterprise - has MCP with admin controls
+
+**How it works**: Users enable Developer Mode (Settings → Connectors → Advanced → Developer mode), then add our MCP server URL as a custom connector.
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Research Apps SDK requirements | ✅ | Same MCP standard |
-| Adapt server if needed | ⚪ Pending | After Claude validation |
-| Test in developer mode | ⚪ Pending | |
+| Research subscription requirements | ✅ | Plus ($20/mo) minimum |
+| Research MCP in ChatGPT | ✅ | Developer Mode required |
+| Test with ChatGPT Plus | ⚪ Pending | Need subscription |
+| Adapt server if needed | ⚪ Pending | May need tweaks |
 | Document ChatGPT setup | ⚪ Pending | |
+
+**References**:
+- [OpenAI MCP Docs](https://platform.openai.com/docs/mcp)
+- [ChatGPT MCP Support Guide](https://apidog.com/blog/chatgpt-mcp-support/)
 
 ---
 
@@ -151,6 +176,20 @@ The Thursday demo with dental practice owner has been completed. Demo materials 
 ---
 
 ## Progress Changelog
+
+### 2025-11-29 - Claude.ai Validated, ChatGPT Next
+
+**Achievements**:
+- Claude.ai MCP integration fully validated and working
+- Full Xero tools audit completed (10 tools fixed/hardened)
+- $1,500 overdue invoice successfully retrieved via Claude.ai
+
+**Next Priority**: ChatGPT integration
+- Minimum subscription: ChatGPT Plus ($20/month)
+- Requires Developer Mode enabled
+- Same MCP server should work (may need minor tweaks)
+
+**Deferred**: Comprehensive tool testing checklist added to feature_1_1_3
 
 ### 2025-11-29 - Documentation Cleanup
 
