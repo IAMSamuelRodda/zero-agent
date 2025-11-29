@@ -769,6 +769,37 @@ On Demand:
 
 **Context Reduction**: 85% (2000 → 300 tokens)
 
+### MCP Authentication Flow
+
+Two authentication methods supported:
+
+**Method 1: Token URL (Recommended)**
+```
+1. User visits /login
+2. User enters email
+3. Server generates JWT (30-day expiry)
+4. Server shows URL: /sse?token=<JWT>
+5. User pastes URL into Claude.ai custom integration
+6. Claude.ai connects to SSE endpoint with token
+```
+
+**Method 2: OAuth 2.0 (For Supported Clients)**
+```
+1. Client redirects to /oauth/authorize
+2. User authenticates via login form
+3. Server generates authorization code
+4. Client exchanges code for access token at /oauth/token
+5. Client connects to SSE with Bearer token in Authorization header
+```
+
+**Endpoints**:
+- `GET /login` - Token URL generation page
+- `POST /login` - Generate JWT and show URL
+- `GET /oauth/authorize` - OAuth authorization page
+- `POST /oauth/authorize/submit` - Process OAuth login
+- `POST /oauth/token` - Exchange code for access token
+- `GET /sse` - MCP SSE endpoint (accepts ?token= or Authorization header)
+
 ### Deployment
 
 - **URL**: https://mcp.pip.arcforge.au

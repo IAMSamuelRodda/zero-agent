@@ -4,7 +4,7 @@
 > **Lifecycle**: Living (update when issues are discovered, resolved, or status changes)
 > **Alternative to**: GitHub Issues (streamlined approach for solo/small team development)
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-11-29
 
 ---
 
@@ -33,7 +33,37 @@
 
 ### Bugs
 
-None currently.
+#### issue_bug_001: [P0 SECURITY] Token URL Allows User Impersonation
+- **Status**: 🟢 Resolved
+- **Priority**: P0 (CRITICAL)
+- **Component**: `packages/mcp-remote-server` (/login endpoint)
+- **Description**: The /login page generated JWT tokens for ANY email without verification.
+- **Resolution** (2025-11-29):
+  - [x] Removed insecure /login endpoint entirely
+  - [x] OAuth 2.0 flow now verifies password against database (bcrypt)
+  - [x] Added OAuth discovery endpoint (/.well-known/oauth-authorization-server)
+  - [x] User lookup via getUserByEmail() before allowing auth
+- **Notes**: Deploy required to apply fix
+
+#### issue_bug_002: Claude.ai OAuth Integration Not Working
+- **Status**: 🔴 Open
+- **Priority**: P1
+- **Component**: `packages/mcp-remote-server` (OAuth flow)
+- **Description**: Claude.ai custom connector with OAuth credentials doesn't connect properly
+- **Current State**:
+  - OAuth 2.0 endpoints exist (/oauth/authorize, /oauth/token)
+  - Claude.ai has OAuth Client ID/Secret fields in "Advanced settings"
+  - Missing: OAuth discovery endpoint (/.well-known/oauth-authorization-server)
+- **Configuration to Test**:
+  - URL: `https://mcp.pip.arcforge.au/sse`
+  - Client ID: `pip-mcp-client`
+  - Client Secret: `pip-mcp-secret-change-in-production`
+- **Acceptance Criteria**:
+  - [ ] Add OAuth discovery endpoint
+  - [ ] Test OAuth flow end-to-end with Claude.ai
+  - [ ] User clicks Connect → redirects to login → authenticates → connects
+  - [ ] Update /login page or remove it entirely
+- **Notes**: OAuth 2.0 code exists but may need discovery metadata for Claude.ai to find endpoints
 
 ### Improvements
 
@@ -184,6 +214,22 @@ Research/investigation tasks that must complete before dependent implementation 
 ## Risk Registry
 
 Risks identified during blueprint complexity assessment.
+
+### risk_000: Xero 25-User Limit for Unapproved Apps
+- **Severity**: High
+- **Probability**: Certain (hard limit)
+- **Impact**: Cannot onboard more than 25 users until Xero app approval
+- **Constraint**: Xero requires app approval for >25 connected organizations
+- **Mitigation**:
+  - Track connected Xero orgs in database
+  - Enforce limit in code (reject new Xero connections after 25)
+  - Apply for Xero app approval before hitting limit
+- **Acceptance Criteria**:
+  - [ ] Add user count check before Xero OAuth
+  - [ ] Display "beta full" message when limit reached
+  - [ ] Track connected org count in admin dashboard
+- **Timeline**: Must implement before public beta launch
+- **Reference**: https://developer.xero.com/documentation/guides/oauth2/app-partnership/
 
 ### risk_001: VPS Memory Constraint
 - **Severity**: High

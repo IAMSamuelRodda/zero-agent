@@ -1,131 +1,257 @@
-# Contributing to {{PROJECT_NAME}}
+# Pip - Contributing Guide
 
-> **Purpose**: Workflow guide and progress tracking
+> **Purpose**: Workflow guide for documentation updates and progress tracking
 > **Lifecycle**: Stable (update when processes change)
 
-> **Technical setup**: See `DEVELOPMENT.md` for git workflow, pre-commit checklist, CI/CD
+**Last Updated**: 2025-11-29
 
-## Quick Start
+---
 
-```bash
-[Setup command]
+## Documentation System
+
+Pip uses a **markdown-based tracking system** instead of GitHub Issues. This keeps all context in the codebase and works well with AI-assisted development.
+
+### Core Documents
+
+| Document | Purpose | Update Frequency |
+|----------|---------|------------------|
+| `STATUS.md` | Current state, active work, 2-week rolling window | Daily/Weekly |
+| `PROGRESS.md` | Detailed task tracking (epics, features, tasks) | On task completion |
+| `ISSUES.md` | Bugs, improvements, technical debt, risks | When issues arise/resolve |
+| `ARCHITECTURE.md` | System design, database schema, ADRs | When architecture changes |
+| `CHANGELOG.md` | Release history with semantic versioning (append-only) | On version releases |
+| `CLAUDE.md` | AI agent navigation hub (minimal, ~100 lines) | Rarely |
+
+### Document Workflow
+
+```
+Starting Work:
+  1. Check STATUS.md for current state and priorities
+  2. Check PROGRESS.md for your task's status
+  3. Update task to "in_progress" in PROGRESS.md
+
+During Work:
+  - Log blockers/issues in ISSUES.md
+  - Update STATUS.md if priorities shift
+
+Completing Work:
+  1. Update PROGRESS.md - mark task "complete"
+  2. Update STATUS.md - move item to "Recent Achievements"
+  3. If unresolved issues remain → log in ISSUES.md
+  4. If architecture changed → update ARCHITECTURE.md
 ```
 
-See [`DEVELOPMENT.md`](./DEVELOPMENT.md) for complete environment setup.
+---
+
+## When to Update Each Document
+
+### STATUS.md
+Update when:
+- Starting a new focus area
+- Completing significant work
+- Deployment status changes
+- Priorities shift
+
+**Structure**:
+- Current Focus (what's being worked on NOW)
+- Quick Overview (health of each component)
+- Deployment Status (what's live)
+- Known Issues (summary, details in ISSUES.md)
+- Recent Achievements (last 2 weeks)
+- Next Steps (prioritized)
+
+### PROGRESS.md
+Update when:
+- Starting a task (mark `in_progress`)
+- Completing a task (mark `complete`)
+- Adding new tasks discovered during work
+- Blocking issues arise
+
+**Structure**:
+- Milestones → Epics → Features → Tasks
+- Each task has: ID, description, complexity, status
+- Progress changelog at bottom
+
+### ISSUES.md
+Update when:
+- Bug discovered
+- Improvement identified
+- Technical debt noted
+- Risk identified
+- Spike research needed
+- Issue resolved
+
+**Structure**:
+- Active Issues (bugs, improvements)
+- Flagged Items (needs decomposition)
+- Spike Tasks (research needed)
+- Technical Debt
+- Risk Registry
+- Resolved Issues (last 2 weeks)
+
+### ARCHITECTURE.md
+Update when:
+- New component added
+- Database schema changes
+- New ADR (Architecture Decision Record)
+- Deployment architecture changes
+- Technology stack changes
+
+**Structure**:
+- System Overview (diagrams)
+- Technology Stack
+- Database Schema
+- Authentication Flow
+- ADRs (numbered, dated)
+- Deployment Architecture
+- Recent Architecture Changes
+
+---
+
+## Git Workflow
+
+### Branch Strategy
+
+```
+feature/fix/sync branches
+         ↓  (PR only)
+      dev branch → staging
+         ↓  (PR only - main ONLY accepts PRs from dev)
+     main branch → production
+```
+
+### Starting Work
+
+```bash
+# Always branch from dev (NOT main)
+git checkout dev
+git pull origin dev
+git checkout -b feature/[feature-name]  # or fix/, sync/
+
+# Update PROGRESS.md with task status
+```
+
+### Completing Work
+
+```bash
+# Commit with descriptive message
+git commit -m "[type]: [description]
+
+Closes #[issue-number] (if applicable)"
+
+# Push and create PR targeting dev branch
+git push -u origin feature/[feature-name]
+gh pr create --base dev --head feature/[feature-name]
+
+# Update PROGRESS.md and STATUS.md
+```
+
+### Releasing to Production
+
+```bash
+# After staging testing, create dev → main PR
+gh pr create --base main --head dev --title "Release v[version]"
+
+# This is the ONLY way to get code into main
+```
+
+---
+
+## docs/ Folder Structure
+
+The `docs/` folder contains supporting documentation organized by purpose:
+
+```
+docs/
+├── research-notes/     # Spike research, technical investigations
+│   ├── SPIKE-*.md      # Investigation spikes (time-boxed research)
+│   └── PATTERN-*.md    # Reusable patterns discovered
+├── samples/            # Sample data for testing/demos
+├── archive/            # Old documents (preserved for reference)
+└── *.md                # Active documentation
+    ├── ADR-*.md        # Architecture Decision Records (detailed)
+    └── [topic].md      # Topic-specific deep dives
+```
+
+**What belongs in docs/**:
+- Spike research notes (SPIKE-*.md)
+- Detailed ADRs that don't fit in ARCHITECTURE.md
+- Implementation guides
+- Integration documentation
+- Sample data for testing
+
+**What does NOT belong in docs/**:
+- Current status (use STATUS.md)
+- Task tracking (use PROGRESS.md)
+- Issue tracking (use ISSUES.md)
+- Architecture overview (use ARCHITECTURE.md)
 
 ---
 
 ## Definition of Done
 
 ### Feature Development
-- [ ] Feature implemented and tested
-- [ ] Tests written and passing
-- [ ] Documentation updated
-- [ ] PR reviewed and merged
+- [ ] Feature implemented
+- [ ] Tested (manual or automated)
+- [ ] PROGRESS.md updated (task complete)
+- [ ] STATUS.md updated (if significant)
+- [ ] ARCHITECTURE.md updated (if design changed)
+- [ ] PR merged to dev
 
 ### Bug Fixes
-- [ ] Root cause documented
-- [ ] Test written that reproduces bug
+- [ ] Root cause documented in ISSUES.md
 - [ ] Fix implemented
-- [ ] Issue updated with notes
+- [ ] ISSUES.md updated (moved to resolved)
+- [ ] PR merged to dev
+
+### Spike/Research
+- [ ] Research documented in `docs/research-notes/SPIKE-*.md`
+- [ ] Decision recorded (in spike doc or ARCHITECTURE.md ADR)
+- [ ] PROGRESS.md updated (spike complete)
+- [ ] Related tasks updated with findings
 
 ---
 
-## Progress Tracking
+## Quick Reference
 
-**Tool**: [GitHub Issues | Jira | Linear | Other]
-
-**Hierarchy**: [Optional - describe issue structure if using hierarchical tracking]
-
-**Commands**:
 ```bash
-# View current work
-[command]
+# Development
+pnpm install
+pnpm dev
 
-# Mark in progress
-[command]
+# Testing
+pnpm test
 
-# Mark complete
-[command]
+# VPS Deployment
+ssh user@vps
+cd /opt/pip
+git pull
+docker compose build
+docker compose up -d
+
+# Check health
+curl https://app.pip.arcforge.au/health
+curl https://mcp.pip.arcforge.au/health
 ```
-
----
-
-## Workflow
-
-### Starting Work
-```bash
-# Always branch from dev (NOT main)
-git checkout dev
-git pull origin dev
-git checkout -b feature/[feature-name]  # or fix/, sync/, etc.
-
-# Update issue status
-[command]
-```
-
-### Completing Work
-```bash
-# Commit with issue reference
-git commit -m "[type]: [description]
-
-Closes #[issue-number]"
-
-# Push and create PR targeting dev branch
-git push -u origin feature/[feature-name]
-gh pr create --base dev --head feature/[feature-name]
-
-# ⚠️ IMPORTANT: PR must target 'dev' branch, NOT 'main'
-# CI will reject PRs to main from feature branches
-```
-
-### Releasing to Production
-```bash
-# After staging testing is complete, create dev → main PR
-gh pr create --base main --head dev --title "Release v[version]"
-
-# ✅ This is the ONLY way to get code into main
-# PRs from any other branch will be rejected by CI
-```
-
-### Marking Blocked
-```bash
-# Mark blocked with reason
-[command]
-```
-
----
-
-## Git Workflow
-
-**Branching Strategy**: Three-Tier with Aggressive Branch Protection
-
-```
-feature/fix/sync branches
-         ↓  (PR only)
-      dev branch → staging environment
-         ↓  (PR only - main ONLY accepts PRs from dev)
-     main branch → production environment
-```
-
-**Critical Rules** (enforced by CI/CD):
-- ⛔ **main branch**: ONLY accepts PRs from `dev` branch (all other PRs rejected)
-- ⛔ **dev branch**: ONLY accepts PRs from feature/fix/sync branches (no direct commits)
-- ⚠️ **No direct commits** to dev or main allowed
-
-**Why this matters**: These rules prevent accidental production deployments and ensure all code goes through staging testing first.
-
-See [`DEVELOPMENT.md`](./DEVELOPMENT.md) for complete git workflow, branch protection setup, and CI/CD details.
 
 ---
 
 ## Best Practices
 
-1. **Check current state** before starting
-2. **Update status** when you begin work
-3. **Comment on progress** regularly
-4. **Link commits to issues** (use `Closes #N` or `Relates to #N`)
+1. **Check current state** before starting work (STATUS.md)
+2. **Update progress** immediately when completing tasks
+3. **Log issues** that you don't solve (ISSUES.md)
+4. **Document decisions** in ARCHITECTURE.md ADRs
+5. **Keep STATUS.md focused** - archive items older than 2 weeks
+6. **Link commits to tasks** - reference task IDs in commit messages
 
 ---
 
-**Last Updated**: {{DATE}}
+## References
+
+- `CLAUDE.md` - Quick navigation for AI agents
+- `STATUS.md` - Current state (2-week window)
+- `PROGRESS.md` - Detailed task tracking
+- `ISSUES.md` - Bugs, improvements, risks
+- `ARCHITECTURE.md` - System design and ADRs
+- `CHANGELOG.md` - Release history (semantic versioning)

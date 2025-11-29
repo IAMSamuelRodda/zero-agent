@@ -593,254 +593,211 @@ app.post("/messages", async (req: Request, res: Response) => {
   }
 });
 
-// OAuth callback for Xero (placeholder)
+// ===========================================
+// Pending OAuth Flows (for unified Xero + MCP OAuth)
+// ===========================================
+
+// Store pending MCP OAuth flows while user completes Xero OAuth
+const pendingOAuthFlows = new Map<string, {
+  userId: string;
+  redirectUri: string;
+  state: string;
+  expiresAt: number;
+}>();
+
+// ===========================================
+// Xero OAuth Flow (integrated with MCP OAuth)
+// ===========================================
+
+/**
+ * Start Xero OAuth flow
+ * Can be called directly or as part of MCP OAuth flow
+ */
 app.get("/auth/xero", (req: Request, res: Response) => {
-  // TODO: Implement Xero OAuth flow
-  res.redirect(
-    `https://login.xero.com/identity/connect/authorize?` +
-      `client_id=${process.env.XERO_CLIENT_ID}&` +
-      `redirect_uri=${encodeURIComponent(process.env.BASE_URL + "/auth/xero/callback")}&` +
-      `response_type=code&` +
-      `scope=offline_access openid profile email accounting.transactions accounting.reports.read accounting.contacts.read accounting.settings.read`
-  );
+  const { flow_id } = req.query;
+  const baseUrl = process.env.BASE_URL || "https://mcp.pip.arcforge.au";
+
+  // Build Xero OAuth URL
+  const xeroAuthUrl = new URL("https://login.xero.com/identity/connect/authorize");
+  xeroAuthUrl.searchParams.set("client_id", process.env.XERO_CLIENT_ID || "");
+  xeroAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/auth/xero/callback`);
+  xeroAuthUrl.searchParams.set("response_type", "code");
+  xeroAuthUrl.searchParams.set("scope", "offline_access openid profile email accounting.transactions accounting.reports.read accounting.contacts.read accounting.settings.read");
+
+  // Pass flow_id through Xero OAuth via state parameter
+  if (flow_id) {
+    xeroAuthUrl.searchParams.set("state", flow_id as string);
+  }
+
+  console.log("Starting Xero OAuth, flow_id:", flow_id);
+  res.redirect(xeroAuthUrl.toString());
 });
 
+/**
+ * Xero OAuth callback
+ * Exchanges code for tokens and completes any pending MCP OAuth flow
+ */
 app.get("/auth/xero/callback", async (req: Request, res: Response) => {
-  // TODO: Handle OAuth callback and store tokens
-  res.send("Xero connected successfully! You can close this window.");
-});
+  const { code, state: flowId, error } = req.query;
 
-// ===========================================
-// Simple Token Login (for Claude.ai Custom Connector)
-// ===========================================
+  console.log("Xero OAuth callback:", { code: code ? "present" : "missing", flowId, error });
 
-/**
- * Login page - generates a token URL for Claude.ai
- * Since Claude.ai custom connectors don't support OAuth redirects,
- * users login here and get a URL with their token to paste into Claude.ai
- */
-app.get("/login", (req: Request, res: Response) => {
-  const error = req.query.error as string | undefined;
-  const tokenUrl = req.query.token_url as string | undefined;
-
-  const loginHtml = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connect Pip to Claude</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #0a0e14;
-      color: #e6e6e6;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-    .container {
-      background: #1a1f29;
-      padding: 2rem;
-      border-radius: 12px;
-      max-width: 500px;
-      width: 100%;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    h1 {
-      color: #7eb88e;
-      margin-bottom: 0.5rem;
-      font-size: 1.5rem;
-    }
-    p {
-      color: #999;
-      margin-bottom: 1.5rem;
-      font-size: 0.9rem;
-    }
-    .form-group {
-      margin-bottom: 1rem;
-    }
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: #ccc;
-      font-size: 0.85rem;
-    }
-    input {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #333;
-      border-radius: 6px;
-      background: #0f1419;
-      color: #e6e6e6;
-      font-size: 1rem;
-    }
-    input:focus {
-      outline: none;
-      border-color: #7eb88e;
-    }
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      background: #7eb88e;
-      color: #0a0e14;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-    button:hover {
-      background: #6aa87e;
-    }
-    .error {
-      color: #e57373;
-      font-size: 0.85rem;
-      margin-bottom: 1rem;
-      padding: 0.75rem;
-      background: rgba(229, 115, 115, 0.1);
-      border-radius: 6px;
-    }
-    .success {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: rgba(126, 184, 142, 0.1);
-      border: 1px solid #7eb88e;
-      border-radius: 6px;
-    }
-    .success h3 {
-      color: #7eb88e;
-      margin-bottom: 0.5rem;
-      font-size: 1rem;
-    }
-    .token-url {
-      background: #0f1419;
-      padding: 0.75rem;
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 0.8rem;
-      word-break: break-all;
-      margin: 0.5rem 0;
-      border: 1px solid #333;
-    }
-    .copy-btn {
-      margin-top: 0.5rem;
-      background: #333;
-      color: #e6e6e6;
-    }
-    .copy-btn:hover {
-      background: #444;
-    }
-    .instructions {
-      color: #999;
-      font-size: 0.8rem;
-      margin-top: 0.75rem;
-    }
-    .instructions ol {
-      margin-left: 1.25rem;
-      margin-top: 0.5rem;
-    }
-    .instructions li {
-      margin-bottom: 0.25rem;
-    }
-    .logo {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .logo span {
-      font-size: 2rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="logo"><span>🤖</span></div>
-    <h1>Connect Pip to Claude</h1>
-    <p>Sign in to get your personal connection URL for Claude.ai.</p>
-
-    ${error ? `<div class="error">${error === 'invalid_email' ? 'Please enter a valid email address.' : 'Login failed. Please try again.'}</div>` : ''}
-
-    ${tokenUrl ? `
-    <div class="success">
-      <h3>✅ Your Connection URL</h3>
-      <div class="token-url" id="tokenUrl">${tokenUrl}</div>
-      <button class="copy-btn" onclick="copyUrl()">Copy URL</button>
-      <div class="instructions">
-        <strong>How to connect:</strong>
-        <ol>
-          <li>Copy the URL above</li>
-          <li>In Claude.ai, go to Settings → Integrations</li>
-          <li>Click "Add custom integration"</li>
-          <li>Paste this URL and save</li>
-        </ol>
-      </div>
-    </div>
-    <script>
-      function copyUrl() {
-        navigator.clipboard.writeText(document.getElementById('tokenUrl').innerText);
-        document.querySelector('.copy-btn').innerText = 'Copied!';
-        setTimeout(() => document.querySelector('.copy-btn').innerText = 'Copy URL', 2000);
-      }
-    </script>
-    ` : `
-    <form method="POST" action="/login">
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required placeholder="you@example.com">
-      </div>
-      <button type="submit">Get Connection URL</button>
-    </form>
-    `}
-  </div>
-</body>
-</html>
-  `;
-
-  res.setHeader("Content-Type", "text/html");
-  res.send(loginHtml);
-});
-
-/**
- * Login form submission - generates token and shows URL
- */
-app.post("/login", express.urlencoded({ extended: true }), (req: Request, res: Response) => {
-  const { email } = req.body;
-
-  console.log("Login attempt:", { email });
-
-  if (!email || !email.includes("@")) {
-    res.redirect("/login?error=invalid_email");
+  if (error) {
+    res.status(400).send(`Xero authorization failed: ${error}`);
     return;
   }
 
-  // Generate JWT token for this user
-  const token = jwt.sign(
-    { userId: email, type: "access" },
-    JWT_SECRET,
-    { expiresIn: "30d" } // Long-lived token for MCP
-  );
+  if (!code) {
+    res.status(400).send("No authorization code received from Xero");
+    return;
+  }
 
-  // Generate the SSE URL with token
-  const baseUrl = process.env.BASE_URL || "https://pip.arcforge.au";
-  const tokenUrl = `${baseUrl}/sse?token=${token}`;
+  try {
+    const baseUrl = process.env.BASE_URL || "https://mcp.pip.arcforge.au";
 
-  console.log("Token generated for user:", email);
+    // Exchange code for tokens
+    const tokenResponse = await fetch("https://identity.xero.com/connect/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${Buffer.from(`${process.env.XERO_CLIENT_ID}:${process.env.XERO_CLIENT_SECRET}`).toString("base64")}`,
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code as string,
+        redirect_uri: `${baseUrl}/auth/xero/callback`,
+      }),
+    });
 
-  res.redirect(`/login?token_url=${encodeURIComponent(tokenUrl)}`);
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error("Xero token exchange failed:", errorText);
+      res.status(400).send("Failed to exchange Xero authorization code");
+      return;
+    }
+
+    const tokens = await tokenResponse.json();
+    console.log("Xero tokens received, expires_in:", tokens.expires_in);
+
+    // Get connected tenants (organizations)
+    const connectionsResponse = await fetch("https://api.xero.com/connections", {
+      headers: {
+        "Authorization": `Bearer ${tokens.access_token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!connectionsResponse.ok) {
+      console.error("Failed to get Xero connections");
+      res.status(400).send("Failed to get Xero organization info");
+      return;
+    }
+
+    const connections = await connectionsResponse.json();
+
+    if (!connections || connections.length === 0) {
+      res.status(400).send("No Xero organizations found. Please ensure you have access to at least one organization.");
+      return;
+    }
+
+    // Use first tenant
+    const tenant = connections[0];
+    console.log("Xero tenant:", tenant.tenantName, tenant.tenantId);
+
+    // Check if this is part of an MCP OAuth flow
+    const pendingFlow = flowId ? pendingOAuthFlows.get(flowId as string) : null;
+
+    if (pendingFlow && pendingFlow.expiresAt > Date.now()) {
+      // Store tokens for the user from the pending flow
+      const { getDb } = await import("./services/xero.js");
+      const db = await getDb();
+
+      await db.saveOAuthTokens(pendingFlow.userId, "xero", {
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: Date.now() + (tokens.expires_in * 1000),
+        tenantId: tenant.tenantId,
+        tenantName: tenant.tenantName,
+      });
+
+      console.log("Xero tokens saved for user:", pendingFlow.userId);
+
+      // Clean up pending flow
+      pendingOAuthFlows.delete(flowId as string);
+
+      // Generate MCP OAuth authorization code
+      const authCode = crypto.randomUUID();
+      authorizationCodes.set(authCode, {
+        userId: pendingFlow.userId,
+        redirectUri: pendingFlow.redirectUri,
+        expiresAt: Date.now() + 10 * 60 * 1000,
+      });
+
+      // Redirect back to Claude.ai with the auth code
+      const redirectUrl = new URL(pendingFlow.redirectUri);
+      redirectUrl.searchParams.set("code", authCode);
+      if (pendingFlow.state) {
+        redirectUrl.searchParams.set("state", pendingFlow.state);
+      }
+
+      console.log("MCP OAuth flow complete, redirecting to Claude.ai");
+      res.redirect(redirectUrl.toString());
+    } else {
+      // Standalone Xero OAuth (not part of MCP flow)
+      // Show success page
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Xero Connected</title>
+          <style>
+            body { font-family: system-ui; background: #0a0e14; color: #e6e6e6; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+            .container { text-align: center; padding: 2rem; }
+            h1 { color: #7eb88e; }
+            p { color: #999; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>✅ Xero Connected!</h1>
+            <p>Connected to: ${tenant.tenantName}</p>
+            <p>You can close this window and return to Claude.ai.</p>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+  } catch (error) {
+    console.error("Xero callback error:", error);
+    res.status(500).send("An error occurred connecting to Xero. Please try again.");
+  }
 });
 
 // ===========================================
 // OAuth 2.0 for Claude.ai / ChatGPT Integration
-// (Kept for future use when Claude.ai supports OAuth)
 // ===========================================
 
 // OAuth configuration
 const OAUTH_CLIENT_ID = process.env.MCP_OAUTH_CLIENT_ID || "pip-mcp-client";
 const OAUTH_CLIENT_SECRET = process.env.MCP_OAUTH_CLIENT_SECRET || "pip-mcp-secret-change-in-production";
+
+/**
+ * OAuth 2.0 Authorization Server Metadata (RFC 8414)
+ * Claude.ai uses this to discover our OAuth endpoints
+ */
+app.get("/.well-known/oauth-authorization-server", (req: Request, res: Response) => {
+  const baseUrl = process.env.BASE_URL || "https://mcp.pip.arcforge.au";
+
+  res.json({
+    issuer: baseUrl,
+    authorization_endpoint: `${baseUrl}/oauth/authorize`,
+    token_endpoint: `${baseUrl}/oauth/token`,
+    response_types_supported: ["code"],
+    grant_types_supported: ["authorization_code"],
+    code_challenge_methods_supported: ["S256", "plain"],
+    token_endpoint_auth_methods_supported: ["client_secret_post", "client_secret_basic"]
+  });
+});
 
 // Store authorization codes temporarily (in production, use Redis or database)
 const authorizationCodes = new Map<string, { userId: string; redirectUri: string; expiresAt: number }>();
@@ -850,9 +807,9 @@ const authorizationCodes = new Map<string, { userId: string; redirectUri: string
  * Claude.ai redirects users here to authenticate
  */
 app.get("/oauth/authorize", (req: Request, res: Response) => {
-  const { client_id, redirect_uri, response_type, state } = req.query;
+  const { client_id, redirect_uri, response_type, state, error } = req.query;
 
-  console.log("OAuth authorize request:", { client_id, redirect_uri, response_type, state });
+  console.log("OAuth authorize request:", { client_id, redirect_uri, response_type, state, error });
 
   // Validate client_id
   if (client_id !== OAUTH_CLIENT_ID) {
@@ -865,6 +822,15 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
     res.status(400).send("Invalid response_type. Only 'code' is supported.");
     return;
   }
+
+  // Map error codes to user-friendly messages
+  const errorMessages: Record<string, string> = {
+    invalid_email: "Please enter a valid email address.",
+    invalid_password: "Please enter your password.",
+    invalid_credentials: "Invalid email or password. Please try again.",
+    server_error: "An error occurred. Please try again.",
+  };
+  const errorMessage = error ? errorMessages[error as string] || "An error occurred." : null;
 
   // Show login page
   const loginHtml = `
@@ -971,7 +937,7 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
         <label for="password">Password</label>
         <input type="password" id="password" name="password" required placeholder="Your password">
       </div>
-      <div class="error" id="error"></div>
+      ${errorMessage ? `<div class="error" style="display: block;">${errorMessage}</div>` : '<div class="error" id="error"></div>'}
       <button type="submit">Connect to Claude</button>
     </form>
   </div>
@@ -985,7 +951,7 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
 
 /**
  * OAuth Authorization Submit
- * Handles login form submission
+ * Handles login form submission with proper password verification
  */
 app.post("/oauth/authorize/submit", express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const { email, password, redirect_uri, state } = req.body;
@@ -993,29 +959,68 @@ app.post("/oauth/authorize/submit", express.urlencoded({ extended: true }), asyn
   console.log("OAuth login attempt:", { email, redirect_uri });
 
   // Validate credentials against main database
-  // For now, we'll use a simple check - in production this should validate against the users table
   try {
     const { getDb } = await import("./services/xero.js");
+    const bcrypt = await import("bcryptjs");
     const db = await getDb();
 
-    // Check if user exists and has Xero connected
-    // We need to implement user lookup - for now, create a simple flow
-    // that generates a token for any valid-looking email
-
-    // In a real implementation, you'd validate against the users table
-    // For MVP, we'll accept any email and create a session
-
+    // Validate email format
     if (!email || !email.includes("@")) {
-      res.redirect(`/oauth/authorize?error=invalid_email&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}`);
+      res.redirect(`/oauth/authorize?error=invalid_email&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
       return;
     }
 
-    // Generate authorization code
+    // Validate password provided
+    if (!password) {
+      res.redirect(`/oauth/authorize?error=invalid_password&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
+      return;
+    }
+
+    // Look up user in database
+    const user = await db.getUserByEmail(email);
+
+    if (!user) {
+      console.log("OAuth login failed: user not found:", email);
+      res.redirect(`/oauth/authorize?error=invalid_credentials&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
+      return;
+    }
+
+    // Verify password
+    const passwordValid = await bcrypt.compare(password, user.passwordHash);
+
+    if (!passwordValid) {
+      console.log("OAuth login failed: invalid password for:", email);
+      res.redirect(`/oauth/authorize?error=invalid_credentials&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
+      return;
+    }
+
+    // Check if user has Xero connected
+    const xeroTokens = await db.getOAuthTokens(user.id, "xero");
+
+    if (!xeroTokens) {
+      // User needs to connect Xero first
+      // Store the pending OAuth flow and redirect to Xero OAuth
+      const flowId = crypto.randomUUID();
+
+      pendingOAuthFlows.set(flowId, {
+        userId: user.id,
+        redirectUri: redirect_uri,
+        state: state || "",
+        expiresAt: Date.now() + 30 * 60 * 1000, // 30 minutes to complete Xero OAuth
+      });
+
+      console.log("User needs Xero connection, starting Xero OAuth. Flow ID:", flowId);
+
+      // Redirect to Xero OAuth with flow_id
+      res.redirect(`/auth/xero?flow_id=${flowId}`);
+      return;
+    }
+
+    // User has Xero connected - generate authorization code
     const code = crypto.randomUUID();
-    const userId = email; // Use email as userId for now
 
     authorizationCodes.set(code, {
-      userId,
+      userId: user.id,
       redirectUri: redirect_uri,
       expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
     });
@@ -1027,11 +1032,11 @@ app.post("/oauth/authorize/submit", express.urlencoded({ extended: true }), asyn
       redirectUrl.searchParams.set("state", state);
     }
 
-    console.log("OAuth code generated, redirecting to:", redirectUrl.toString());
+    console.log("OAuth code generated for user:", user.id, "redirecting to:", redirectUrl.toString());
     res.redirect(redirectUrl.toString());
   } catch (error) {
     console.error("OAuth login error:", error);
-    res.redirect(`/oauth/authorize?error=server_error&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}`);
+    res.redirect(`/oauth/authorize?error=server_error&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
   }
 });
 

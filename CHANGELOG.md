@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Zero Agent will be documented in this file.
+All notable changes to Pip are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,79 +9,139 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- **CLI Chat Interface** - Interactive REPL for conversational Xero queries (`pnpm chat`)
-- **Native Tool Calling** - Anthropic Claude tool use integration for automatic Xero API access
-- **Chat History Viewer** - View conversation history from SQLite database
-- **Documentation**:
-  - CHAT_GUIDE.md - Complete CLI usage guide
-  - Updated README.md with quick start instructions
-- AWS-based serverless architecture (Lambda, DynamoDB, Cognito, S3/CloudFront)
-- Terraform infrastructure-as-code definitions
-- DynamoDB single-table design for sessions, users, cache, and memory
-- AWS Secrets Manager integration for OAuth token security
-- IAM roles and policies for Lambda functions
-- **Memory Persistence System** (ADR-007):
-  - Core memory (permanent, free tier): preferences, milestones, relationship stage
-  - Extended memory (paid tier): conversation history, semantic search, deep learning
-  - Relationship progression: colleague (0-3mo) → partner (3-12mo) → friend (12mo+)
-  - Graceful degradation: users retain core memory when subscription lapses
-- **Voice-to-Voice Integration** (ADR-008):
-  - Premium tier feature ($29/month Pro, unlimited Enterprise)
-  - AWS Transcribe for speech-to-text (streaming)
-  - Amazon Polly or ElevenLabs for text-to-speech
-  - WebSocket infrastructure for real-time audio
-  - < 2s latency target
-- **Subscription Model**:
-  - Free tier: text-only, 50 requests/month, core memory
-  - Pro tier: $29/month, voice (1000 min), extended memory, 1000 requests
-  - Enterprise tier: custom pricing, unlimited usage, SSO, custom integrations
-  - Stripe integration for billing
-  - Usage tracking (voice minutes, agent requests)
-
-### Changed
-- **BREAKING**: Project renamed from "Xero Agent" to "Zero Agent"
-  - All package names updated: `@xero-agent/*` → `@pip/*`
-  - All import statements and dependencies updated
-  - All documentation updated (README, ARCHITECTURE, CLAUDE, STATUS)
-- **Tool Calling Approach**: Switched from JSON parsing to native Anthropic tool use
-  - More reliable tool detection and execution
-  - Automatic parameter extraction and validation
-- **BREAKING**: Migrated from Firebase to AWS infrastructure
-- Updated all documentation to reflect AWS architecture
-- Architecture decision records updated:
-  - ADR-001: AWS over Firebase
-  - ADR-007: Memory persistence and relationship building
-  - ADR-008: Voice-to-voice integration (premium tier)
+### Planned
+- Claude.ai integration validation (in progress)
+- ChatGPT Apps SDK integration
+- Landing page at pip.arcforge.au
 
 ---
 
-## [0.1.0] - 2025-11-12
-
-### Summary
-Initial project setup with documentation structure and architectural planning.
+## [0.2.0] - 2025-11-29
 
 ### Added
-- **Documentation Foundation** - Established 7-document structure following project-documentation-template skill
-- **Architecture Planning** - Defined multi-tier serverless architecture on AWS
-- **Technology Stack** - Selected AWS (Lambda, DynamoDB, Cognito) + Claude Agent SDK + MCP + React
-- **Database Schema** - Defined DynamoDB single-table design with access patterns
-- **Security Model** - Token encryption in Secrets Manager, IAM policies, Cognito authentication
-- **ADRs** - Documented key architectural decisions (AWS, Terraform, DynamoDB, Agent SDK, MCP, PWA)
+- **MCP Remote Server**: New `packages/mcp-remote-server` for Claude.ai and ChatGPT distribution
+- **Lazy-loading pattern**: 2 meta-tools reduce context by 85% (2000 → 300 tokens)
+- **OAuth 2.0 authentication**: Authorization Code flow for MCP clients
+- **Token URL login**: /login generates personal connection URLs for Claude.ai
+- **JWT authentication**: 30-day tokens for MCP sessions
+- **Domain structure**: app.pip.arcforge.au (PWA), mcp.pip.arcforge.au (MCP)
 
 ### Changed
-- Migrated from draft documentation to structured templates
-- Archived old documentation drafts to `docs/archive/`
+- **Full rebrand**: Renamed from "Zero Agent" to "Pip"
+- All packages renamed: `@zero-agent/*` → `@pip/*`
+- Repository renamed: `zero-agent` → `pip`
+- VPS deployment: `/opt/zero-agent` → `/opt/pip`
+- Docker container: `zero-agent` → `pip-app`, `pip-mcp`
+
+### Documented
+- MCP Authentication Flow in ARCHITECTURE.md
+- CONTRIBUTING.md workflow guide
+- Organized docs/ folder (archived outdated files)
+- Prioritized Claude.ai integration over ChatGPT
 
 ---
 
-## Version Guidelines
+## [0.1.0] - 2025-11-28
 
-- **Major (X.0.0)**: Breaking changes, API changes, schema migrations
-- **Minor (0.X.0)**: New features (backward compatible)
-- **Patch (0.0.X)**: Bug fixes, security patches
+### Added
+- **User authentication**: Email/password with invite codes for beta
+- **Per-user data isolation**: Sessions, documents, Xero scoped to users
+- **Admin CLI**: `pnpm admin` for invite code management
+- **Business Context Layer**: Document upload, parsing, context injection
+- **Document parsing**: PDF, TXT, MD, DOCX support (pdf-parse, mammoth)
+- **Arc Forge dark theme**: Applied to PWA
+
+### Fixed
+- OAuth callback hang (service worker intercepting /auth/callback)
+- Invoice tool: clarified AUTHORISED = unpaid, added isOverdue
+- P&L and Balance Sheet tools: correct Xero report parsing
+
+### Changed
+- Loading indicator shows elapsed time ("Pip is thinking... (Xs)")
+- Enhanced system prompt with structured response format
+- Markdown rendering for assistant messages (react-markdown)
 
 ---
 
-[Unreleased]: https://github.com/your-org/zero-agent/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/your-org/zero-agent/releases/tag/v0.1.0
+## [0.0.2] - 2025-11-27
+
+### Added
+- **VPS deployment**: DigitalOcean Sydney (production-syd1)
+- **Express server**: `packages/server` with API routes
+- **PWA frontend**: React chat interface with Vite
+- **Xero OAuth**: Token storage in SQLite, automatic refresh
+- **SQLite database**: Daily backups at 3am UTC
+- **Docker**: Multi-stage build with Caddy reverse proxy
+
+### Changed
+- **Architecture pivot**: AWS Lambda → VPS monolith
+- Cost reduced: ~$120/month → $0/month (shared droplet)
+- Simplified: 40+ AWS resources → 1 Docker container
+
+### Removed
+- AWS infrastructure (Lambda, API Gateway, DynamoDB, Cognito)
+- Terraform configuration
+- Lambda function wrappers
+
+---
+
+## [0.0.1] - 2025-11-17
+
+### Added
+- **LLM abstraction**: Provider-agnostic (Anthropic + Ollama)
+- **Database abstraction**: SQLite (default), DynamoDB (available)
+- **Agent orchestrator**: Native Claude tool calling
+- **Xero tools**: Organization, invoices, contacts, reports (10 tools)
+- **CLI chat**: `pnpm chat` for local testing
+- **Open source pivot**: MIT license
+
+### Changed
+- Project renamed: "Xero Agent" → "Zero Agent" (brand collision with Xero)
+
+---
+
+## [0.0.0] - 2025-11-12
+
+### Added
+- Documentation foundation (7 core documents)
+- Architecture planning (AWS serverless design)
+- Technology stack selection
+- Database schema (DynamoDB single-table)
+- Security model planning
+- ADRs for major decisions
+
+---
+
+## Version Summary
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| 0.2.0 | 2025-11-29 | Pip rebrand, MCP server, Claude.ai support |
+| 0.1.0 | 2025-11-28 | User auth, business context, dark theme |
+| 0.0.2 | 2025-11-27 | VPS deployment, AWS → monolith migration |
+| 0.0.1 | 2025-11-17 | LLM/DB abstraction, agent foundation |
+| 0.0.0 | 2025-11-12 | Project initialization, documentation |
+
+---
+
+## Versioning Policy
+
+- **MAJOR** (X.0.0): Breaking changes, API incompatibility
+- **MINOR** (0.X.0): New features (backwards compatible)
+- **PATCH** (0.0.X): Bug fixes, documentation
+
+**Current stage**: Pre-1.0 (rapid iteration)
+
+**1.0.0 criteria**:
+- Claude.ai and ChatGPT integrations validated
+- 25 beta users active
+- Core features stable
+
+---
+
+[Unreleased]: https://github.com/IAMSamuelRodda/pip/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/IAMSamuelRodda/pip/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/IAMSamuelRodda/pip/compare/v0.0.2...v0.1.0
+[0.0.2]: https://github.com/IAMSamuelRodda/pip/compare/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/IAMSamuelRodda/pip/compare/v0.0.0...v0.0.1
+[0.0.0]: https://github.com/IAMSamuelRodda/pip/releases/tag/v0.0.0
