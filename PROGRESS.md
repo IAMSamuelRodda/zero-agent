@@ -3,8 +3,8 @@
 > **Purpose**: Detailed project tracking with milestones, epics, features, and tasks
 > **Lifecycle**: Living (update on task completion, status changes)
 
-**Last Updated**: 2025-11-29
-**Current Phase**: MCP Integration Validation
+**Last Updated**: 2025-11-30
+**Current Phase**: Memory Stack + Safety Hardening
 
 ---
 
@@ -12,10 +12,30 @@
 
 | Metric | Value |
 |--------|-------|
-| Current Focus | Safety Guardrails + Memory Import |
-| Phase | Production Hardening |
+| Current Focus | Mem0 Memory Stack + Safety Guardrails |
+| Phase | Memory Stack + Safety Hardening |
 | Milestones Complete | 1/3 (Core Platform) |
-| Overall | MCP validated, adding safety before write ops |
+| Overall | MCP validated, implementing Mem0 memory layer |
+
+### Architecture Direction (2025-11-30)
+
+Based on consolidated research (Joplin notes + project docs), Pip adopts:
+
+```
+Claude API (direct, with tool calling)
+         |
+    +----+----+
+    |         |
+   Mem0    Lazy-MCP
+ (Memory)  (Tools)
+```
+
+**Key Decisions**:
+- **USE Mem0** - Universal memory layer for personalization
+- **USE Lazy-MCP** - Already implemented, working well
+- **SKIP LangChain** - Obsolete for agentic systems
+- **SKIP traditional RAG** - Mem0 handles memory; tools handle live data
+- **DEFER LangGraph** - Only if complex approval workflows needed later
 
 ---
 
@@ -162,20 +182,169 @@
 
 ---
 
-### Epic 1.4: Memory Import (ChatGPT Workaround)
+### Epic 1.4: Mem0 Memory Stack
+
+**Status**: 🔵 In Progress (Spike)
+**Priority**: HIGH (enables "Pip knows me" experience)
+
+**Problem**: ChatGPT Plus users have memory disabled in Developer Mode. Need Pip-native memory layer.
+
+**Solution**: Integrate Mem0 as universal memory layer for cross-platform personalization.
+
+**Research Basis**: Joplin notes (2025-11-29) + `docs/research-notes/03-mem0-memory-layer.md`
+
+---
+
+#### spike_mem0: Mem0 Integration Feasibility
 
 **Status**: ⚪ Not Started
-**Priority**: HIGH (for demo with dental client)
+**Duration**: 2-3 days
+**Priority**: P1 (blocks all Epic 1.4 tasks)
 
-**Problem**: ChatGPT disables memory when MCP connectors are used (Developer Mode security).
+**Objective**: Evaluate integration approaches and select best path for Pip (Node.js/TypeScript codebase).
 
-**Solution**: Export ChatGPT memories → upload to Pip's Business Context Layer → personalized experience works across all platforms.
+##### Integration Options to Evaluate
 
-| Task | Status | Notes |
-|------|--------|-------|
-| Document memory export process | ⚪ Pending | ChatGPT prompt method |
-| Create memory import guide | ⚪ Pending | Upload to context layer |
-| Test with existing user context | ⚪ Pending | Verify personalization works |
+| Option | Description | Language |
+|--------|-------------|----------|
+| **A. OpenMemory MCP** | Mem0's official MCP server, runs locally | Python |
+| **B. Mem0 Cloud API** | REST API, managed infrastructure | Language-agnostic |
+| **C. Self-hosted Mem0** | Run Mem0 server on VPS | Python |
+| **D. Python subprocess** | Call Mem0 Python SDK from Node.js | Python + Node.js |
+| **E. Refactor Pip to Python** | Rewrite MCP server in Python | Python |
+| **F. Refactor Mem0 to TypeScript** | Port Mem0 core to TS | TypeScript |
+| **G. Community alternatives** | mem0-ts, langmem, other TS memory libs | TypeScript |
+
+##### Evaluation Criteria
+
+| Criterion | Weight | Notes |
+|-----------|--------|-------|
+| Integration complexity | HIGH | How much code/infra change? |
+| Latency | HIGH | Per-request overhead |
+| Maintenance burden | HIGH | Long-term sustainability |
+| Feature parity | MEDIUM | Graph memory, conflict resolution |
+| Self-hosted option | MEDIUM | Privacy, cost control |
+| Community support | MEDIUM | Active development, issues |
+
+##### Tradeoffs to Analyze
+
+**Option A: OpenMemory MCP**
+- ✅ Official, maintained by Mem0 team
+- ✅ MCP-native (fits our architecture)
+- ✅ Runs locally (privacy, no API costs)
+- ❌ Another process to manage
+- ❌ Python dependency on VPS
+- ❓ How to share auth context with Pip MCP?
+
+**Option B: Mem0 Cloud API**
+- ✅ Zero infrastructure, just REST calls
+- ✅ Scales automatically
+- ❌ Monthly cost (~$10-50/mo)
+- ❌ Latency (network round-trip per memory op)
+- ❌ Data leaves our infrastructure
+
+**Option C: Self-hosted Mem0**
+- ✅ Full control, privacy
+- ✅ No recurring API costs
+- ❌ Python process on VPS (memory constraint: 384MB shared)
+- ❌ Maintenance burden (updates, monitoring)
+- ❓ Resource usage on shared VPS?
+
+**Option D: Python subprocess**
+- ✅ Use official SDK directly
+- ✅ No separate server process
+- ❌ IPC overhead per call
+- ❌ Error handling complexity
+- ❌ Two language runtimes in one app
+
+**Option E: Refactor Pip to Python**
+- ✅ Native Mem0 integration
+- ✅ Aligns with AI/ML ecosystem (Python-first)
+- ❌ Major rewrite effort (weeks)
+- ❌ Lose TypeScript benefits (types, tooling)
+- ❓ FastMCP (Python) vs current Express?
+
+**Option F: Refactor Mem0 to TypeScript**
+- ✅ Native integration, no Python
+- ❌ Massive effort (Mem0 is complex)
+- ❌ Lose upstream updates
+- ❌ Not sustainable long-term
+
+**Option G: Community alternatives**
+- Research: mem0-ts, langmem, custom implementations
+- ✅ Native TypeScript
+- ❓ Feature parity with Mem0?
+- ❓ Community health/maintenance?
+
+##### Deliverables
+
+- [ ] Test OpenMemory MCP locally
+- [ ] Test Mem0 Cloud API latency
+- [ ] Research community TypeScript alternatives
+- [ ] Assess VPS resource impact for Python options
+- [ ] Decision document with recommendation
+- [ ] Spike report: `docs/research-notes/SPIKE-mem0-integration.md`
+
+---
+
+#### feature_1_4_1: Mem0 Integration
+
+**Status**: ⚪ Blocked (waiting for spike_mem0)
+
+| Task | Status | Depends On |
+|------|--------|------------|
+| Implement chosen integration approach | ⚪ Pending | spike_mem0 |
+| Memory storage configuration | ⚪ Pending | task above |
+| User isolation (multi-tenant) | ⚪ Pending | task above |
+
+---
+
+#### feature_1_4_2: Memory Injection
+
+**Status**: ⚪ Blocked
+
+| Task | Status | Depends On |
+|------|--------|------------|
+| Inject memories into MCP tool context | ⚪ Pending | feature_1_4_1 |
+| Memory retrieval per request | ⚪ Pending | task above |
+| Context formatting for Claude | ⚪ Pending | task above |
+
+---
+
+#### feature_1_4_3: ChatGPT Memory Import
+
+**Status**: ⚪ Blocked
+
+| Task | Status | Depends On |
+|------|--------|------------|
+| Parse ChatGPT data export | ⚪ Pending | feature_1_4_1 |
+| Extract user facts from conversations.json | ⚪ Pending | task above |
+| Import endpoint in MCP server | ⚪ Pending | task above |
+| User guide for export/import | ✅ Done | docs/CHATGPT-MEMORY-GUIDE.md |
+
+---
+
+#### feature_1_4_4: Memory Management UI
+
+**Status**: ⚪ Blocked
+
+| Task | Status | Depends On |
+|------|--------|------------|
+| View memories in PWA | ⚪ Pending | feature_1_4_2 |
+| Edit/delete memories | ⚪ Pending | task above |
+| Manual memory add | ⚪ Pending | task above |
+
+---
+
+#### feature_1_4_5: Automatic Memory Extraction
+
+**Status**: ⚪ Future (post-MVP)
+
+| Task | Status | Depends On |
+|------|--------|------------|
+| Extract facts from conversations | ⚪ Future | feature_1_4_2 |
+| Conflict resolution | ⚪ Future | task above |
+| Memory consolidation | ⚪ Future | task above |
 
 ---
 
@@ -221,6 +390,32 @@ The Thursday demo with dental practice owner has been completed. Demo materials 
 ---
 
 ## Progress Changelog
+
+### 2025-11-30 - Mem0 Memory Architecture Decision
+
+**Architecture Shift**:
+- Consolidated research from Joplin notes + project docs
+- Adopted Mem0 as universal memory layer (replaces simple "Memory Import" workaround)
+- Created comprehensive spike_mem0 to evaluate 7 integration approaches
+- Sunset plans for traditional RAG (Mem0 + tools approach instead)
+
+**Epic 1.4 Restructured**:
+- Old: "Memory Import" - simple ChatGPT export/import
+- New: "Mem0 Memory Stack" - full memory layer with:
+  - spike_mem0: Integration feasibility (A-G options)
+  - feature_1_4_1: Mem0 integration
+  - feature_1_4_2: Memory injection into MCP
+  - feature_1_4_3: ChatGPT memory import
+  - feature_1_4_4: Memory management UI
+  - feature_1_4_5: Automatic extraction (future)
+
+**Key Research References**:
+- Joplin: "Mem0 - Universal Memory Layer Analysis"
+- Joplin: "Future Architecture Recommendation"
+- Joplin: "RAG Obsolescence in Agentic AI Systems"
+- Project: docs/research-notes/03-mem0-memory-layer.md
+
+---
 
 ### 2025-11-29 - Safety Architecture + Memory Import Priority
 

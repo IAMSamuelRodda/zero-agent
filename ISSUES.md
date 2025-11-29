@@ -180,11 +180,38 @@ Items flagged by `improving-plans` skill as requiring decomposition or spike tas
 
 Research/investigation tasks that must complete before dependent implementation tasks.
 
-### spike_001: Chunking Strategy Spike
+### spike_mem0: Mem0 Integration Feasibility (NEW - P1)
 - **Status**: 🔴 Open
+- **Task ID**: spike_mem0
+- **Duration**: 2-3 days
+- **Priority**: P1 (blocks Epic 1.4)
+- **Reduces Uncertainty For**: All Mem0 Memory Stack implementation
+- **Context**: Pip is Node.js/TypeScript; Mem0 SDK is Python. Need to evaluate integration approaches.
+- **Options to Evaluate**:
+  - A: OpenMemory MCP (official Mem0 MCP server, Python)
+  - B: Mem0 Cloud API (REST, managed infrastructure)
+  - C: Self-hosted Mem0 (Python process on VPS)
+  - D: Python subprocess (call Mem0 SDK from Node.js)
+  - E: Refactor Pip to Python (FastMCP rewrite)
+  - F: Port Mem0 to TypeScript (create pip-mem0 package)
+  - G: Community TS alternatives (mem0-ts, langmem, etc.)
+- **Deliverables**:
+  - [ ] Test OpenMemory MCP locally
+  - [ ] Test Mem0 Cloud API latency
+  - [ ] Research TypeScript alternatives
+  - [ ] Assess VPS resource impact (Python on 384MB shared)
+  - [ ] Evaluate refactor tradeoffs with pros/cons
+  - [ ] Decision document: `docs/research-notes/SPIKE-mem0-integration.md`
+- **Acceptance Criteria**:
+  - Clear integration approach selected with rationale
+  - Tradeoffs documented for each option
+  - Resource/cost implications understood
+
+### spike_001: Chunking Strategy Spike (DEPRIORITIZED)
+- **Status**: 🟡 Deprioritized (Mem0 may replace need)
 - **Task ID**: task_1_2_0
 - **Duration**: 2 days
-- **Priority**: P1 (blocks feature_1_2)
+- **Priority**: P3 (was P1 - Mem0 adoption may eliminate need)
 - **Reduces Uncertainty For**: task_1_2_1 (Chunking Strategy Implementation)
 - **Deliverables**:
   - [ ] Test semantic chunking with real business documents
@@ -194,6 +221,7 @@ Research/investigation tasks that must complete before dependent implementation 
 - **Acceptance Criteria**:
   - Uncertainty reduced from 4 → 2 for subsequent tasks
   - Clear chunking algorithm selected with rationale
+- **Note**: May be unnecessary if Mem0 handles document context. Evaluate after spike_mem0.
 
 ### spike_002: Whisper Deployment Strategy Spike
 - **Status**: 🔴 Open

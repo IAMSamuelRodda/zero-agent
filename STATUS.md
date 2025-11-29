@@ -4,7 +4,7 @@
 > **Lifecycle**: Living (update daily/weekly during active development)
 
 **Last Updated**: 2025-11-30
-**Current Phase**: Production Hardening
+**Current Phase**: Memory Stack + Safety Hardening
 **Version**: 0.2.0
 **Infrastructure**: DigitalOcean VPS (shared with do-vps-prod services)
 
@@ -12,34 +12,53 @@
 
 ## Current Focus
 
-### Phase: Memory Stack + Safety Guardrails
+### Phase: Mem0 Memory Stack + Safety Guardrails
 
-**Objective**: Enable personalized "Pip knows me" experience for ChatGPT Plus users, then harden for write operations.
+**Objective**: Integrate Mem0 as universal memory layer, then harden for write operations.
+
+**Architecture Decision** (2025-11-30):
+Based on consolidated Joplin research, Pip adopts:
+- **Mem0** for memory (NOT traditional RAG)
+- **Lazy-MCP** for tools (already implemented)
+- **Skip LangChain** (obsolete for agentic systems)
+- **Defer LangGraph** (only if complex approval flows needed)
 
 **Priority Order**:
-1. **Memory Technology Stack** - Pip-native memory layer for Plus users (Epic 1.4)
-2. **Safety Guardrails** - Tiered permissions before ANY write operations (Epic 1.3)
-3. **ChatGPT Memory Export** - Document + implement import flow (Epic 1.4.1)
+1. **spike_mem0** - Evaluate integration approaches (2-3 days)
+2. **Mem0 Memory Stack** - Implement chosen approach (Epic 1.4)
+3. **Safety Guardrails** - Tiered permissions before write ops (Epic 1.3)
 4. **Landing Page** - Create pip.arcforge.au (Epic 1.5)
 
 **Why this order**:
-- Memory first: Enables demo-ready "Pip knows me" experience for dental client
-- Safety before writes: Xero has NO user restore - must protect users before adding write capabilities
-- Memory export after stack: Can't import memories without storage layer
+- Spike first: Must choose integration approach before implementation
+- Memory enables "Pip knows me" for dental client demo
+- Safety before writes: Xero has NO user restore
 
 ### Current Priorities
 
-#### Memory Technology Stack (Priority 1)
+#### spike_mem0: Integration Feasibility (Priority 1)
 | Task | Status | Notes |
 |------|--------|-------|
-| Research memory approaches | ⚪ Pending | mem0, custom SQLite, vector DB |
-| Design memory schema | ⚪ Pending | User facts, preferences, context |
-| Add `user_memories` table | ⚪ Pending | SQLite storage layer |
-| Implement memory extraction | ⚪ Pending | Parse conversations for facts |
-| Add memory injection to MCP | ⚪ Pending | Include in tool context |
-| Add memory UI to PWA | ⚪ Pending | View/edit/delete memories |
+| Test OpenMemory MCP locally | ⚪ Pending | Official Mem0 MCP server |
+| Test Mem0 Cloud API latency | ⚪ Pending | REST API option |
+| Research TS alternatives | ⚪ Pending | mem0-ts, langmem, etc |
+| Assess VPS resource impact | ⚪ Pending | Python options on 384MB shared |
+| Evaluate refactor options | ⚪ Pending | Pip→Python or Mem0→TS |
+| Decision document | ⚪ Pending | Recommendation with tradeoffs |
 
-**Why Memory First?**: ChatGPT Plus users (majority market) can't publish connectors → memory disabled in Dev Mode. Pip needs its own memory layer to enable "Pip knows me" experience for dental client demo.
+**Duration**: 2-3 days
+**Blocks**: All Epic 1.4 implementation
+
+**Options Being Evaluated**:
+- A: OpenMemory MCP (Python, official)
+- B: Mem0 Cloud API (REST, managed)
+- C: Self-hosted Mem0 (Python, VPS)
+- D: Python subprocess (hybrid)
+- E: Refactor Pip to Python
+- F: Port Mem0 to TypeScript
+- G: Community TS alternatives
+
+**Why Mem0?**: Joplin research (2025-11-29) recommends Mem0 as universal memory layer. 26% better accuracy than OpenAI Memory, 90% token reduction. Graph-based memory for relationships.
 
 #### Safety Guardrails (Priority 2)
 | Task | Status | Notes |
@@ -52,15 +71,16 @@
 
 **Why Safety Before Writes?**: Xero has NO user restore. Must protect users from AI mistakes before adding any write capabilities.
 
-#### ChatGPT Memory Export (Priority 3)
+#### Mem0 Implementation (Priority 3 - after spike)
 | Task | Status | Notes |
 |------|--------|-------|
-| Document official data export | ✅ Done | docs/CHATGPT-MEMORY-GUIDE.md |
-| Create memory import endpoint | ⚪ Pending | Requires Memory Stack first |
-| Parse conversations.json | ⚪ Pending | Extract user facts |
-| Test import flow | ⚪ Pending | Verify personalization works |
+| Implement chosen approach | ⚪ Blocked | Waiting for spike_mem0 |
+| Memory injection to MCP | ⚪ Blocked | Depends on implementation |
+| ChatGPT memory import | ⚪ Blocked | Parse conversations.json |
+| Memory management UI | ⚪ Blocked | PWA interface |
 
-**Dependency**: Requires Memory Stack (Priority 1) to be complete first.
+**Dependency**: Blocked by spike_mem0 decision.
+**Guide Ready**: docs/CHATGPT-MEMORY-GUIDE.md (export instructions)
 
 **ChatGPT Business Option** (NEEDS VERIFICATION):
 - Research suggests published connectors retain memory
@@ -103,7 +123,8 @@
 | **MCP Server** | 🟢 | Deployed at mcp.pip.arcforge.au |
 | **Claude.ai Integration** | 🟢 | Fully validated and working |
 | **ChatGPT Integration** | 🟡 | Working, but memory disabled for Plus users |
-| **Memory Stack** | ⚪ | Not started - required for Plus users |
+| **spike_mem0** | ⚪ | Not started - evaluating 7 integration options |
+| **Mem0 Memory Stack** | ⚪ | Blocked by spike_mem0 |
 | **Safety Guardrails** | 🔵 | Architecture designed, implementation pending |
 | PWA Frontend | 🟢 | Live at app.pip.arcforge.au |
 | Xero Integration | 🟢 | OAuth + 10 READ-ONLY tools |
@@ -166,23 +187,28 @@ See **ISSUES.md** for detailed tracking.
 
 ## Next Steps (Priority Order)
 
-### Immediate
+### Immediate (This Week)
 
-1. **Memory Technology Stack** (Epic 1.4)
-   - Research: mem0 vs custom SQLite vs vector DB
-   - Design memory schema (facts, preferences, context)
-   - Implement storage + extraction + injection
-   - Add memory management UI to PWA
+1. **spike_mem0** (2-3 days)
+   - Test OpenMemory MCP locally
+   - Test Mem0 Cloud API latency
+   - Research TypeScript alternatives (mem0-ts, langmem)
+   - Assess VPS resource impact for Python options
+   - Evaluate refactor tradeoffs (Pip→Python vs Mem0→TS)
+   - Decision document with recommendation
 
-2. **Safety Guardrails Implementation** (Epic 1.3)
+### After Spike
+
+2. **Mem0 Memory Stack Implementation** (Epic 1.4)
+   - Implement chosen integration approach
+   - Memory injection into MCP tool context
+   - ChatGPT memory import endpoint
+   - Memory management UI in PWA
+
+3. **Safety Guardrails Implementation** (Epic 1.3)
    - Add database tables (user_settings, operation_snapshots)
    - Implement permission checks in tool router
    - Add settings UI to PWA
-
-3. **ChatGPT Memory Export/Import** (Epic 1.4.1)
-   - Create memory import endpoint
-   - Parse conversations.json for user facts
-   - Test with dental client's ChatGPT export
 
 ### After Memory + Safety
 
@@ -202,19 +228,27 @@ See **ISSUES.md** for detailed tracking.
 
 ## Recent Achievements
 
-### 2025-11-30: ChatGPT Memory Research + Priority Refinement
-- **RESEARCH**: ChatGPT memory behavior with MCP connectors
-  - Developer Mode disables memory (security feature, confirmed)
+### 2025-11-30: Mem0 Architecture Decision + Spike Created
+- **ARCHITECTURE**: Consolidated Joplin research → adopted Mem0 as memory layer
+  - Skip traditional RAG (Mem0 + tools approach instead)
+  - Skip LangChain (obsolete for agentic systems)
+  - Defer LangGraph (only if complex approval flows needed)
+- **SPIKE**: Created spike_mem0 with 7 integration options
+  - A: OpenMemory MCP (official, Python)
+  - B: Mem0 Cloud API (REST, managed)
+  - C: Self-hosted Mem0 (Python, VPS)
+  - D: Python subprocess (hybrid)
+  - E: Refactor Pip to Python
+  - F: Port Mem0 to TypeScript
+  - G: Community TS alternatives
+- **EPIC 1.4**: Restructured from "Memory Import" → "Mem0 Memory Stack"
+  - 5 features with clear dependencies
+  - All blocked by spike_mem0 decision
+- **RESEARCH**: ChatGPT memory behavior confirmed
+  - Developer Mode disables memory (security feature)
   - Published connectors in Business/Teams MAY retain memory (UNVERIFIED)
-  - Plus users have no workaround → need Pip memory stack
-- **RESEARCH**: ChatGPT Apps SDK (preview, built on MCP, higher effort than needed)
-- **RESEARCH**: Official data export structure documented
-  - Files: conversations.json, shared_conversations.json, message_feedback.json, user.json, chat.html
-  - No explicit memories.json - may need separate export via Memory management UI
-- **DECISION**: Memory Technology Stack is Priority 2 (after Safety Guardrails)
-  - Required for ChatGPT Plus users (majority of target market)
-  - Enables cross-platform memory (ChatGPT → Claude.ai via Pip)
 - **CREATED**: docs/CHATGPT-MEMORY-GUIDE.md - user guide for memory options
+- **CLEANUP**: ISSUES.md now open-only, resolved → CHANGELOG.md
 
 ### 2025-11-29: Safety Architecture + ChatGPT Validated
 - **DESIGN**: Created safety guardrails architecture (specs/SAFETY-ARCHITECTURE.md)
