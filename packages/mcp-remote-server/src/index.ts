@@ -518,23 +518,32 @@ app.get("/sse", async (req: Request, res: Response) => {
     }
   }
 
-  let userId: string | undefined;
-
-  if (token) {
-    const decoded = verifyToken(token);
-    if (decoded) {
-      userId = decoded.userId;
-      console.log(`Authenticated user: ${userId}`);
-
-      // Check Xero connection status
-      const xeroStatus = await getXeroStatus(userId);
-      console.log(`Xero connected: ${xeroStatus.connected}${xeroStatus.tenantName ? ` (${xeroStatus.tenantName})` : ""}`);
-    } else {
-      console.log("Invalid auth token provided");
-    }
-  } else {
-    console.log("No auth token - tools will require authentication");
+  // REQUIRE authentication - return 401 to trigger OAuth flow
+  if (!token) {
+    console.log("No auth token - returning 401 to trigger OAuth");
+    res.status(401).json({
+      error: "unauthorized",
+      error_description: "Authentication required. Please connect via OAuth."
+    });
+    return;
   }
+
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    console.log("Invalid auth token - returning 401");
+    res.status(401).json({
+      error: "invalid_token",
+      error_description: "Invalid or expired token. Please reconnect."
+    });
+    return;
+  }
+
+  const userId = decoded.userId;
+  console.log(`Authenticated user: ${userId}`);
+
+  // Check Xero connection status
+  const xeroStatus = await getXeroStatus(userId);
+  console.log(`Xero connected: ${xeroStatus.connected}${xeroStatus.tenantName ? ` (${xeroStatus.tenantName})` : ""}`);
 
   // Create new MCP server instance for this session (with user context)
   const server = createMcpServer(userId);
@@ -545,17 +554,17 @@ app.get("/sse", async (req: Request, res: Response) => {
   // Use the transport's built-in session ID
   const sessionId = transport.sessionId;
 
-  // Store session with user info
+  // Store session with user info (userId is guaranteed at this point)
   const session: Session = {
     id: sessionId,
     transport,
     userId,
-    xeroConnected: userId ? (await getXeroStatus(userId)).connected : false,
+    xeroConnected: xeroStatus.connected,
     createdAt: new Date(),
   };
   sessions.set(sessionId, session);
 
-  console.log(`Session created: ${sessionId}${userId ? ` for user ${userId}` : " (anonymous)"}`);
+  console.log(`Session created: ${sessionId} for user ${userId}`);
 
   // Handle disconnect
   res.on("close", () => {
