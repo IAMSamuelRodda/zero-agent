@@ -1,4 +1,4 @@
-# @zero-agent/core
+# @pip/core
 
 Core abstractions for Zero Agent platform.
 
@@ -19,7 +19,7 @@ Core abstractions for Zero Agent platform.
 ## Installation
 
 ```bash
-pnpm add @zero-agent/core
+pnpm add @pip/core
 ```
 
 ## Usage
@@ -27,7 +27,7 @@ pnpm add @zero-agent/core
 ### Using Environment Variables
 
 ```typescript
-import { createLLMProviderFromEnv } from "@zero-agent/core";
+import { createLLMProviderFromEnv } from "@pip/core";
 
 // Set environment variables:
 // LLM_PROVIDER=anthropic
@@ -46,7 +46,7 @@ console.log(response.content);
 ### Using Configuration Object
 
 ```typescript
-import { createLLMProvider } from "@zero-agent/core";
+import { createLLMProvider } from "@pip/core";
 
 // Anthropic with API key
 const anthropic = await createLLMProvider({
@@ -129,7 +129,7 @@ GOOGLE_API_KEY=...
 4. **Use in code**:
 
 ```typescript
-import { createLLMProvider } from "@zero-agent/core";
+import { createLLMProvider } from "@pip/core";
 
 const provider = await createLLMProvider({
   provider: "ollama",
@@ -151,7 +151,7 @@ import {
   AuthenticationError,
   RateLimitError,
   LLMProviderError,
-} from "@zero-agent/core";
+} from "@pip/core";
 
 try {
   const provider = await createLLMProvider(config);

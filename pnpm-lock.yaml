@@ -35,7 +35,7 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.700.0
         version: 3.929.0(@aws-sdk/client-dynamodb@3.929.0)
-      '@zero-agent/core':
+      '@pip/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -106,7 +106,7 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.4
         version: 1.21.1
-      '@zero-agent/core':
+      '@pip/core':
         specifier: workspace:*
         version: link:../core
       cors:
@@ -183,7 +183,7 @@ importers:
 
   packages/oauth-server:
     dependencies:
-      '@zero-agent/core':
+      '@pip/core':
         specifier: workspace:*
         version: link:../core
       dotenv:
@@ -269,10 +269,10 @@ importers:
 
   packages/server:
     dependencies:
-      '@zero-agent/agent-core':
+      '@pip/agent-core':
         specifier: workspace:*
         version: link:../agent-core
-      '@zero-agent/core':
+      '@pip/core':
         specifier: workspace:*
         version: link:../core
       bcryptjs:

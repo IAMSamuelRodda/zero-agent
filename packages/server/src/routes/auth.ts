@@ -6,7 +6,7 @@
  */
 
 import { Router } from 'express';
-import type { DatabaseProvider, OAuthTokens } from '@zero-agent/core';
+import type { DatabaseProvider, OAuthTokens } from '@pip/core';
 import crypto from 'crypto';
 import { requireAuth } from '../middleware/auth.js';
 import { verifyToken } from '../services/auth.js';

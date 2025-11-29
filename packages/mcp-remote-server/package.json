@@ -1,5 +1,5 @@
 {
-  "name": "@zero-agent/mcp-remote-server",
+  "name": "@pip/mcp-remote-server",
   "version": "0.1.0",
   "description": "Remote MCP server for Claude.ai and ChatGPT integration - Pip bookkeeping assistant",
   "type": "module",
@@ -21,7 +21,7 @@
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "@zero-agent/core": "workspace:*",
+    "@pip/core": "workspace:*",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",

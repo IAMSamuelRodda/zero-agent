@@ -308,7 +308,7 @@ LLM_ENDPOINT=http://localhost:11434  # If using local Ollama
 
 # Database
 DATABASE_PROVIDER=sqlite  # or dynamodb, postgresql
-DATABASE_URL=./data/zero-agent.db  # For SQLite/PostgreSQL
+DATABASE_URL=./data/pip.db  # For SQLite/PostgreSQL
 AWS_REGION=ap-southeast-2  # For DynamoDB
 
 # Xero OAuth
@@ -441,7 +441,7 @@ variable "enable_sso" {
 **Migration Script** (`scripts/migrate-db.sh`):
 ```bash
 # Export from SQLite
-sqlite3 data/zero-agent.db .dump > backup.sql
+sqlite3 data/pip.db .dump > backup.sql
 
 # Import to PostgreSQL
 psql -U xero -d xero_agent -f backup.sql

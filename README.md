@@ -1,25 +1,28 @@
-# Zero Agent
+# Pip - AI Bookkeeping Assistant
 
 > **Purpose**: Project introduction and quick start guide
 > **Lifecycle**: Stable (update when fundamentals change)
 
-AI-powered accounting assistant for Xero, built with Claude and native tool calling.
+AI-powered bookkeeping assistant for Xero, built with Claude and native tool calling.
 
-**Live Demo**: https://zero.rodda.xyz
+**Live Demo**: https://app.pip.arcforge.au
+**MCP Server**: https://mcp.pip.arcforge.au (for Claude.ai/ChatGPT)
 **Current Work**: See [`STATUS.md`](./STATUS.md)
 
 ---
 
 ## Overview
 
-Zero Agent is a mobile-first Progressive Web App (PWA) that brings natural language interaction to Xero accounting software. Ask questions about your invoices, check unpaid bills, and get insights from your accounting data through conversational AI powered by Claude.
+Pip is a mobile-first Progressive Web App (PWA) that brings natural language interaction to Xero accounting software. Ask questions about your invoices, check unpaid bills, and get insights from your accounting data through conversational AI powered by Claude.
 
 **Key Features:**
 - **Conversational Accounting** - Ask questions about invoices, contacts, and financials
+- **Business Context Layer** - Upload business plans/KPIs for context-aware advice
 - **Xero Integration** - Direct connection to your Xero organization
 - **Multi-device Support** - Works on smartphones, tablets, and laptops
 - **Self-Hostable** - Run on your own infrastructure with Docker
 - **LLM Agnostic** - Supports Anthropic Claude or local models via Ollama
+- **MCP Remote Server** - Use Pip from Claude.ai or ChatGPT ($0 LLM cost)
 
 ---
 
@@ -27,16 +30,20 @@ Zero Agent is a mobile-first Progressive Web App (PWA) that brings natural langu
 
 ### Use the Live Demo
 
-Visit https://zero.rodda.xyz to try Zero Agent with your Xero account.
+Visit https://app.pip.arcforge.au to try Pip with your Xero account.
 
-### Chat with Zero Agent (CLI)
+### Use with Claude.ai
 
-The quickest way to try locally:
+1. Visit https://mcp.pip.arcforge.au/login
+2. Enter your email to get a personal token URL
+3. Add to Claude.ai as a Custom Integration (Settings → Claude.ai Integrations)
+
+### Run Locally (CLI)
 
 ```bash
 # 1. Clone and setup
-git clone https://github.com/IAMSamuelRodda/zero-agent.git
-cd zero-agent
+git clone https://github.com/IAMSamuelRodda/pip.git
+cd pip
 pnpm install
 
 # 2. Configure environment
@@ -47,7 +54,7 @@ cp .env.example .env
 pnpm build
 
 # 4. Start the server
-pnpm --filter @zero-agent/server dev
+pnpm --filter @pip/server dev
 
 # 5. Connect to Xero
 # Visit http://localhost:3000/auth/xero and authorize
@@ -130,4 +137,4 @@ MIT License
 
 ---
 
-**Last Updated**: 2025-11-27
+**Last Updated**: 2025-11-29

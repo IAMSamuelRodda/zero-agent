@@ -1,5 +1,5 @@
 {
-  "name": "@zero-agent/oauth-server",
+  "name": "@pip/oauth-server",
   "version": "0.1.0",
   "description": "OAuth 2.0 server for Xero integration (local testing)",
   "type": "module",
@@ -10,7 +10,7 @@
     "start": "cd ../.. && node packages/oauth-server/dist/index.js"
   },
   "dependencies": {
-    "@zero-agent/core": "workspace:*",
+    "@pip/core": "workspace:*",
     "express": "^4.18.2",
     "dotenv": "^16.3.1"
   },

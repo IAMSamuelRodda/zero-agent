@@ -5,7 +5,7 @@
  * Uses the database abstraction layer (SQLite, DynamoDB, or PostgreSQL)
  */
 
-import type { DatabaseProvider, Milestone } from '@zero-agent/core';
+import type { DatabaseProvider, Milestone } from '@pip/core';
 import type { CoreMemory, ExtendedMemory } from '../types.js';
 
 export class MemoryManager {

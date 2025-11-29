@@ -70,13 +70,13 @@ const invoiceTools = await loadToolsForCategory('invoices'); // 5,000 tokens
 **Example**:
 ```typescript
 // ❌ BAD: Monolithic server
-@zero-agent/everything-server
+@pip/everything-server
   - invoices, bank-transactions, reporting, expenses, contacts, inventory...
 
 // ✅ GOOD: Domain-specific servers
-@zero-agent/invoice-server      // Only invoice operations
-@zero-agent/reporting-server    // Only reporting tools
-@zero-agent/banking-server      // Only bank transactions
+@pip/invoice-server      // Only invoice operations
+@pip/reporting-server    // Only reporting tools
+@pip/banking-server      // Only bank transactions
 ```
 
 ### 3. Workflow-Oriented Tools

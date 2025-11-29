@@ -14,7 +14,7 @@
 
 ### 2. LLM Abstraction Layer - COMPLETE ✅
 
-**Package Created**: `@zero-agent/core`
+**Package Created**: `@pip/core`
 
 **Features Implemented**:
 - ✅ Provider-agnostic interface (works with ANY LLM)
@@ -72,9 +72,9 @@ examples/
 ### 4. LLM Integration into Agent Orchestrator ✅
 
 **Package Integration**:
-- ✅ Updated `packages/agent-core/package.json` to use `@zero-agent/core`
+- ✅ Updated `packages/agent-core/package.json` to use `@pip/core`
 - ✅ Removed direct `@anthropic-ai/sdk` dependency (now abstracted)
-- ✅ Added workspace dependency: `"@zero-agent/core": "workspace:*"`
+- ✅ Added workspace dependency: `"@pip/core": "workspace:*"`
 
 **Orchestrator Implementation**:
 - ✅ Integrated LLM provider initialization in AgentOrchestrator constructor
@@ -135,7 +135,7 @@ interface LLMProvider {
 ### Usage Example
 
 ```typescript
-import { createLLMProvider } from "@zero-agent/core";
+import { createLLMProvider } from "@pip/core";
 
 // Anthropic
 const provider = await createLLMProvider({
@@ -215,7 +215,7 @@ console.log(`Cost: $${response.usage.costUsd}`);
 - STATUS.md (updated with integration progress)
 - SESSION_SUMMARY.md (documented orchestrator integration)
 - VISION.md (updated with Agent Zero branding)
-- packages/agent-core/package.json (added @zero-agent/core dependency)
+- packages/agent-core/package.json (added @pip/core dependency)
 - packages/agent-core/src/orchestrator.ts (integrated LLM provider)
 - terraform/variables.tf (Sydney region default)
 - terraform/README.md (region selection guide)

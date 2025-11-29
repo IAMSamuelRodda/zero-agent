@@ -1,8 +1,8 @@
 {
-  "name": "zero-agent",
-  "version": "0.1.0",
+  "name": "pip",
+  "version": "0.2.0",
   "private": true,
-  "description": "Claude Code-like agent for Xero accounting using Claude Agent SDK and MCP",
+  "description": "Pip - AI bookkeeping assistant for Xero accounting",
   "workspaces": [
     "packages/*",
     "functions/*"
@@ -10,16 +10,16 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "build:lambda": "pnpm --filter '@zero-agent/lambda-*' run build",
+    "build:lambda": "pnpm --filter '@pip/lambda-*' run build",
     "test": "turbo run test",
     "lint": "turbo run lint",
     "clean": "turbo run clean && rm -rf node_modules",
     "deploy:dev": "cd terraform && terraform workspace select dev && terraform apply",
     "chat": "tsx examples/chat.ts",
     "admin": "tsx examples/admin.ts",
-    "server": "pnpm --filter @zero-agent/server run dev",
-    "server:build": "pnpm --filter @zero-agent/server run build",
-    "server:start": "pnpm --filter @zero-agent/server run start"
+    "server": "pnpm --filter @pip/server run dev",
+    "server:build": "pnpm --filter @pip/server run build",
+    "server:start": "pnpm --filter @pip/server run start"
   },
   "devDependencies": {
     "dotenv": "^17.2.3",

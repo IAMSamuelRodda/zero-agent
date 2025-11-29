@@ -2,7 +2,7 @@
  * Type definitions for agent core
  */
 
-// Re-export database types from @zero-agent/core
+// Re-export database types from @pip/core
 export type {
   Session,
   Message,
@@ -10,7 +10,7 @@ export type {
   ExtendedMemory,
   Milestone,
   OAuthTokens,
-} from '@zero-agent/core';
+} from '@pip/core';
 
 // Agent-specific request/response types
 export interface AgentRequest {

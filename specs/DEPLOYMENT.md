@@ -70,7 +70,7 @@ XERO_REDIRECT_URI=https://yourdomain.com/auth/xero/callback
 NODE_ENV=production
 PORT=3000
 DATABASE_PROVIDER=sqlite
-DATABASE_PATH=/app/data/zero-agent.db
+DATABASE_PATH=/app/data/pip.db
 EOF
 
 # Secure the file
@@ -140,7 +140,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 mkdir -p $BACKUP_DIR
 
 # Copy database from container
-docker cp zero-agent:/app/data/zero-agent.db "$BACKUP_DIR/zero-agent_$TIMESTAMP.db"
+docker cp zero-agent:/app/data/pip.db "$BACKUP_DIR/zero-agent_$TIMESTAMP.db"
 
 # Keep only last 7 days
 find $BACKUP_DIR -name "zero-agent_*.db" -mtime +7 -delete

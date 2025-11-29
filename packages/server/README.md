@@ -1,4 +1,4 @@
-# @zero-agent/server
+# @pip/server
 
 Unified HTTP server for Zero Agent - designed for VPS deployment.
 
@@ -123,14 +123,14 @@ zero-agent.example.com {
 │  └──────────────────────────────────────────────┘  │
 │                         │                           │
 │  ┌──────────────────────▼──────────────────────┐  │
-│  │  @zero-agent/agent-core                      │  │
+│  │  @pip/agent-core                      │  │
 │  │  - AgentOrchestrator                         │  │
 │  │  - Xero tools (direct function calls)        │  │
 │  │  - Session/Memory managers                   │  │
 │  └──────────────────────────────────────────────┘  │
 │                         │                           │
 │  ┌──────────────────────▼──────────────────────┐  │
-│  │  @zero-agent/core                            │  │
+│  │  @pip/core                            │  │
 │  │  - LLM Provider (Anthropic/Ollama)           │  │
 │  │  - Database Provider (SQLite/DynamoDB)       │  │
 │  └──────────────────────────────────────────────┘  │

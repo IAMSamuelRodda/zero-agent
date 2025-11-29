@@ -1,5 +1,5 @@
 {
-  "name": "@zero-agent/agent-core",
+  "name": "@pip/agent-core",
   "version": "0.1.0",
   "description": "Claude Agent SDK orchestrator for Zero Agent",
   "type": "module",
@@ -19,7 +19,7 @@
     "xero"
   ],
   "dependencies": {
-    "@zero-agent/core": "workspace:*",
+    "@pip/core": "workspace:*",
     "@anthropic-ai/claude-agent-sdk": "^0.1.37",
     "@aws-sdk/client-lambda": "^3.700.0",
     "@aws-sdk/client-dynamodb": "^3.700.0",

@@ -6,7 +6,7 @@
  */
 
 import { XeroClient } from "xero-node";
-import { createDatabaseProvider, type OAuthTokens, type DatabaseProvider } from "@zero-agent/core";
+import { createDatabaseProvider, type OAuthTokens, type DatabaseProvider } from "@pip/core";
 
 // Xero OAuth configuration
 const XERO_TOKEN_URL = "https://identity.xero.com/connect/token";

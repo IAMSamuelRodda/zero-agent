@@ -9,7 +9,7 @@ import {
   createDatabaseProviderFromEnv,
   type LLMProvider,
   type DatabaseProvider,
-} from '@zero-agent/core';
+} from '@pip/core';
 import { SessionManager } from './session/manager.js';
 import { MemoryManager } from './memory/manager.js';
 import { XeroClient } from './xero/client.js';

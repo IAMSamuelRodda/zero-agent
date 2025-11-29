@@ -5,7 +5,7 @@
  */
 
 import { Router } from 'express';
-import type { DatabaseProvider } from '@zero-agent/core';
+import type { DatabaseProvider } from '@pip/core';
 
 export function createHealthRoutes(db: DatabaseProvider): Router {
   const router = Router();

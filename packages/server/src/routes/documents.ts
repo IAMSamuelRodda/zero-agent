@@ -9,7 +9,7 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
-import type { DatabaseProvider } from '@zero-agent/core';
+import type { DatabaseProvider } from '@pip/core';
 
 // Configure multer for file uploads (memory storage)
 const upload = multer({

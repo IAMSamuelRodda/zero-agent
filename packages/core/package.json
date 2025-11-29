@@ -1,5 +1,5 @@
 {
-  "name": "@zero-agent/core",
+  "name": "@pip/core",
   "version": "0.1.0",
   "description": "Core abstractions for LLM providers and database backends (Zero Agent)",
   "type": "module",

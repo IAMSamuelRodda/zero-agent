@@ -1,4 +1,4 @@
-# Zero Agent - Architecture
+# Pip - Architecture
 
 > **Purpose**: Technical reference for system design, database schema, and architectural decisions
 > **Lifecycle**: Living (update as architecture evolves)
@@ -168,8 +168,8 @@ CREATE INDEX idx_extended_memory_user ON extended_memory(user_id);
 ```
 
 ### Database Location
-- **Development**: `./data/zero-agent.db`
-- **Production (Docker)**: `/app/data/zero-agent.db` (mounted volume)
+- **Development**: `./data/pip.db`
+- **Production (Docker)**: `/app/data/pip.db` (mounted volume)
 
 ### Backup Strategy
 - Daily automated backups via cron at 3am UTC

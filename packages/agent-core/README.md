@@ -79,7 +79,7 @@ pnpm test
 ## Usage
 
 ```typescript
-import { AgentOrchestrator } from '@zero-agent/agent-core';
+import { AgentOrchestrator } from '@pip/agent-core';
 
 const orchestrator = new AgentOrchestrator();
 

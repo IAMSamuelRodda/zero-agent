@@ -6,8 +6,8 @@
  */
 
 import { Router } from 'express';
-import { AgentOrchestrator } from '@zero-agent/agent-core';
-import type { DatabaseProvider } from '@zero-agent/core';
+import { AgentOrchestrator } from '@pip/agent-core';
+import type { DatabaseProvider } from '@pip/core';
 
 export function createChatRoutes(db: DatabaseProvider): Router {
   const router = Router();

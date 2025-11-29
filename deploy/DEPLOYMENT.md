@@ -99,9 +99,9 @@ sudo chown zero-agent:zero-agent /opt/zero-agent
 cd /opt/zero-agent
 sudo -u zero-agent git clone https://github.com/IAMSamuelRodda/zero-agent.git .
 sudo -u zero-agent pnpm install
-sudo -u zero-agent pnpm --filter @zero-agent/core run build
-sudo -u zero-agent pnpm --filter @zero-agent/agent-core run build
-sudo -u zero-agent pnpm --filter @zero-agent/server run build
+sudo -u zero-agent pnpm --filter @pip/core run build
+sudo -u zero-agent pnpm --filter @pip/agent-core run build
+sudo -u zero-agent pnpm --filter @pip/server run build
 ```
 
 ### 5. Configure environment
@@ -207,9 +207,9 @@ docker compose up -d
 cd /opt/zero-agent
 git pull
 pnpm install
-pnpm --filter @zero-agent/core run build
-pnpm --filter @zero-agent/agent-core run build
-pnpm --filter @zero-agent/server run build
+pnpm --filter @pip/core run build
+pnpm --filter @pip/agent-core run build
+pnpm --filter @pip/server run build
 sudo systemctl restart zero-agent
 ```
 
@@ -221,18 +221,18 @@ sudo systemctl restart zero-agent
 
 ```bash
 # Docker
-docker compose exec zero-agent cp /app/data/zero-agent.db /app/data/backup-$(date +%Y%m%d).db
+docker compose exec zero-agent cp /app/data/pip.db /app/data/backup-$(date +%Y%m%d).db
 docker cp zero-agent:/app/data/backup-*.db ./backups/
 
 # Manual
-cp /opt/zero-agent/data/zero-agent.db ~/backups/zero-agent-$(date +%Y%m%d).db
+cp /opt/zero-agent/data/pip.db ~/backups/zero-agent-$(date +%Y%m%d).db
 ```
 
 ### Automated Backups (cron)
 
 ```bash
 # Add to crontab: crontab -e
-0 2 * * * cp /opt/zero-agent/data/zero-agent.db /opt/zero-agent/backups/zero-agent-$(date +\%Y\%m\%d).db
+0 2 * * * cp /opt/zero-agent/data/pip.db /opt/zero-agent/backups/zero-agent-$(date +\%Y\%m\%d).db
 ```
 
 ---
@@ -303,7 +303,7 @@ sudo journalctl -u caddy -f
 
 2. Reset database (warning: deletes all data):
    ```bash
-   rm /opt/zero-agent/data/zero-agent.db
+   rm /opt/zero-agent/data/pip.db
    sudo systemctl restart zero-agent
    ```
 

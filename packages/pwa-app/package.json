@@ -1,5 +1,5 @@
 {
-  "name": "@zero-agent/pwa-app",
+  "name": "@pip/pwa-app",
   "version": "0.1.0",
   "description": "Progressive Web App for Zero Agent",
   "type": "module",

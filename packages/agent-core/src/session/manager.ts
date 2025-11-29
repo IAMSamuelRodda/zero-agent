@@ -4,7 +4,7 @@
  * Uses the database abstraction layer (SQLite, DynamoDB, or PostgreSQL)
  */
 
-import type { DatabaseProvider } from '@zero-agent/core';
+import type { DatabaseProvider } from '@pip/core';
 import type { Session } from '../types.js';
 
 export class SessionManager {

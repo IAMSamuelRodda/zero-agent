@@ -152,7 +152,7 @@ Express route → AgentOrchestrator → XeroTools (direct) → Xero API
 
 ### 2. DynamoDB → SQLite
 
-**Already Implemented!** The `@zero-agent/core` package has:
+**Already Implemented!** The `@pip/core` package has:
 - `packages/core/src/database/providers/sqlite.ts` - Full SQLite provider
 - `packages/core/src/database/providers/dynamodb.ts` - DynamoDB provider
 
@@ -248,7 +248,7 @@ packages/server/
 
 ```typescript
 import { Router } from 'express';
-import { AgentOrchestrator } from '@zero-agent/agent-core';
+import { AgentOrchestrator } from '@pip/agent-core';
 
 const router = Router();
 const orchestrator = new AgentOrchestrator();

@@ -41,7 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **BREAKING**: Project renamed from "Xero Agent" to "Zero Agent"
-  - All package names updated: `@xero-agent/*` → `@zero-agent/*`
+  - All package names updated: `@xero-agent/*` → `@pip/*`
   - All import statements and dependencies updated
   - All documentation updated (README, ARCHITECTURE, CLAUDE, STATUS)
 - **Tool Calling Approach**: Switched from JSON parsing to native Anthropic tool use

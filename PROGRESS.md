@@ -1,4 +1,4 @@
-# Zero Agent (Pip) - Progress Tracking
+# Pip - Progress Tracking
 
 > **Purpose**: Detailed project tracking with epics, features, and tasks from BLUEPRINT.yaml
 > **Lifecycle**: Living (update on task completion, status changes, or blocking issues)

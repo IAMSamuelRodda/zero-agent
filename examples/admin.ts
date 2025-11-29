@@ -9,7 +9,7 @@
  *   pnpm admin list-users           # List all users
  */
 
-import { createDatabaseProvider } from '@zero-agent/core';
+import { createDatabaseProvider } from '@pip/core';
 import { hashPassword } from '../packages/server/src/services/auth.js';
 
 // Generate random invite code

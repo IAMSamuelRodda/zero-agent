@@ -19,8 +19,8 @@ import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { createDatabaseProviderFromEnv } from '@zero-agent/core';
-import type { DatabaseProvider } from '@zero-agent/core';
+import { createDatabaseProviderFromEnv } from '@pip/core';
+import type { DatabaseProvider } from '@pip/core';
 
 import { createChatRoutes } from './routes/chat.js';
 import { createAuthRoutes } from './routes/auth.js';

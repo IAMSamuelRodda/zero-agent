@@ -9,8 +9,8 @@
 
 import express from "express";
 import { config } from "dotenv";
-import { createDatabaseProviderFromEnv } from "@zero-agent/core";
-import type { DatabaseProvider, OAuthTokens } from "@zero-agent/core";
+import { createDatabaseProviderFromEnv } from "@pip/core";
+import type { DatabaseProvider, OAuthTokens } from "@pip/core";
 
 // Xero OAuth token response type
 interface XeroTokenResponse {

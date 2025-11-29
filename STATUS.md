@@ -1,4 +1,4 @@
-# Project Status
+# Pip - Project Status
 
 > **Purpose**: Current work, active bugs, and recent changes (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
@@ -61,7 +61,7 @@ Status: Pending validation at Thursday demo
 **After name finalized**:
 - [ ] Register chosen domain (.com.au)
 - [ ] Rename repo: `zero-agent` → `pip` or `askpip`
-- [ ] Update packages: `@zero-agent/*` → `@askpip/*`
+- [ ] Update packages: `@pip/*` → `@askpip/*`
 - [ ] Update PWA branding, copy, UI
 - [ ] Update Xero app name in developer portal
 - [ ] Update VISION.md, README.md, all docs
@@ -264,12 +264,12 @@ Status: Pending validation at Thursday demo
   - ✅ Factory pattern for easy provider creation
   - ✅ Usage tracking and cost calculation
   - ✅ Streaming support
-  - ✅ Built and compiled successfully (`@zero-agent/core` package)
+  - ✅ Built and compiled successfully (`@pip/core` package)
   - ✅ Example test script created
   - ✅ Tested with Anthropic API (cost: $0.000053 per test)
   - ✅ Secured API key in .env file (600 permissions)
 - ✅ **LLM Integration into Agent Orchestrator COMPLETE**:
-  - ✅ Updated agent-core package.json to use `@zero-agent/core`
+  - ✅ Updated agent-core package.json to use `@pip/core`
   - ✅ Removed direct Anthropic SDK dependency (now abstracted)
   - ✅ Integrated LLM provider into AgentOrchestrator class
   - ✅ Implemented message processing with conversation context
@@ -291,7 +291,7 @@ Status: Pending validation at Thursday demo
   - ✅ Updated SessionManager to use database abstraction
   - ✅ Updated MemoryManager to use database abstraction
   - ✅ Integrated into AgentOrchestrator with async initialization
-  - ✅ Removed duplicate types (re-export from @zero-agent/core)
+  - ✅ Removed duplicate types (re-export from @pip/core)
   - ✅ Tested end-to-end with SQLite (conversation persistence working)
   - ✅ Verified conversation history retrieval (4 messages saved correctly)
 - ✅ **Xero OAuth Integration COMPLETE**:

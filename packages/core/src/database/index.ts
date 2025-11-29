@@ -7,7 +7,7 @@
  * - PostgreSQL (coming soon)
  *
  * @example
- * import { createDatabaseProvider } from "@zero-agent/core";
+ * import { createDatabaseProvider } from "@pip/core";
  *
  * const db = await createDatabaseProvider({
  *   provider: "sqlite",

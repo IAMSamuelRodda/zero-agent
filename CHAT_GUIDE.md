@@ -67,7 +67,7 @@ Zero Agent can answer questions about:
 ## Technical Details
 
 - **LLM Provider**: Uses Anthropic Claude (configurable in .env)
-- **Database**: SQLite for local development (see ./data/zero-agent.db)
+- **Database**: SQLite for local development (see ./data/pip.db)
 - **OAuth**: Connects to Xero via OAuth 2.0 (tokens stored securely)
 - **Session Persistence**: Conversations are saved and can be resumed
 
@@ -76,7 +76,7 @@ Zero Agent can answer questions about:
 ### "No Xero authentication found"
 You need to connect to Xero first. Run the OAuth server:
 ```bash
-pnpm --filter @zero-agent/oauth-server dev
+pnpm --filter @pip/oauth-server dev
 ```
 Then visit http://localhost:3000/auth/xero to connect.
 
@@ -84,7 +84,7 @@ Then visit http://localhost:3000/auth/xero to connect.
 Make sure the OAuth server is running in a separate terminal.
 
 ### "Database not found"
-The database will be created automatically in `./data/zero-agent.db` on first run.
+The database will be created automatically in `./data/pip.db` on first run.
 
 ## Configuration
 
