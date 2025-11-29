@@ -34,7 +34,7 @@
 ### Bugs
 
 #### issue_bug_001: [P0 SECURITY] Token URL Allows User Impersonation
-- **Status**: 🟢 Resolved
+- **Status**: 🟢 Resolved & Deployed
 - **Priority**: P0 (CRITICAL)
 - **Component**: `packages/mcp-remote-server` (/login endpoint)
 - **Description**: The /login page generated JWT tokens for ANY email without verification.
@@ -43,27 +43,29 @@
   - [x] OAuth 2.0 flow now verifies password against database (bcrypt)
   - [x] Added OAuth discovery endpoint (/.well-known/oauth-authorization-server)
   - [x] User lookup via getUserByEmail() before allowing auth
-- **Notes**: Deploy required to apply fix
+  - [x] SSE endpoint returns 401 without Bearer token (triggers OAuth)
+  - [x] Deployed to production
+- **Notes**: Fix deployed and verified
 
 #### issue_bug_002: Claude.ai OAuth Integration Not Working
-- **Status**: 🔴 Open
+- **Status**: 🟡 In Progress (Testing)
 - **Priority**: P1
 - **Component**: `packages/mcp-remote-server` (OAuth flow)
 - **Description**: Claude.ai custom connector with OAuth credentials doesn't connect properly
-- **Current State**:
-  - OAuth 2.0 endpoints exist (/oauth/authorize, /oauth/token)
-  - Claude.ai has OAuth Client ID/Secret fields in "Advanced settings"
-  - Missing: OAuth discovery endpoint (/.well-known/oauth-authorization-server)
-- **Configuration to Test**:
+- **Progress** (2025-11-29):
+  - [x] Added OAuth discovery endpoint (/.well-known/oauth-authorization-server)
+  - [x] SSE returns 401 to trigger OAuth flow
+  - [x] Added tabbed Sign In / Sign Up interface
+  - [x] Sign Up requires one-time invite code (beta access)
+  - [x] Unified OAuth flow with Xero connection
+  - [x] Password verification via bcrypt
+  - [ ] Complete end-to-end test with Claude.ai
+  - [ ] Verify Xero tools work via Claude
+- **Configuration**:
   - URL: `https://mcp.pip.arcforge.au/sse`
   - Client ID: `pip-mcp-client`
   - Client Secret: `pip-mcp-secret-change-in-production`
-- **Acceptance Criteria**:
-  - [ ] Add OAuth discovery endpoint
-  - [ ] Test OAuth flow end-to-end with Claude.ai
-  - [ ] User clicks Connect → redirects to login → authenticates → connects
-  - [ ] Update /login page or remove it entirely
-- **Notes**: OAuth 2.0 code exists but may need discovery metadata for Claude.ai to find endpoints
+- **Notes**: OAuth flow triggers correctly, now testing full sign-up → Xero OAuth → connection flow
 
 ### Improvements
 

@@ -30,9 +30,12 @@
 |------|--------|-------|
 | MCP server deployed | ✅ Done | https://mcp.pip.arcforge.au |
 | SSE endpoint working | ✅ Done | /sse with lazy-loading |
-| OAuth 2.0 flow | ✅ Done | Authorization Code flow |
-| Login page (token URL) | ✅ Done | /login generates personal URL |
-| Test with Claude.ai | 🔵 Pending | Need to validate end-to-end |
+| OAuth 2.0 flow | ✅ Done | Authorization Code flow with PKCE |
+| OAuth discovery endpoint | ✅ Done | /.well-known/oauth-authorization-server |
+| Sign In + Sign Up page | ✅ Done | Tabbed UI with invite code validation |
+| Password verification | ✅ Done | bcrypt against database |
+| Unified Xero OAuth | ✅ Done | Redirects to Xero if not connected |
+| Test with Claude.ai | 🔵 Testing | OAuth flow triggering correctly |
 | Xero tools via Claude | 🔵 Pending | Verify all 10 tools work |
 | Document connection flow | ⚪ Pending | User guide for Claude.ai setup |
 
@@ -74,10 +77,16 @@
 
 ### MCP Server Details
 
-- **SSE Endpoint**: https://mcp.pip.arcforge.au/sse
+- **SSE Endpoint**: https://mcp.pip.arcforge.au/sse (requires Bearer token)
 - **Health Check**: https://mcp.pip.arcforge.au/health
-- **Login Page**: https://mcp.pip.arcforge.au/login
-- **OAuth Authorize**: https://mcp.pip.arcforge.au/oauth/authorize
+- **OAuth Discovery**: https://mcp.pip.arcforge.au/.well-known/oauth-authorization-server
+- **OAuth Authorize**: https://mcp.pip.arcforge.au/oauth/authorize (Sign In + Sign Up)
+- **OAuth Token**: https://mcp.pip.arcforge.au/oauth/token
+
+**OAuth Configuration** (for Claude.ai custom connector):
+- URL: `https://mcp.pip.arcforge.au/sse`
+- Client ID: `pip-mcp-client`
+- Client Secret: `pip-mcp-secret-change-in-production`
 
 **Architecture**: Lazy-loading with 2 meta-tools (85% context reduction)
 
@@ -142,6 +151,17 @@ See **ISSUES.md** for detailed tracking.
 
 ## Recent Achievements
 
+### 2025-11-29: OAuth Security Hardening & Sign-Up Flow
+- **SECURITY**: Removed insecure /login endpoint (P0 vulnerability)
+- Added OAuth discovery endpoint (/.well-known/oauth-authorization-server)
+- Implemented bcrypt password verification
+- Created unified OAuth flow with Xero connection
+- Added Sign In + Sign Up tabbed interface
+- Sign Up requires one-time invite code (beta access control)
+- SSE endpoint now requires authentication (returns 401 to trigger OAuth)
+- Added VPS SSH details to CLAUDE.md
+- Created docs/INVITE-CODES.md for beta code tracking
+
 ### 2025-11-29: Repo Cleanup & Documentation
 - Fixed CONTRIBUTING.md with proper workflow guide
 - Organized docs/ folder (archived outdated files)
@@ -157,7 +177,6 @@ See **ISSUES.md** for detailed tracking.
 - Deployed mcp.pip.arcforge.au
 - Implemented lazy-loading (85% context reduction)
 - Added OAuth 2.0 for Claude.ai integration
-- Created login page for token URL generation
 
 ### 2025-11-28: User Authentication
 - Email/password auth with invite codes
