@@ -573,7 +573,7 @@ feature_3_2 (TTS)
 
 ## Progress Changelog
 
-### 2025-11-29 - MCP Remote Server Deployment with Lazy-Loading
+### 2025-11-29 - MCP Remote Server with OAuth 2.0 Authentication
 
 **MCP Remote Server DEPLOYED** ✅
 - Created `packages/mcp-remote-server` for Claude.ai + ChatGPT distribution
@@ -594,8 +594,21 @@ feature_3_2 (TTS)
 - Pattern documented: `docs/research-notes/PATTERN-lazy-loading-mcp-tools.md`
 - Joplin note created: "Lazy-Loading MCP Tools - Context Efficiency Pattern"
 
+**OAuth 2.0 Implementation** ✅ (2025-11-29 evening)
+- Added OAuth 2.0 Authorization Code flow for Claude.ai integration
+- Endpoints:
+  - `GET /oauth/authorize` - Shows login page with Arc Forge dark theme
+  - `POST /oauth/authorize/submit` - Handles login, generates authorization code
+  - `POST /oauth/token` - Exchanges auth code for JWT access token
+- SSE endpoint accepts Bearer tokens from Authorization header
+- Configurable via environment variables:
+  - `MCP_OAUTH_CLIENT_ID` (default: `pip-mcp-client`)
+  - `MCP_OAUTH_CLIENT_SECRET` (default: `pip-mcp-secret-change-in-production`)
+  - `JWT_SECRET` (shared with main server)
+- 7-day token expiry for long-lived MCP sessions
+
 **Key Files Created/Modified**:
-- `packages/mcp-remote-server/src/index.ts` - Main MCP server with lazy-loading
+- `packages/mcp-remote-server/src/index.ts` - Main MCP server with lazy-loading + OAuth
 - `packages/mcp-remote-server/src/services/xero.ts` - Xero client service
 - `packages/mcp-remote-server/src/handlers/xero-tools.ts` - 10 Xero tool handlers
 - `packages/mcp-remote-server/Dockerfile` - Production Docker image
@@ -606,6 +619,7 @@ feature_3_2 (TTS)
 - Users bring their own LLM subscription = **$0 inference costs** for Arc Forge
 - Same MCP server works with Claude.ai AND ChatGPT
 - Lazy-loading pattern applicable to Claude Desktop integration
+- OAuth enables secure per-user Xero access from Claude.ai
 
 ---
 

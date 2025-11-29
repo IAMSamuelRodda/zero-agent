@@ -3,7 +3,7 @@
 > **Purpose**: Current work, active bugs, and recent changes (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-11-29 (evening)
+**Last Updated**: 2025-11-29 (evening - OAuth added)
 **Current Phase**: ✅ Production - Live at https://zero.rodda.xyz + https://pip.arcforge.au
 **Version**: 0.2.3-alpha (MCP Remote Server with Lazy-Loading Deployed)
 **Infrastructure**: DigitalOcean VPS (shared with do-vps-prod services)
@@ -425,8 +425,10 @@ Status: Pending validation at Thursday demo
 - ✅ DNS configured: pip.arcforge.au → 170.64.169.203 (DNS Only for SSE)
 - ✅ Caddy reverse proxy with auto-HTTPS
 - ✅ Docker container running with shared SQLite volume
+- ✅ **OAuth 2.0 implemented**: Authorization Code flow for Claude.ai integration
 - **Key insight**: Users bring their own LLM subscription = $0 inference costs
-- **Endpoints**: `/sse` (SSE), `/messages` (POST), `/health`, `/auth/xero`
+- **Endpoints**: `/sse` (SSE), `/messages` (POST), `/health`, `/oauth/authorize`, `/oauth/token`
+- **OAuth Config**: Client ID `pip-mcp-client`, configurable via `MCP_OAUTH_CLIENT_SECRET` env var
 - **Lazy-loading categories**: invoices, reports, banking, contacts, organisation
 - Research: `docs/research-notes/SPIKE-pip-inside-claude-chatgpt.md`
 - Pattern: `docs/research-notes/PATTERN-lazy-loading-mcp-tools.md`

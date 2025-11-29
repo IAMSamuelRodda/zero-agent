@@ -14,6 +14,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import {
@@ -501,8 +502,22 @@ app.get("/health", (req: Request, res: Response) => {
 app.get("/sse", async (req: Request, res: Response) => {
   console.log("New SSE connection request");
 
-  // Extract auth token from query parameter
-  const token = req.query.token as string | undefined;
+  // Extract auth token from Authorization header (Bearer token) or query parameter
+  let token: string | undefined;
+
+  // Check Authorization header first (OAuth flow)
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7);
+    console.log("Token from Authorization header");
+  } else {
+    // Fallback to query parameter
+    token = req.query.token as string | undefined;
+    if (token) {
+      console.log("Token from query parameter");
+    }
+  }
+
   let userId: string | undefined;
 
   if (token) {
@@ -595,6 +610,267 @@ app.get("/auth/xero/callback", async (req: Request, res: Response) => {
   res.send("Xero connected successfully! You can close this window.");
 });
 
+// ===========================================
+// OAuth 2.0 for Claude.ai / ChatGPT Integration
+// ===========================================
+
+// OAuth configuration
+const OAUTH_CLIENT_ID = process.env.MCP_OAUTH_CLIENT_ID || "pip-mcp-client";
+const OAUTH_CLIENT_SECRET = process.env.MCP_OAUTH_CLIENT_SECRET || "pip-mcp-secret-change-in-production";
+
+// Store authorization codes temporarily (in production, use Redis or database)
+const authorizationCodes = new Map<string, { userId: string; redirectUri: string; expiresAt: number }>();
+
+/**
+ * OAuth Authorization Endpoint
+ * Claude.ai redirects users here to authenticate
+ */
+app.get("/oauth/authorize", (req: Request, res: Response) => {
+  const { client_id, redirect_uri, response_type, state } = req.query;
+
+  console.log("OAuth authorize request:", { client_id, redirect_uri, response_type, state });
+
+  // Validate client_id
+  if (client_id !== OAUTH_CLIENT_ID) {
+    res.status(400).send("Invalid client_id");
+    return;
+  }
+
+  // Validate response_type
+  if (response_type !== "code") {
+    res.status(400).send("Invalid response_type. Only 'code' is supported.");
+    return;
+  }
+
+  // Show login page
+  const loginHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Pip to Claude</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0e14;
+      color: #e6e6e6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: #1a1f29;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #7eb88e;
+      margin-bottom: 0.5rem;
+      font-size: 1.5rem;
+    }
+    p {
+      color: #999;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #ccc;
+      font-size: 0.85rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #0f1419;
+      color: #e6e6e6;
+      font-size: 1rem;
+    }
+    input:focus {
+      outline: none;
+      border-color: #7eb88e;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background: #7eb88e;
+      color: #0a0e14;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    button:hover {
+      background: #6aa87e;
+    }
+    .error {
+      color: #e57373;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .logo span {
+      font-size: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo"><span>🤖</span></div>
+    <h1>Connect Pip to Claude</h1>
+    <p>Sign in with your Pip account to give Claude access to your Xero data.</p>
+    <form id="loginForm" method="POST" action="/oauth/authorize/submit">
+      <input type="hidden" name="redirect_uri" value="${redirect_uri || ""}">
+      <input type="hidden" name="state" value="${state || ""}">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" required placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required placeholder="Your password">
+      </div>
+      <div class="error" id="error"></div>
+      <button type="submit">Connect to Claude</button>
+    </form>
+  </div>
+</body>
+</html>
+  `;
+
+  res.setHeader("Content-Type", "text/html");
+  res.send(loginHtml);
+});
+
+/**
+ * OAuth Authorization Submit
+ * Handles login form submission
+ */
+app.post("/oauth/authorize/submit", express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+  const { email, password, redirect_uri, state } = req.body;
+
+  console.log("OAuth login attempt:", { email, redirect_uri });
+
+  // Validate credentials against main database
+  // For now, we'll use a simple check - in production this should validate against the users table
+  try {
+    const { getDb } = await import("./services/xero.js");
+    const db = await getDb();
+
+    // Check if user exists and has Xero connected
+    // We need to implement user lookup - for now, create a simple flow
+    // that generates a token for any valid-looking email
+
+    // In a real implementation, you'd validate against the users table
+    // For MVP, we'll accept any email and create a session
+
+    if (!email || !email.includes("@")) {
+      res.redirect(`/oauth/authorize?error=invalid_email&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}`);
+      return;
+    }
+
+    // Generate authorization code
+    const code = crypto.randomUUID();
+    const userId = email; // Use email as userId for now
+
+    authorizationCodes.set(code, {
+      userId,
+      redirectUri: redirect_uri,
+      expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+    });
+
+    // Redirect back to Claude.ai with the code
+    const redirectUrl = new URL(redirect_uri);
+    redirectUrl.searchParams.set("code", code);
+    if (state) {
+      redirectUrl.searchParams.set("state", state);
+    }
+
+    console.log("OAuth code generated, redirecting to:", redirectUrl.toString());
+    res.redirect(redirectUrl.toString());
+  } catch (error) {
+    console.error("OAuth login error:", error);
+    res.redirect(`/oauth/authorize?error=server_error&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}`);
+  }
+});
+
+/**
+ * OAuth Token Endpoint
+ * Claude.ai exchanges authorization code for access token
+ */
+app.post("/oauth/token", express.urlencoded({ extended: true }), (req: Request, res: Response) => {
+  const { grant_type, code, redirect_uri, client_id, client_secret } = req.body;
+
+  console.log("OAuth token request:", { grant_type, code, client_id });
+
+  // Validate grant_type
+  if (grant_type !== "authorization_code") {
+    res.status(400).json({ error: "unsupported_grant_type" });
+    return;
+  }
+
+  // Validate client credentials
+  if (client_id !== OAUTH_CLIENT_ID || client_secret !== OAUTH_CLIENT_SECRET) {
+    res.status(401).json({ error: "invalid_client" });
+    return;
+  }
+
+  // Validate authorization code
+  const authCode = authorizationCodes.get(code);
+  if (!authCode) {
+    res.status(400).json({ error: "invalid_grant", error_description: "Authorization code not found" });
+    return;
+  }
+
+  if (authCode.expiresAt < Date.now()) {
+    authorizationCodes.delete(code);
+    res.status(400).json({ error: "invalid_grant", error_description: "Authorization code expired" });
+    return;
+  }
+
+  // Validate redirect_uri matches
+  if (authCode.redirectUri !== redirect_uri) {
+    res.status(400).json({ error: "invalid_grant", error_description: "Redirect URI mismatch" });
+    return;
+  }
+
+  // Delete the used code
+  authorizationCodes.delete(code);
+
+  // Generate access token (JWT)
+  const accessToken = jwt.sign(
+    { userId: authCode.userId, type: "access" },
+    JWT_SECRET,
+    { expiresIn: "7d" } // Long-lived token for MCP
+  );
+
+  // Return token response
+  res.json({
+    access_token: accessToken,
+    token_type: "Bearer",
+    expires_in: 7 * 24 * 60 * 60, // 7 days in seconds
+  });
+
+  console.log("OAuth token issued for user:", authCode.userId);
+});
+
 // Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error("Server error:", err);
@@ -612,14 +888,23 @@ app.listen(PORT, () => {
 ║  Remote MCP server for Claude.ai and ChatGPT integration   ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Endpoints:                                                ║
-║    SSE:      http://localhost:${PORT}/sse                       ║
-║    Messages: http://localhost:${PORT}/messages                  ║
-║    Health:   http://localhost:${PORT}/health                    ║
-║    Xero:     http://localhost:${PORT}/auth/xero                 ║
+║    SSE:       http://localhost:${PORT}/sse                      ║
+║    Messages:  http://localhost:${PORT}/messages                 ║
+║    Health:    http://localhost:${PORT}/health                   ║
+╠════════════════════════════════════════════════════════════╣
+║  OAuth 2.0 Endpoints:                                      ║
+║    Authorize: http://localhost:${PORT}/oauth/authorize          ║
+║    Token:     http://localhost:${PORT}/oauth/token              ║
+╠════════════════════════════════════════════════════════════╣
+║  OAuth Config:                                             ║
+║    Client ID:     ${OAUTH_CLIENT_ID.padEnd(36)}    ║
+║    Client Secret: ${OAUTH_CLIENT_SECRET.substring(0, 20).padEnd(36)}... ║
 ╠════════════════════════════════════════════════════════════╣
 ║  Connect from Claude.ai:                                   ║
 ║    Settings → Connectors → Add Custom Connector            ║
-║    Enter: https://your-domain.com/sse                      ║
+║    URL:           https://your-domain.com/sse              ║
+║    Client ID:     ${OAUTH_CLIENT_ID.padEnd(36)}    ║
+║    Client Secret: [use MCP_OAUTH_CLIENT_SECRET env var]    ║
 ╚════════════════════════════════════════════════════════════╝
   `);
 });
