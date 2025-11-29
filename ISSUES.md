@@ -48,24 +48,26 @@
 - **Notes**: Fix deployed and verified
 
 #### issue_bug_002: Claude.ai OAuth Integration Not Working
-- **Status**: 🟡 In Progress (Testing)
+- **Status**: 🟢 Resolved
 - **Priority**: P1
 - **Component**: `packages/mcp-remote-server` (OAuth flow)
 - **Description**: Claude.ai custom connector with OAuth credentials doesn't connect properly
-- **Progress** (2025-11-29):
+- **Resolution** (2025-11-29):
   - [x] Added OAuth discovery endpoint (/.well-known/oauth-authorization-server)
   - [x] SSE returns 401 to trigger OAuth flow
   - [x] Added tabbed Sign In / Sign Up interface
   - [x] Sign Up requires one-time invite code (beta access)
   - [x] Unified OAuth flow with Xero connection
   - [x] Password verification via bcrypt
-  - [ ] Complete end-to-end test with Claude.ai
-  - [ ] Verify Xero tools work via Claude
+  - [x] Fixed bcrypt ESM import issue
+  - [x] Added MCP callback to Xero app redirect URIs
+  - [x] Complete end-to-end test with Claude.ai ✅
+  - [x] Verify Xero tools work via Claude ✅
 - **Configuration**:
   - URL: `https://mcp.pip.arcforge.au/sse`
   - Client ID: `pip-mcp-client`
   - Client Secret: `pip-mcp-secret-change-in-production`
-- **Notes**: OAuth flow triggers correctly, now testing full sign-up → Xero OAuth → connection flow
+- **Notes**: Full OAuth flow working! User can sign up/in → connect Xero → use tools in Claude.ai
 
 ### Improvements
 
