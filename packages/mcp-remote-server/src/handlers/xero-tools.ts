@@ -430,7 +430,8 @@ export async function getOrganisation(userId: string): Promise<ToolResult> {
 }
 
 /**
- * Get aged receivables
+ * Get aged receivables - who owes you money
+ * Uses invoices endpoint instead of reports API for reliability
  */
 export async function getAgedReceivables(
   userId: string,
@@ -445,51 +446,90 @@ export async function getAgedReceivables(
 
   try {
     const { client, tenantId } = xero;
-    const date = args.date || new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const reportDate = args.date || today.toISOString().split("T")[0];
 
-    const response = await client.accountingApi.getReportAgedReceivablesByContact(
+    // Get all unpaid invoices (AUTHORISED status = approved but not paid)
+    const response = await client.accountingApi.getInvoices(
       tenantId,
-      date
+      undefined, // modifiedAfter
+      'Type=="ACCREC" AND Status=="AUTHORISED"', // where - ACCREC = Accounts Receivable (sales invoices)
+      undefined, // order
+      undefined, // ids
+      undefined, // invoiceNumbers
+      undefined, // contactIDs
+      undefined, // statuses
+      100 // limit
     );
 
-    const report = response.body.reports?.[0];
-    if (!report) {
-      return successResult("No aged receivables data available.");
+    const invoices = response.body.invoices || [];
+
+    if (invoices.length === 0) {
+      return successResult("No outstanding receivables! Nobody owes you money. 🎉");
     }
 
-    const rows = report.rows || [];
-    const contacts: string[] = [];
-    let totalOwed = 0;
+    // Group invoices by contact and calculate aging
+    const contactTotals: Map<string, { name: string; total: number; overdue: number; invoices: number }> = new Map();
 
-    for (const row of rows) {
-      const rowTypeStr = String(row.rowType || "");
-      if (rowTypeStr === "Row" && row.cells) {
-        const name = String(row.cells[0]?.value || "Unknown");
-        const total = parseFloat(String(row.cells[row.cells.length - 1]?.value || "0"));
-        if (total > 0) {
-          contacts.push(`• ${name}: ${formatCurrency(total)}`);
-          totalOwed += total;
-        }
+    for (const invoice of invoices) {
+      const contactName = invoice.contact?.name || "Unknown Contact";
+      const contactId = invoice.contact?.contactID || "unknown";
+      const amountDue = invoice.amountDue || 0;
+
+      if (amountDue <= 0) continue;
+
+      const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : today;
+      const isOverdue = dueDate < today;
+
+      const existing = contactTotals.get(contactId) || { name: contactName, total: 0, overdue: 0, invoices: 0 };
+      existing.total += amountDue;
+      existing.invoices += 1;
+      if (isOverdue) {
+        existing.overdue += amountDue;
       }
+      contactTotals.set(contactId, existing);
     }
 
-    if (contacts.length === 0) {
-      return successResult("No outstanding receivables! 🎉");
+    // Format output
+    const contactLines: string[] = [];
+    let totalOwed = 0;
+    let totalOverdue = 0;
+
+    // Sort by total owed (highest first)
+    const sorted = Array.from(contactTotals.values()).sort((a, b) => b.total - a.total);
+
+    for (const contact of sorted) {
+      totalOwed += contact.total;
+      totalOverdue += contact.overdue;
+
+      let line = `• ${contact.name}: ${formatCurrency(contact.total)}`;
+      if (contact.overdue > 0) {
+        line += ` (${formatCurrency(contact.overdue)} overdue)`;
+      }
+      if (contact.invoices > 1) {
+        line += ` [${contact.invoices} invoices]`;
+      }
+      contactLines.push(line);
     }
 
-    return successResult(
-      `📥 Aged Receivables (as of ${date})\n\n` +
-        `Who owes you money:\n${contacts.join("\n")}\n\n` +
-        `Total Outstanding: ${formatCurrency(totalOwed)}`
-    );
+    let result = `📥 Aged Receivables (as of ${reportDate})\n\n`;
+    result += `Who owes you money:\n${contactLines.join("\n")}\n\n`;
+    result += `Total Outstanding: ${formatCurrency(totalOwed)}`;
+    if (totalOverdue > 0) {
+      result += `\n⚠️ Total Overdue: ${formatCurrency(totalOverdue)}`;
+    }
+
+    return successResult(result);
   } catch (error: any) {
     console.error("Error fetching aged receivables:", error);
-    return errorResult(`Failed to fetch aged receivables: ${error.message}`);
+    const message = error?.response?.body?.Message || error?.message || "Unknown error";
+    return errorResult(`Failed to fetch aged receivables: ${message}`);
   }
 }
 
 /**
- * Get aged payables
+ * Get aged payables - who you owe money to
+ * Uses invoices endpoint instead of reports API for reliability
  */
 export async function getAgedPayables(
   userId: string,
@@ -504,46 +544,84 @@ export async function getAgedPayables(
 
   try {
     const { client, tenantId } = xero;
-    const date = args.date || new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const reportDate = args.date || today.toISOString().split("T")[0];
 
-    const response = await client.accountingApi.getReportAgedPayablesByContact(
+    // Get all unpaid bills (AUTHORISED status = approved but not paid)
+    const response = await client.accountingApi.getInvoices(
       tenantId,
-      date
+      undefined, // modifiedAfter
+      'Type=="ACCPAY" AND Status=="AUTHORISED"', // where - ACCPAY = Accounts Payable (bills)
+      undefined, // order
+      undefined, // ids
+      undefined, // invoiceNumbers
+      undefined, // contactIDs
+      undefined, // statuses
+      100 // limit
     );
 
-    const report = response.body.reports?.[0];
-    if (!report) {
-      return successResult("No aged payables data available.");
+    const invoices = response.body.invoices || [];
+
+    if (invoices.length === 0) {
+      return successResult("No outstanding payables! You don't owe anyone money. 🎉");
     }
 
-    const rows = report.rows || [];
-    const contacts: string[] = [];
-    let totalOwed = 0;
+    // Group bills by contact and calculate aging
+    const contactTotals: Map<string, { name: string; total: number; overdue: number; bills: number }> = new Map();
 
-    for (const row of rows) {
-      const rowTypeStr = String(row.rowType || "");
-      if (rowTypeStr === "Row" && row.cells) {
-        const name = String(row.cells[0]?.value || "Unknown");
-        const total = parseFloat(String(row.cells[row.cells.length - 1]?.value || "0"));
-        if (total > 0) {
-          contacts.push(`• ${name}: ${formatCurrency(total)}`);
-          totalOwed += total;
-        }
+    for (const invoice of invoices) {
+      const contactName = invoice.contact?.name || "Unknown Contact";
+      const contactId = invoice.contact?.contactID || "unknown";
+      const amountDue = invoice.amountDue || 0;
+
+      if (amountDue <= 0) continue;
+
+      const dueDate = invoice.dueDate ? new Date(invoice.dueDate) : today;
+      const isOverdue = dueDate < today;
+
+      const existing = contactTotals.get(contactId) || { name: contactName, total: 0, overdue: 0, bills: 0 };
+      existing.total += amountDue;
+      existing.bills += 1;
+      if (isOverdue) {
+        existing.overdue += amountDue;
       }
+      contactTotals.set(contactId, existing);
     }
 
-    if (contacts.length === 0) {
-      return successResult("No outstanding payables! 🎉");
+    // Format output
+    const contactLines: string[] = [];
+    let totalOwed = 0;
+    let totalOverdue = 0;
+
+    // Sort by total owed (highest first)
+    const sorted = Array.from(contactTotals.values()).sort((a, b) => b.total - a.total);
+
+    for (const contact of sorted) {
+      totalOwed += contact.total;
+      totalOverdue += contact.overdue;
+
+      let line = `• ${contact.name}: ${formatCurrency(contact.total)}`;
+      if (contact.overdue > 0) {
+        line += ` (${formatCurrency(contact.overdue)} overdue)`;
+      }
+      if (contact.bills > 1) {
+        line += ` [${contact.bills} bills]`;
+      }
+      contactLines.push(line);
     }
 
-    return successResult(
-      `📤 Aged Payables (as of ${date})\n\n` +
-        `Who you owe money to:\n${contacts.join("\n")}\n\n` +
-        `Total Outstanding: ${formatCurrency(totalOwed)}`
-    );
+    let result = `📤 Aged Payables (as of ${reportDate})\n\n`;
+    result += `Who you owe money to:\n${contactLines.join("\n")}\n\n`;
+    result += `Total Outstanding: ${formatCurrency(totalOwed)}`;
+    if (totalOverdue > 0) {
+      result += `\n⚠️ Total Overdue: ${formatCurrency(totalOverdue)}`;
+    }
+
+    return successResult(result);
   } catch (error: any) {
     console.error("Error fetching aged payables:", error);
-    return errorResult(`Failed to fetch aged payables: ${error.message}`);
+    const message = error?.response?.body?.Message || error?.message || "Unknown error";
+    return errorResult(`Failed to fetch aged payables: ${message}`);
   }
 }
 
