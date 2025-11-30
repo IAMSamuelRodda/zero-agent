@@ -3,8 +3,8 @@
 > **Purpose**: Current state snapshot (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-11-30 (Night)
-**Current Phase**: MVP Complete - Ready for Beta Users
+**Last Updated**: 2025-12-01
+**Current Phase**: Milestone 2 Planning Complete
 **Version**: 0.3.3
 
 ---
@@ -21,6 +21,7 @@
 | **PWA Frontend** | 🟢 | Live at app.pip.arcforge.au |
 | **Landing Page** | 🟢 | Live at pip.arcforge.au |
 | **Xero Integration** | 🟢 | 10 READ-ONLY tools verified |
+| **Milestone 2** | 🔵 | Blueprint complete, ready to implement |
 
 **Legend**: 🟢 Good | 🟡 Attention | 🔴 Critical | 🔵 In Progress
 
@@ -28,37 +29,42 @@
 
 ## Current Focus
 
-**Objective**: Onboard beta users and gather feedback.
+**Objective**: Implement Milestone 2 - User Experience & Personality (v0.4.0)
 
-### Just Completed (2025-11-30 Late Evening)
+### Just Completed (2025-12-01)
 
-1. **Memory System Fixed (issue_010)** ✅
-   - Option A (mem0) crashed with `SQLITE_CANTOPEN` - mem0ai bug in Docker/Alpine
-   - Option B (native) crashed with `ld-linux-x86-64.so.2` - onnxruntime needs glibc
-   - **Solution**: Removed @xenova/transformers, use text-based search
-   - Memory tools now working with better-sqlite3
-   - Trade-off: Text search vs semantic search (acceptable for MVP)
+1. **Milestone 2 Planning Session** ✅
+   - Full blueprint generated: `specs/BLUEPRINT-project-milestone2-ux-personality-20251201.yaml`
+   - 6 epics, 15 features, 44 tasks (all complexity ≤3.0 after decomposition)
+   - 3 spikes identified and documented
+   - Translated to PROGRESS.md + ISSUES.md
 
-2. **Technical Fixes** ✅
-   - memory-native.ts creates its own tables on init
-   - Embedding code commented out (Alpine/musl incompatible)
-   - Fixed getAllMemories bug (was calling wrong method)
-   - Server starts cleanly without crashes
+2. **Blueprint Highlights**:
+   - Epic 2.1: Memory Architecture Refactor (align with Anthropic's approach)
+   - Epic 2.2: Chat History (vertical tabs sidebar)
+   - Epic 2.3: Projects Feature (isolated context, multi-Xero org)
+   - Epic 2.4: Per-Chat Document Upload (+ icon)
+   - Epic 2.5: Pip's Voice & Personality (Adelaide / Pippin) **CRITICAL**
+   - Epic 2.6: Testing & Documentation
 
-3. **Previous Session** ✅
-   - Claude.ai OAuth and Xero tools fully working
-   - Login page UI fixed (centered, no emoji)
-   - Landing page live
+3. **Spikes Required Before Implementation**:
+   - spike_m2_001: Cross-Project Reference Research (2 days)
+   - spike_m2_002: React.js Refactor Assessment (2 days)
+   - spike_m2_003: Character Voice Methodology Research (3 days)
 
-### Test Results
+### Recommended Sequence
 
-- [x] Memory tools via Claude.ai (`add_memory`, `search_memory`) - **WORKING**
-  - `add_memory`: Stored "I like invoices on Monday" (category: preference)
-  - `search_memory`: Found with 80% relevance for query "invoices Monday"
-- [x] Memory tools via ChatGPT - **WORKING**
-  - Requires meta-tool pattern: `get_tools_in_category` → `execute_tool`
-  - `add_memory`: Stored "I like financial reports on the weekend"
-  - `search_memory`: Found with 80% relevance
+1. **Epic 2.1** (Memory Refactor) - Foundation for all features
+2. **Epic 2.2** (Chat History) - High user value, low risk
+3. **Epic 2.3** (Projects) - Complex, needs careful implementation
+4. **Epic 2.5** (Voice) - CRITICAL for retention, run spikes early
+5. **Epic 2.4** (Document Upload) - Medium priority, spike dependent
+6. **Epic 2.6** (Testing) - Continuous throughout milestone
+
+### Language Rules (User-Facing Content)
+- ❌ NEVER use "AI" (overused marketing hype)
+- ❌ NEVER use "query" (too technical)
+- ✅ Focus on what the tool actually does
 
 ---
 

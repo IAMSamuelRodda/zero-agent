@@ -3,8 +3,8 @@
 > **Purpose**: Detailed project tracking with milestones, epics, features, and tasks
 > **Lifecycle**: Living (update on task completion, status changes)
 
-**Last Updated**: 2025-11-30 (Night)
-**Current Phase**: MVP Complete - Ready for Beta
+**Last Updated**: 2025-12-01
+**Current Phase**: Milestone 2 Planning Complete
 
 ---
 
@@ -378,21 +378,273 @@ Deep research into alternative memory architectures. Key findings:
 
 ---
 
-## Milestone 2: Voice Mode & Premium (Future)
+## Milestone 2: User Experience & Personality (v0.4.0)
+
+**Status**: 🔵 Planning Complete
+**Blueprint**: `specs/BLUEPRINT-project-milestone2-ux-personality-20251201.yaml`
+**Estimated**: 8-10 weeks
+**Tracking**: Document-based (PROGRESS.md + ISSUES.md)
+
+### Overview
+
+| Epic | Priority | Description |
+|------|----------|-------------|
+| 2.1 Memory Refactor | High | Align with Anthropic's MCP Memory Server approach |
+| 2.2 Chat History | High | Persistent conversations with sidebar navigation |
+| 2.3 Projects | High | Isolated context per project/client |
+| 2.4 Document Upload | Medium | Per-chat attachments with + icon |
+| 2.5 Pip's Voice | Critical | Switchable personalities (Adelaide / Pippin) |
+| 2.6 Testing & Docs | Medium | Integration testing and documentation |
+
+**Language Rules**: No "AI" (overused hype), no "query" (too technical)
+
+---
+
+### Epic 2.1: Memory Architecture Modernization
 
 **Status**: ⚪ Not Started
-**Timeline**: After MCP distribution validated
+**Priority**: HIGH (foundation for all features)
 
-### Epic 2.1: Voice Mode
+#### feature_2_1_1: Memory Architecture Analysis & Design
+**Complexity**: 2.3/5 | **Est**: 3 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_1_1_1: Review Anthropic's MCP Memory Server | ⚪ | 1.5 | Study ~350 line reference implementation |
+| task_2_1_1_2: Audit current memory-native.ts | ⚪ | 1.7 | Identify bloat and deviations |
+| task_2_1_1_3: Design refactored schema and API | ⚪ | 2.2 | Define migration path |
+
+#### feature_2_1_2: Memory System Refactor Implementation
+**Complexity**: 2.8/5 | **Est**: 5 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_1_2_1: Implement lean memory service | ⚪ | 2.5 | Target ~350 lines, remove bloat |
+| task_2_1_2_2: Create database migration | ⚪ | 2.3 | Schema updates, backward compatibility |
+| task_2_1_2_3: Update MCP tools | ⚪ | 2.0 | add_memory, search_memory, etc. |
+| task_2_1_2_4: Integration testing | ⚪ | 2.2 | Claude.ai + ChatGPT verification |
+
+---
+
+### Epic 2.2: Persistent Chat History
+
+**Status**: ⚪ Not Started
+**Priority**: HIGH (standard user expectation)
+
+#### feature_2_2_1: Chat History Backend Infrastructure
+**Complexity**: 2.5/5 | **Est**: 4 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_2_1_1: Extend sessions table schema | ⚪ | 1.8 | title, preview_text, last_message_at |
+| task_2_2_1_2: Implement chat title auto-generation | ⚪ | 2.5 | LLM generates from first messages |
+| task_2_2_1_3: Create API endpoints | ⚪ | 2.0 | GET /api/chats, GET/:id, DELETE/:id |
+
+#### feature_2_2_2: Chat History UI - Vertical Tabs Sidebar
+**Complexity**: 3.0/5 | **Est**: 5 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_2_2_1: Collapsible sidebar component | ⚪ | 2.8 | Left sidebar, responsive |
+| task_2_2_2_2: Chat list with metadata | ⚪ | 2.2 | Title, preview, timestamp |
+| task_2_2_2_3: New/delete chat actions | ⚪ | 2.0 | Plus icon, delete confirmation |
+| task_2_2_2_4: Chat switching with state | ⚪ | 2.5 | Load chat, restore scroll |
+
+---
+
+### Epic 2.3: Projects Feature - Isolated Context
+
+**Status**: ⚪ Not Started
+**Priority**: HIGH (differentiator)
+
+#### feature_2_3_1: Projects Data Model & Backend
+**Complexity**: 2.8/5 | **Est**: 5 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_3_1_1: Design projects schema | ⚪ | 2.5 | Tables, relationships |
+| task_2_3_1_2: Implement project CRUD | ⚪ | 2.2 | Create, read, update, delete |
+| task_2_3_1_3: Refactor services for isolation | ⚪ | 3.2 | **DECOMPOSED** → 4 subtasks |
+
+**Decomposed: task_2_3_1_3** (was 3.2 → all subtasks ≤2.5):
+
+| Subtask | Status | Complexity | Notes |
+|---------|--------|------------|-------|
+| subtask_2_3_1_3_1: Audit service coupling | ⚪ | 1.8 | Document touchpoints |
+| subtask_2_3_1_3_2: Refactor memory service | ⚪ | 2.5 | Add project_id scoping |
+| subtask_2_3_1_3_3: Refactor session service | ⚪ | 2.3 | Prevent cross-project access |
+| subtask_2_3_1_3_4: Integration testing | ⚪ | 2.0 | Verify isolation |
+
+#### feature_2_3_2: Multi-Xero Organization Support
+**Complexity**: 2.7/5 | **Est**: 4 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_3_2_1: Update oauth_tokens schema | ⚪ | 2.0 | Add project_id FK |
+| task_2_3_2_2: Per-project OAuth flow | ⚪ | 2.8 | Associate tokens with project |
+| task_2_3_2_3: Update XeroClient | ⚪ | 2.5 | Get tokens by project_id |
+
+#### feature_2_3_3: Cross-Project Reference Capability
+**Status**: ⚠️ SPIKE REQUIRED
+**Complexity**: 2.5/5 | **Est**: 3 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_3_3_1: Design cross-project API | ⚪ | 2.8 | **needs_spike** (uncertainty: 4) |
+| task_2_3_3_2: Implement access controls | ⚪ | 2.5 | Read-only cross-project access |
+
+**Spike**: spike_m2_001 (Cross-Project Reference Research) - 2 days
+
+#### feature_2_3_4: Projects UI - Switcher & Management
+**Complexity**: 2.3/5 | **Est**: 4 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_3_4_1: Project switcher dropdown | ⚪ | 2.2 | Header component |
+| task_2_3_4_2: Project settings page | ⚪ | 2.0 | Edit name, Xero status |
+| task_2_3_4_3: Project context indicator | ⚪ | 1.5 | Visual in chat UI |
+
+---
+
+### Epic 2.4: Per-Chat Document Upload
+
+**Status**: ⚪ Not Started (spike-dependent)
+**Priority**: MEDIUM
+
+#### feature_2_4_1: React.js Refactor Assessment (SPIKE)
+**Status**: ⚠️ SPIKE REQUIRED
+**Complexity**: 2.0/5 | **Est**: 2 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_4_1_1: Research PWA file upload patterns | ⚪ | 2.0 | **needs_spike** (uncertainty: 4) |
+| task_2_4_1_2: Evaluate refactor cost vs benefits | ⚪ | 2.0 | **needs_spike** |
+
+**Spike**: spike_m2_002 (React.js Refactor Assessment) - 2 days
+
+#### feature_2_4_2: Document Upload Backend
+**Complexity**: 2.5/5 | **Est**: 4 days | **Depends on**: feature_2_4_1
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_4_2_1: Design session_documents schema | ⚪ | 2.2 | Metadata, storage strategy |
+| task_2_4_2_2: Implement file upload API | ⚪ | 2.8 | Validation, size limits |
+| task_2_4_2_3: Add retrieval/deletion endpoints | ⚪ | 1.8 | GET, DELETE |
+
+#### feature_2_4_3: Document Upload UI Component
+**Complexity**: 2.7/5 | **Est**: 4 days | **Depends on**: feature_2_4_1
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_4_3_1: Plus (+) icon attachment button | ⚪ | 2.5 | File picker, drag-and-drop |
+| task_2_4_3_2: Document preview component | ⚪ | 2.3 | Below chat input, upload progress |
+| task_2_4_3_3: Documents list in sidebar | ⚪ | 2.0 | Download/delete actions |
+
+---
+
+### Epic 2.5: Pip's Voice & Personality System
+
+**Status**: ⚪ Not Started (spike-dependent)
+**Priority**: CRITICAL (retention impact)
+
+#### feature_2_5_1: Character Voice Methodology Research (SPIKE)
+**Status**: ⚠️ SPIKE REQUIRED
+**Complexity**: 2.5/5 | **Est**: 3 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_5_1_1: Analyze literary voice techniques | ⚪ | 2.3 | **needs_spike** - novels, objective description |
+| task_2_5_1_2: Research Grok speech modes | ⚪ | 2.0 | **needs_spike** - Assistant, Motivational, etc. |
+| task_2_5_1_3: Define voice profile schema | ⚪ | 2.8 | **needs_spike** - switchable prompts |
+
+**Spike**: spike_m2_003 (Character Voice Methodology) - 3 days
+
+#### feature_2_5_2: Adelaide Bookkeeper Voice Profile
+**Complexity**: 2.3/5 | **Est**: 3 days | **Depends on**: feature_2_5_1
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_5_2_1: Define Adelaide character profile | ⚪ | 2.2 | Professional, approachable, no jargon |
+| task_2_5_2_2: Create system prompt + test | ⚪ | 2.5 | Invoice, report, troubleshooting scenarios |
+| task_2_5_2_3: Refine based on user testing | ⚪ | 2.0 | Iterate on tone |
+
+#### feature_2_5_3: LOTR Pippin Voice Profile
+**Complexity**: 2.5/5 | **Est**: 3 days | **Depends on**: feature_2_5_1
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_5_3_1: Define Pippin character profile | ⚪ | 2.3 | Fun, endearing, competent |
+| task_2_5_3_2: Create system prompt + test | ⚪ | 2.8 | Balance playfulness with professionalism |
+| task_2_5_3_3: Refine based on user testing | ⚪ | 2.2 | Ensure not undermining trust |
+
+#### feature_2_5_4: Voice Switching Infrastructure
+**Complexity**: 2.2/5 | **Est**: 3 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_5_4_1: Extend user_settings schema | ⚪ | 1.5 | voice_profile field |
+| task_2_5_4_2: Voice loading in AgentOrchestrator | ⚪ | 2.5 | Inject into system prompt |
+| task_2_5_4_3: Mid-chat voice switching | ⚪ | 2.8 | Maintain conversation context |
+
+#### feature_2_5_5: Voice Selector UI
+**Complexity**: 1.8/5 | **Est**: 2 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_5_5_1: Voice selector in settings | ⚪ | 1.8 | Radio buttons/cards |
+| task_2_5_5_2: Quick voice toggle in chat | ⚪ | 2.0 | Icon/dropdown, visual confirm |
+
+---
+
+### Epic 2.6: Testing & Documentation
+
+**Status**: ⚪ Not Started
+**Priority**: MEDIUM (continuous)
+
+#### feature_2_6_1: Integration Testing Suite
+**Complexity**: 2.3/5 | **Est**: 3 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_6_1_1: Test chat history + project switching | ⚪ | 2.2 | Persistence, isolation |
+| task_2_6_1_2: Test voice profiles + switching | ⚪ | 2.5 | Consistency, prompt injection |
+
+#### feature_2_6_2: User Documentation Updates
+**Complexity**: 1.5/5 | **Est**: 2 days
+
+| Task | Status | Complexity | Notes |
+|------|--------|------------|-------|
+| task_2_6_2_1: Update ARCHITECTURE.md | ⚪ | 1.5 | New schemas, voice system |
+| task_2_6_2_2: Create user guide | ⚪ | 1.5 | Projects, voice features |
+
+---
+
+### Milestone 2 Risks
+
+| ID | Area | Severity | Mitigation |
+|----|------|----------|------------|
+| risk_m2_1 | Memory Refactor | Medium | Integration testing before deploy |
+| risk_m2_2 | Project Isolation | High | Audit all queries for project_id |
+| risk_m2_3 | Voice Consistency | Medium | Regular prompt reinforcement |
+| risk_m2_4 | React Refactor Scope | Low | Time-box spike to 2 days |
+
+---
+
+## Milestone 3: Voice Mode & Premium (Future)
+
+**Status**: ⚪ Not Started
+**Timeline**: After Milestone 2
+
+### Epic 3.1: Voice Mode
 - Speech-to-Text (Whisper)
 - Text-to-Speech (Chatterbox)
 - WebSocket conversation flow
 - Voice UI in PWA
 
-### Epic 2.2: Enhanced Features
-- ~~Relationship progression~~ (REMOVED - overcomplicated, not relevant for bookkeeping tool)
-- Semantic search (if needed - currently text-based search works fine)
+### Epic 3.2: Premium Features
+- Semantic search (if needed)
 - Premium subscription tiers
+- Advanced analytics
 
 ---
 

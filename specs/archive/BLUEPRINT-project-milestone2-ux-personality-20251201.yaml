@@ -1,0 +1,1211 @@
+blueprint_type: project
+created: 2025-12-01
+tracking_method: document
+
+project_overview:
+  brief: "Pip Milestone 2 focuses on user experience enhancements and personality features to increase retention and engagement. Key additions include memory architecture refactor, persistent chat history, project-based isolation, per-chat document uploads, and switchable voice/personality modes."
+  core_objectives:
+    - "Align memory architecture with Anthropic's official MCP Memory Server approach for efficiency"
+    - "Implement persistent chat history with sidebar navigation for session continuity"
+    - "Enable project-based context isolation with cross-project reference capability"
+    - "Add per-chat document upload functionality to enhance contextual conversations"
+    - "Develop switchable personality system (Adelaide Bookkeeper / LOTR Pippin) for differentiated user experience"
+
+architecture:
+  pattern: "vertical-slice"
+  rationale: "Maintaining existing monolithic VPS architecture (Express + SQLite + PWA). Feature-based organization minimizes context window usage and keeps related functionality together."
+
+milestones:
+  milestone_1:
+    name: "v0.4.0 - User Experience & Personality"
+    timeline_weeks: "8-10"
+
+    epics:
+      epic_1:
+        name: "Memory Architecture Modernization"
+        priority: "high"
+        description: "Refactor memory system to align with Anthropic's official MCP Memory Server approach"
+
+        features:
+          feature_1_1:
+            name: "Memory Architecture Analysis & Design"
+            complexity:
+              composite: 2.3
+              dimensions:
+                technical_complexity: 3
+                scope_size: 2
+                dependencies: 2
+                uncertainty: 3
+                risk: 2
+                testing: 2
+            estimated_days: 3
+
+            tasks:
+              task_1_1_1:
+                name: "Review Anthropic's official MCP Memory Server implementation"
+                description: "Study the ~350 line reference implementation, identify patterns and best practices"
+                complexity:
+                  composite: 1.5
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 1
+                    dependencies: 1
+                    uncertainty: 2
+                    risk: 1
+                    testing: 2
+                estimated_days: 1
+
+              task_1_1_2:
+                name: "Audit current memory-native.ts implementation"
+                description: "Identify bloat, unnecessary complexity, and deviations from MCP Memory Server patterns"
+                complexity:
+                  composite: 1.7
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 1
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+              task_1_1_3:
+                name: "Design refactored memory schema and API"
+                description: "Define SQLite schema, API methods, and migration path based on analysis"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+          feature_1_2:
+            name: "Memory System Refactor Implementation"
+            complexity:
+              composite: 2.8
+              dimensions:
+                technical_complexity: 3
+                scope_size: 3
+                dependencies: 3
+                uncertainty: 2
+                risk: 3
+                testing: 3
+            estimated_days: 5
+
+            tasks:
+              task_1_2_1:
+                name: "Implement lean memory service (~350 lines)"
+                description: "Rewrite memory-native.ts following Anthropic patterns, remove bloat"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 3
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 2
+
+              task_1_2_2:
+                name: "Create database migration for memory schema changes"
+                description: "Write and test migration script for schema updates, ensure backward compatibility"
+                complexity:
+                  composite: 2.3
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 3
+                    testing: 3
+                estimated_days: 1
+
+              task_1_2_3:
+                name: "Update MCP tools to use refactored memory service"
+                description: "Update add_memory, search_memory, get_all_memories tools"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 1
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+              task_1_2_4:
+                name: "Integration testing across Claude.ai and ChatGPT"
+                description: "Verify memory operations work correctly in both platforms"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1
+
+      epic_2:
+        name: "Persistent Chat History"
+        priority: "high"
+        description: "Enable users to view and continue previous conversations across sessions"
+
+        features:
+          feature_2_1:
+            name: "Chat History Backend Infrastructure"
+            complexity:
+              composite: 2.5
+              dimensions:
+                technical_complexity: 3
+                scope_size: 3
+                dependencies: 2
+                uncertainty: 2
+                risk: 2
+                testing: 3
+            estimated_days: 4
+
+            tasks:
+              task_2_1_1:
+                name: "Extend sessions table schema for chat metadata"
+                description: "Add fields: title (auto-generated), preview_text, last_message_at, message_count"
+                complexity:
+                  composite: 1.8
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 1
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+              task_2_1_2:
+                name: "Implement chat title auto-generation"
+                description: "Use LLM to generate concise titles from first 2-3 messages"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+              task_2_1_3:
+                name: "Create API endpoints for chat history"
+                description: "GET /api/chats (list), GET /api/chats/:id (load), DELETE /api/chats/:id"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 1
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+          feature_2_2:
+            name: "Chat History UI - Vertical Tabs Sidebar"
+            complexity:
+              composite: 3.0
+              dimensions:
+                technical_complexity: 3
+                scope_size: 3
+                dependencies: 3
+                uncertainty: 3
+                risk: 2
+                testing: 3
+            estimated_days: 5
+
+            tasks:
+              task_2_2_1:
+                name: "Design and implement collapsible sidebar component"
+                description: "Left sidebar with toggle, responsive for mobile/desktop"
+                complexity:
+                  composite: 2.8
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 3
+                    dependencies: 2
+                    uncertainty: 3
+                    risk: 2
+                    testing: 3
+                estimated_days: 2
+
+              task_2_2_2:
+                name: "Implement chat list with metadata display"
+                description: "Show title, preview, timestamp, sorted by last_message_at"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+              task_2_2_3:
+                name: "Add new chat and delete chat actions"
+                description: "Plus icon for new chat, delete confirmation modal"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+              task_2_2_4:
+                name: "Implement chat switching with state persistence"
+                description: "Load selected chat, restore scroll position, maintain UI state"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+      epic_3:
+        name: "Projects Feature - Isolated Context"
+        priority: "high"
+        description: "Enable project-based context isolation with different Xero orgs per project"
+
+        features:
+          feature_3_1:
+            name: "Projects Data Model & Backend"
+            complexity:
+              composite: 2.8
+              dimensions:
+                technical_complexity: 3
+                scope_size: 3
+                dependencies: 3
+                uncertainty: 3
+                risk: 3
+                testing: 3
+            estimated_days: 5
+
+            tasks:
+              task_3_1_1:
+                name: "Design projects schema and relationships"
+                description: "Define projects table, link to sessions, memory, oauth_tokens (one-to-many)"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 3
+                    risk: 2
+                    testing: 2
+                estimated_days: 1.5
+
+              task_3_1_2:
+                name: "Implement project CRUD operations"
+                description: "Create, read, update, delete, switch projects with validation"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+              task_3_1_3:
+                name: "Refactor memory and session services for project isolation"
+                description: "Scope all queries by project_id, prevent cross-project data leaks"
+                complexity:
+                  composite: 3.2
+                  dimensions:
+                    technical_complexity: 4
+                    scope_size: 3
+                    dependencies: 4
+                    uncertainty: 3
+                    risk: 4
+                    testing: 3
+                decomposed: true
+                decomposition_reason: "High technical complexity (4) and dependencies (4) - requires careful refactoring across multiple services"
+                estimated_days: 2
+
+                subtasks:
+                  subtask_3_1_3_1:
+                    name: "Audit current service coupling and query patterns"
+                    description: "Document all memory/session queries, identify project_id touchpoints"
+                    complexity:
+                      composite: 1.8
+                      dimensions:
+                        technical_complexity: 2
+                        scope_size: 2
+                        dependencies: 2
+                        uncertainty: 2
+                        risk: 1
+                        testing: 2
+                    estimated_days: 0.5
+
+                  subtask_3_1_3_2:
+                    name: "Refactor memory service for project scoping"
+                    description: "Add project_id to all memory tables, update NativeMemory class methods"
+                    complexity:
+                      composite: 2.5
+                      dimensions:
+                        technical_complexity: 3
+                        scope_size: 3
+                        dependencies: 2
+                        uncertainty: 2
+                        risk: 3
+                        testing: 2
+                    estimated_days: 0.5
+
+                  subtask_3_1_3_3:
+                    name: "Refactor session service for project scoping"
+                    description: "Add project_id foreign key, update session queries, prevent cross-project access"
+                    complexity:
+                      composite: 2.3
+                      dimensions:
+                        technical_complexity: 3
+                        scope_size: 2
+                        dependencies: 3
+                        uncertainty: 2
+                        risk: 3
+                        testing: 2
+                    estimated_days: 0.5
+
+                  subtask_3_1_3_4:
+                    name: "Integration testing for project isolation"
+                    description: "Test data isolation between projects, verify no cross-project leaks"
+                    complexity:
+                      composite: 2.0
+                      dimensions:
+                        technical_complexity: 2
+                        scope_size: 2
+                        dependencies: 3
+                        uncertainty: 2
+                        risk: 2
+                        testing: 3
+                    estimated_days: 0.5
+
+          feature_3_2:
+            name: "Multi-Xero Organization Support"
+            complexity:
+              composite: 2.7
+              dimensions:
+                technical_complexity: 3
+                scope_size: 3
+                dependencies: 3
+                uncertainty: 3
+                risk: 3
+                testing: 2
+            estimated_days: 4
+
+            tasks:
+              task_3_2_1:
+                name: "Update oauth_tokens schema for project_id foreign key"
+                description: "Add project_id column, create migration, update indices"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 3
+                    testing: 2
+                estimated_days: 1
+
+              task_3_2_2:
+                name: "Implement per-project Xero OAuth flow"
+                description: "Update OAuth callback to associate tokens with active project"
+                complexity:
+                  composite: 2.8
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 3
+                    dependencies: 3
+                    uncertainty: 3
+                    risk: 3
+                    testing: 3
+                estimated_days: 2
+
+              task_3_2_3:
+                name: "Update XeroClient to retrieve tokens by project context"
+                description: "Modify getTokens() to accept project_id parameter, update all callsites"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 3
+                    dependencies: 3
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+          feature_3_3:
+            name: "Cross-Project Reference Capability"
+            complexity:
+              composite: 2.5
+              dimensions:
+                technical_complexity: 3
+                scope_size: 2
+                dependencies: 3
+                uncertainty: 3
+                risk: 2
+                testing: 3
+            estimated_days: 3
+            needs_spike: true
+            spike_reason: "Unclear implementation approach - like Claude Code referencing other repos. Need to research patterns for selective cross-project data access."
+            spike_suggestion: "BLUEPRINT-spike-cross-project-reference-20251201.yaml"
+
+            tasks:
+              task_3_3_1:
+                name: "Design cross-project reference API"
+                description: "Define MCP tool or API for agents to query other projects"
+                complexity:
+                  composite: 2.8
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 4
+                    risk: 2
+                    testing: 3
+                needs_spike: true
+                estimated_days: 1.5
+
+              task_3_3_2:
+                name: "Implement project switching and data access controls"
+                description: "Permission checks, read-only access to non-active projects"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 3
+                    risk: 3
+                    testing: 3
+                estimated_days: 1.5
+
+          feature_3_4:
+            name: "Projects UI - Switcher & Management"
+            complexity:
+              composite: 2.3
+              dimensions:
+                technical_complexity: 2
+                scope_size: 3
+                dependencies: 3
+                uncertainty: 2
+                risk: 2
+                testing: 2
+            estimated_days: 4
+
+            tasks:
+              task_3_4_1:
+                name: "Create project switcher dropdown component"
+                description: "Header dropdown with current project, list of projects, create/manage options"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1.5
+
+              task_3_4_2:
+                name: "Implement project settings page"
+                description: "Edit project name, Xero connection status, delete project with confirmation"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1.5
+
+              task_3_4_3:
+                name: "Add project context indicator in chat UI"
+                description: "Visual indicator showing which project user is currently chatting in"
+                complexity:
+                  composite: 1.5
+                  dimensions:
+                    technical_complexity: 1
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 1
+                    risk: 1
+                    testing: 2
+                estimated_days: 1
+
+      epic_4:
+        name: "Per-Chat Document Upload"
+        priority: "medium"
+        description: "Enable users to attach documents to specific chats for contextual conversations"
+
+        features:
+          feature_4_1:
+            name: "React.js Refactor Assessment (SPIKE)"
+            complexity:
+              composite: 2.0
+              dimensions:
+                technical_complexity: 2
+                scope_size: 2
+                dependencies: 2
+                uncertainty: 4
+                risk: 1
+                testing: 1
+            estimated_days: 2
+            needs_spike: true
+            spike_reason: "High uncertainty (4) - need to assess if current Vite PWA architecture is robust enough for file uploads or if React.js refactor is needed for better component lifecycle management"
+            spike_suggestion: "BLUEPRINT-spike-react-refactor-assessment-20251201.yaml"
+
+            tasks:
+              task_4_1_1:
+                name: "Research PWA file upload patterns and limitations"
+                description: "Investigate current Vite setup, file upload best practices, potential issues"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 1
+                    uncertainty: 4
+                    risk: 1
+                    testing: 1
+                needs_spike: true
+                estimated_days: 1
+
+              task_4_1_2:
+                name: "Evaluate React.js refactor cost vs benefits"
+                description: "Compare incremental enhancement vs full refactor, document recommendation"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 4
+                    risk: 1
+                    testing: 1
+                needs_spike: true
+                estimated_days: 1
+
+          feature_4_2:
+            name: "Document Upload Backend"
+            complexity:
+              composite: 2.5
+              dimensions:
+                technical_complexity: 3
+                scope_size: 3
+                dependencies: 2
+                uncertainty: 2
+                risk: 2
+                testing: 3
+            estimated_days: 4
+            depends_on: "feature_4_1"
+
+            tasks:
+              task_4_2_1:
+                name: "Design session_documents schema and file storage strategy"
+                description: "Define table for document metadata, decide on filesystem vs blob storage"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+              task_4_2_2:
+                name: "Implement file upload API endpoint with validation"
+                description: "POST /api/chats/:id/documents with file type, size limits, virus scanning"
+                complexity:
+                  composite: 2.8
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 3
+                    dependencies: 3
+                    uncertainty: 2
+                    risk: 3
+                    testing: 3
+                estimated_days: 2
+
+              task_4_2_3:
+                name: "Add document retrieval and deletion endpoints"
+                description: "GET /api/chats/:id/documents, DELETE /api/documents/:docId"
+                complexity:
+                  composite: 1.8
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 1
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+          feature_4_3:
+            name: "Document Upload UI Component"
+            complexity:
+              composite: 2.7
+              dimensions:
+                technical_complexity: 3
+                scope_size: 3
+                dependencies: 3
+                uncertainty: 2
+                risk: 2
+                testing: 3
+            estimated_days: 4
+            depends_on: "feature_4_1"
+
+            tasks:
+              task_4_3_1:
+                name: "Create plus (+) icon attachment button in chat input"
+                description: "Button triggers file picker, supports drag-and-drop"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+              task_4_3_2:
+                name: "Implement document preview component below chat input"
+                description: "Show filename, size, type with remove button; display upload progress"
+                complexity:
+                  composite: 2.3
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 3
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+              task_4_3_3:
+                name: "Add uploaded documents list in chat sidebar"
+                description: "Show all documents attached to current chat, download/delete actions"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+      epic_5:
+        name: "Pip's Voice & Personality System"
+        priority: "critical"
+        description: "Implement switchable character personalities (Adelaide Bookkeeper / LOTR Pippin) for differentiated user experience and retention"
+
+        features:
+          feature_5_1:
+            name: "Character Voice Methodology Research (SPIKE)"
+            complexity:
+              composite: 2.5
+              dimensions:
+                technical_complexity: 3
+                scope_size: 2
+                dependencies: 1
+                uncertainty: 4
+                risk: 2
+                testing: 2
+            estimated_days: 3
+            needs_spike: true
+            spike_reason: "High uncertainty (4) - need to research how novels describe character personalities objectively, compare Grok's speech modes, define methodology for switchable voice profiles"
+            spike_suggestion: "BLUEPRINT-spike-character-voice-methodology-20251201.yaml"
+
+            tasks:
+              task_5_1_1:
+                name: "Analyze literary techniques for character voice definition"
+                description: "Study how novels objectively describe personality, speech patterns, mannerisms"
+                complexity:
+                  composite: 2.3
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 1
+                    uncertainty: 4
+                    risk: 1
+                    testing: 2
+                needs_spike: true
+                estimated_days: 1
+
+              task_5_1_2:
+                name: "Research Grok speech modes implementation"
+                description: "Analyze Assistant, Motivational, Storytelling modes; identify patterns and techniques"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 1
+                    uncertainty: 4
+                    risk: 1
+                    testing: 1
+                needs_spike: true
+                estimated_days: 1
+
+              task_5_1_3:
+                name: "Define switchable voice profile schema and prompt structure"
+                description: "Create template for voice profiles, test with LLM for consistency"
+                complexity:
+                  composite: 2.8
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 4
+                    risk: 2
+                    testing: 3
+                needs_spike: true
+                estimated_days: 1
+
+          feature_5_2:
+            name: "Adelaide Bookkeeper Voice Profile"
+            complexity:
+              composite: 2.3
+              dimensions:
+                technical_complexity: 3
+                scope_size: 2
+                dependencies: 2
+                uncertainty: 3
+                risk: 2
+                testing: 3
+            estimated_days: 3
+            depends_on: "feature_5_1"
+
+            tasks:
+              task_5_2_1:
+                name: "Define Adelaide character profile and voice guidelines"
+                description: "Young professional from Adelaide, approachable, competent, no jargon; document speech patterns"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 3
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+              task_5_2_2:
+                name: "Create Adelaide system prompt and test scenarios"
+                description: "Write system prompt, test with invoicing, reports, troubleshooting scenarios"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 3
+                    risk: 2
+                    testing: 4
+                estimated_days: 1.5
+
+              task_5_2_3:
+                name: "Refine Adelaide voice based on user testing"
+                description: "Gather feedback, iterate on tone, helpfulness, personality consistency"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 3
+                    risk: 2
+                    testing: 3
+                estimated_days: 0.5
+
+          feature_5_3:
+            name: "LOTR Pippin Voice Profile"
+            complexity:
+              composite: 2.5
+              dimensions:
+                technical_complexity: 3
+                scope_size: 2
+                dependencies: 2
+                uncertainty: 3
+                risk: 2
+                testing: 3
+            estimated_days: 3
+            depends_on: "feature_5_1"
+
+            tasks:
+              task_5_3_1:
+                name: "Define Pippin character profile and voice guidelines"
+                description: "Fun, endearing, playful but competent; inspired by LOTR Pippin, document speech patterns"
+                complexity:
+                  composite: 2.3
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 3
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+              task_5_3_2:
+                name: "Create Pippin system prompt and test scenarios"
+                description: "Write system prompt balancing playfulness with professionalism, test scenarios"
+                complexity:
+                  composite: 2.8
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 4
+                    risk: 2
+                    testing: 4
+                needs_spike: false
+                estimated_days: 1.5
+
+              task_5_3_3:
+                name: "Refine Pippin voice based on user testing"
+                description: "Ensure playfulness doesn't undermine professionalism, iterate on balance"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 3
+                    risk: 2
+                    testing: 3
+                estimated_days: 0.5
+
+          feature_5_4:
+            name: "Voice Switching Infrastructure"
+            complexity:
+              composite: 2.2
+              dimensions:
+                technical_complexity: 2
+                scope_size: 2
+                dependencies: 3
+                uncertainty: 2
+                risk: 2
+                testing: 3
+            estimated_days: 3
+
+            tasks:
+              task_5_4_1:
+                name: "Extend user_settings schema for voice preference"
+                description: "Add voice_profile field (adelaide/pippin), create migration"
+                complexity:
+                  composite: 1.5
+                  dimensions:
+                    technical_complexity: 1
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 1
+                    risk: 2
+                    testing: 2
+                estimated_days: 0.5
+
+              task_5_4_2:
+                name: "Implement voice profile loading in AgentOrchestrator"
+                description: "Load voice profile from user settings, inject into system prompt"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+              task_5_4_3:
+                name: "Support mid-chat voice switching without losing context"
+                description: "Allow voice changes within same session, maintain conversation history"
+                complexity:
+                  composite: 2.8
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 3
+                    uncertainty: 3
+                    risk: 2
+                    testing: 4
+                estimated_days: 1
+
+          feature_5_5:
+            name: "Voice Selector UI"
+            complexity:
+              composite: 1.8
+              dimensions:
+                technical_complexity: 2
+                scope_size: 2
+                dependencies: 2
+                uncertainty: 2
+                risk: 1
+                testing: 2
+            estimated_days: 2
+
+            tasks:
+              task_5_5_1:
+                name: "Create voice selector in settings page"
+                description: "Radio buttons or cards with character descriptions, save preference"
+                complexity:
+                  composite: 1.8
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 1
+                    testing: 2
+                estimated_days: 1
+
+              task_5_5_2:
+                name: "Add quick voice toggle in chat interface"
+                description: "Icon or dropdown to switch voices during chat, visual confirmation"
+                complexity:
+                  composite: 2.0
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 2
+                    testing: 2
+                estimated_days: 1
+
+      epic_6:
+        name: "Testing & Documentation"
+        priority: "medium"
+        description: "Ensure all Milestone 2 features are tested and documented"
+
+        features:
+          feature_6_1:
+            name: "Integration Testing Suite"
+            complexity:
+              composite: 2.3
+              dimensions:
+                technical_complexity: 2
+                scope_size: 3
+                dependencies: 3
+                uncertainty: 2
+                risk: 2
+                testing: 3
+            estimated_days: 3
+
+            tasks:
+              task_6_1_1:
+                name: "Create test scenarios for chat history and project switching"
+                description: "Test chat persistence, project isolation, cross-project access"
+                complexity:
+                  composite: 2.2
+                  dimensions:
+                    technical_complexity: 2
+                    scope_size: 3
+                    dependencies: 3
+                    uncertainty: 2
+                    risk: 2
+                    testing: 3
+                estimated_days: 1.5
+
+              task_6_1_2:
+                name: "Test voice profiles and mid-chat switching"
+                description: "Verify personality consistency, switching behavior, prompt injection"
+                complexity:
+                  composite: 2.5
+                  dimensions:
+                    technical_complexity: 3
+                    scope_size: 2
+                    dependencies: 2
+                    uncertainty: 2
+                    risk: 3
+                    testing: 3
+                estimated_days: 1.5
+
+          feature_6_2:
+            name: "User Documentation Updates"
+            complexity:
+              composite: 1.5
+              dimensions:
+                technical_complexity: 1
+                scope_size: 2
+                dependencies: 1
+                uncertainty: 1
+                risk: 1
+                testing: 2
+            estimated_days: 2
+
+            tasks:
+              task_6_2_1:
+                name: "Update ARCHITECTURE.md with new features"
+                description: "Document projects schema, voice system, chat history architecture"
+                complexity:
+                  composite: 1.5
+                  dimensions:
+                    technical_complexity: 1
+                    scope_size: 2
+                    dependencies: 1
+                    uncertainty: 1
+                    risk: 1
+                    testing: 2
+                estimated_days: 1
+
+              task_6_2_2:
+                name: "Create user guide for projects and voice features"
+                description: "How to create projects, switch voices, manage chat history"
+                complexity:
+                  composite: 1.5
+                  dimensions:
+                    technical_complexity: 1
+                    scope_size: 2
+                    dependencies: 1
+                    uncertainty: 1
+                    risk: 1
+                    testing: 2
+                estimated_days: 1
+
+flagged_items:
+  high_complexity:
+    - id: task_3_1_3
+      reason: "High technical complexity (4) and dependencies (4) - requires careful refactoring of memory and session services for project isolation"
+      composite_score: 3.2
+      status: "DECOMPOSED"
+      subtasks:
+        - subtask_3_1_3_1 (1.8) - Audit current service coupling
+        - subtask_3_1_3_2 (2.5) - Refactor memory service
+        - subtask_3_1_3_3 (2.3) - Refactor session service
+        - subtask_3_1_3_4 (2.0) - Integration testing
+
+  spikes_required:
+    - id: feature_3_3
+      spike_name: "Cross-Project Reference Capability Research"
+      time_box_days: 2
+      deliverables:
+        - "Research report on cross-project reference patterns (Claude Code, IDEs)"
+        - "API design for cross-project data access with permission model"
+        - "Proof of concept implementation"
+      reduces_uncertainty_for: "task_3_3_1, task_3_3_2"
+
+    - id: feature_4_1
+      spike_name: "React.js Refactor Assessment for File Uploads"
+      time_box_days: 2
+      deliverables:
+        - "Analysis of current Vite PWA architecture's file upload capabilities"
+        - "Cost-benefit analysis of React refactor vs incremental enhancement"
+        - "Recommendation with implementation approach"
+      reduces_uncertainty_for: "feature_4_2, feature_4_3"
+
+    - id: feature_5_1
+      spike_name: "Character Voice Methodology Research"
+      time_box_days: 3
+      deliverables:
+        - "Literary analysis of character voice techniques from novels"
+        - "Grok speech modes comparison and pattern identification"
+        - "Voice profile schema and prompt structure template"
+        - "Test implementation with Adelaide and Pippin profiles"
+      reduces_uncertainty_for: "feature_5_2, feature_5_3, feature_5_4"
+
+language_rules:
+  forbidden_terms:
+    - "AI" # Overused marketing hype
+    - "query" # Too technical for user-facing content
+  focus: "Describe what the tool actually does, not buzzwords"
+
+risks:
+  - id: risk_1
+    area: "Memory Architecture Refactor"
+    description: "Breaking existing memory functionality during refactor"
+    mitigation: "Comprehensive integration testing across Claude.ai and ChatGPT before deployment"
+    severity: "medium"
+
+  - id: risk_2
+    area: "Project Isolation"
+    description: "Data leaks between projects due to incomplete scoping"
+    mitigation: "Thorough audit of all database queries, add project_id checks everywhere"
+    severity: "high"
+
+  - id: risk_3
+    area: "Voice Consistency"
+    description: "LLM may drift from character voice over long conversations"
+    mitigation: "Regular system prompt reinforcement, user testing for consistency, fallback to neutral tone"
+    severity: "medium"
+
+  - id: risk_4
+    area: "React Refactor Scope"
+    description: "File upload spike may reveal need for major frontend refactor"
+    mitigation: "Time-box spike to 2 days, defer refactor if too large for M2 scope"
+    severity: "low"
+
+dependencies:
+  - from: feature_4_2
+    to: feature_4_1
+    type: "blocks"
+    reason: "Backend file upload implementation depends on spike outcome"
+
+  - from: feature_4_3
+    to: feature_4_1
+    type: "blocks"
+    reason: "UI component design depends on spike outcome"
+
+  - from: feature_5_2
+    to: feature_5_1
+    type: "blocks"
+    reason: "Adelaide voice profile requires methodology from spike"
+
+  - from: feature_5_3
+    to: feature_5_1
+    type: "blocks"
+    reason: "Pippin voice profile requires methodology from spike"
+
+summary:
+  total_milestones: 1
+  total_epics: 6
+  total_features: 15
+  total_tasks: 44
+  total_estimated_days: "52-60 days"
+  critical_path: "epic_5 (Voice & Personality) - highest retention impact"
+  recommended_sequence:
+    - "epic_1 (Memory Refactor) - foundation for all features"
+    - "epic_2 (Chat History) - high user value, low risk"
+    - "epic_3 (Projects) - complex, needs careful implementation"
+    - "epic_5 (Voice) - critical for retention, run spikes early"
+    - "epic_4 (Document Upload) - medium priority, spike dependent"
+    - "epic_6 (Testing) - continuous throughout milestone"

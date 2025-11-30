@@ -4,7 +4,7 @@
 > **Lifecycle**: Living (add when issues arise, remove when resolved)
 > **Resolved Issues**: Move to `CHANGELOG.md` under the appropriate version's "Fixed" section
 
-**Last Updated**: 2025-11-30 (Night - MVP Complete)
+**Last Updated**: 2025-12-01 (Milestone 2 Planning)
 
 ---
 
@@ -210,84 +210,116 @@
 
 ---
 
-### Future Features (Captured 2025-11-30)
+### Milestone 2 Features (Planned 2025-12-01)
 
-*To be refined in planning session.*
+*Blueprint: `specs/BLUEPRINT-project-milestone2-ux-personality-20251201.yaml`*
 
-#### issue_011: Automatic Memory Management
+#### issue_011: Memory Architecture Refactor (Epic 2.1)
 - **Status**: 🔴 Open
-- **Priority**: P1 (High - core UX improvement)
-- **Component**: `packages/mcp-remote-server`
-- **Description**: Memory should "just work" without explicit tool calls. LLM extracts facts automatically, server stores them seamlessly.
-- **Current State**: Requires explicit `add_memory` calls
-- **Target State**: Like Anthropic's MCP Memory Server - seamless extraction
+- **Priority**: P1 (High - foundation for all M2 features)
+- **Component**: `packages/mcp-remote-server` (memory-native.ts)
+- **Blueprint**: feature_2_1_1, feature_2_1_2
+- **Description**: Align memory implementation with Anthropic's official MCP Memory Server approach (~350 lines). Remove bloat, improve efficiency.
+- **Current State**: Custom implementation with unnecessary complexity
+- **Target State**: Lean, efficient, Anthropic-aligned memory service
 - **Acceptance Criteria**:
-  - [ ] Research Anthropic's automatic extraction pattern
-  - [ ] Implement system prompt for fact extraction
-  - [ ] Background memory storage without user awareness
-  - [ ] Memory recalled automatically in relevant contexts
-- **Notes**: Key UX improvement. See Joplin note "Pip Memory Architecture" for research.
+  - [ ] Review Anthropic MCP Memory Server reference implementation
+  - [ ] Audit and document current bloat in memory-native.ts
+  - [ ] Implement lean memory service (~350 lines target)
+  - [ ] Database migration for schema changes
+  - [ ] Integration testing on Claude.ai + ChatGPT
+- **Complexity**: 2.3-2.8/5 (Medium)
+- **Notes**: Foundation work - must complete before other features.
 
-#### issue_012: Chat History
+#### issue_012: Chat History (Epic 2.2)
 - **Status**: 🔴 Open
 - **Priority**: P1 (High - expected feature)
 - **Component**: `packages/mcp-remote-server`, `packages/pwa-app`
-- **Description**: Persistent conversation history like Claude.ai
+- **Blueprint**: feature_2_2_1, feature_2_2_2
+- **Description**: Persistent conversation history with vertical tabs sidebar (standard UX pattern like Claude.ai)
 - **Acceptance Criteria**:
-  - [ ] Store chat sessions in SQLite
-  - [ ] Sidebar showing past conversations
-  - [ ] Continue previous conversations
-  - [ ] Per-user isolation
-- **Notes**: Standard feature in AI chat interfaces. Users expect this.
+  - [ ] Extend sessions table (title, preview_text, last_message_at)
+  - [ ] Chat title auto-generation from LLM
+  - [ ] API endpoints: GET /api/chats, GET/:id, DELETE/:id
+  - [ ] Collapsible left sidebar component (responsive)
+  - [ ] Chat list with metadata (title, preview, timestamp)
+  - [ ] New chat (+) and delete actions
+  - [ ] Chat switching with state persistence
+- **Complexity**: 2.5-3.0/5 (Medium-High)
+- **Notes**: Standard feature users expect. Familiar UI pattern.
 
-#### issue_013: Projects Feature (Isolated Context)
+#### issue_013: Projects Feature (Epic 2.3)
 - **Status**: 🔴 Open
-- **Priority**: P2 (Medium - power user feature)
+- **Priority**: P1 (High - differentiator)
 - **Component**: `packages/mcp-remote-server`, `packages/pwa-app`
-- **Description**: Like Claude.ai Projects - separate knowledge bases per project/client
+- **Blueprint**: feature_2_3_1 through feature_2_3_4
+- **Description**: Isolated context per project/client. Global context still applies, but project-specific details don't bleed across projects. Like Claude.ai Projects with cross-project reference capability.
 - **Use Cases**:
-  - Different Xero organizations
-  - Different business contexts
+  - Different Xero organizations per project
   - Client isolation for accountants
+  - Project-specific memory and documents
 - **Acceptance Criteria**:
-  - [ ] Project CRUD operations
-  - [ ] Project-specific memory isolation
-  - [ ] Project-specific document context
-  - [ ] Project selector in UI
-- **Notes**: Power user feature. May be premium tier.
+  - [ ] Projects schema design and CRUD operations
+  - [ ] Refactor memory service for project_id scoping (decomposed into 4 subtasks)
+  - [ ] Refactor session service for project isolation
+  - [ ] Multi-Xero org support (per-project OAuth tokens)
+  - [ ] Cross-project reference capability (**SPIKE REQUIRED**)
+  - [ ] Project switcher dropdown in header
+  - [ ] Project settings page
+  - [ ] Project context indicator in chat UI
+- **Complexity**: 2.2-3.2/5 (task_2_3_1_3 decomposed)
+- **Flagged**: task_2_3_1_3 decomposed into 4 subtasks (all ≤2.5)
+- **Spike**: spike_m2_001 for cross-project reference patterns
 
-#### issue_014: Per-Chat Document Upload
-- **Status**: 🔴 Open
+#### issue_014: Per-Chat Document Upload (Epic 2.4)
+- **Status**: 🔴 Open (spike-dependent)
 - **Priority**: P2 (Medium - UX improvement)
-- **Component**: `packages/pwa-app`
-- **Description**: Plus icon (+) to add documents to current conversation, replacing global context upload
-- **Current State**: Documents uploaded globally
-- **Target State**: Documents attached per-chat (like Claude.ai)
+- **Component**: `packages/pwa-app`, `packages/mcp-remote-server`
+- **Blueprint**: feature_2_4_1 through feature_2_4_3
+- **Description**: Plus (+) icon in chat for attachments (standard UX pattern). Document preview below chat input field.
+- **Spike Required**: React.js refactor assessment (spike_m2_002) - 2 days
 - **Acceptance Criteria**:
-  - [ ] Plus icon in chat input
-  - [ ] Document picker/upload
-  - [ ] Document context for current conversation only
-  - [ ] Visual indicator of attached documents
-- **Notes**: More intuitive UX. Global preferences deferred for later testing.
+  - [ ] Complete React refactor assessment spike first
+  - [ ] Design session_documents schema and storage strategy
+  - [ ] File upload API with validation and size limits
+  - [ ] Plus (+) icon attachment button with drag-and-drop
+  - [ ] Document preview component below chat input
+  - [ ] Documents list in sidebar with download/delete
+- **Complexity**: 2.0-2.8/5 (Medium)
+- **Depends On**: spike_m2_002 outcome
 
-#### issue_015: Pip's Voice/Personality
-- **Status**: 🔴 Open
-- **Priority**: P2 (Medium - brand differentiation)
-- **Component**: `packages/mcp-remote-server` (system prompt)
-- **Description**: Define Pip's character voice. Two options to test:
+#### issue_015: Pip's Voice/Personality (Epic 2.5)
+- **Status**: 🔴 Open (spike-dependent)
+- **Priority**: P1 (CRITICAL - retention impact)
+- **Component**: `packages/mcp-remote-server` (system prompts)
+- **Blueprint**: feature_2_5_1 through feature_2_5_5
+- **Description**: Switchable character personalities that can change mid-chat without losing context. Two options:
 - **Option A - Adelaide Bookkeeper**:
-  - Smart young woman from Adelaide
-  - Professional but approachable
-  - Keeps it simple for Sam (target customer)
+  - Smart young professional from Adelaide
+  - Professional but approachable, no jargon
+  - Knows the books, keeps it simple
+  - Target avatar: Sam (customer persona)
 - **Option B - Pippin (LOTR-inspired)**:
   - Fun, endearing character
-  - Somehow great at bookkeeping
-  - Playful but competent
+  - Somehow great at bookkeeping (unexplained)
+  - Playful but competent, not undermining trust
+- **Spike Required**: Character voice methodology research (spike_m2_003) - 3 days
+  - Literary analysis: how novels describe character personalities objectively
+  - Compare Grok speech modes (Assistant, Motivational, Storytelling)
+  - Define switchable voice profile schema
 - **Acceptance Criteria**:
-  - [ ] Define system prompts for both voices
-  - [ ] Settings toggle to switch voices
-  - [ ] A/B test with users
-- **Notes**: Current "G'day! I'm Pip" is too casual. Need defined personality.
+  - [ ] Complete character voice methodology spike first
+  - [ ] Define Adelaide character profile and system prompt
+  - [ ] Define Pippin character profile and system prompt
+  - [ ] Test both voices across invoicing, reports, troubleshooting
+  - [ ] Extend user_settings schema for voice_profile
+  - [ ] Voice loading in AgentOrchestrator
+  - [ ] Mid-chat voice switching without context loss
+  - [ ] Voice selector in settings page
+  - [ ] Quick voice toggle in chat interface
+  - [ ] Refine based on user testing
+- **Complexity**: 1.5-2.8/5 (Medium)
+- **Notes**: CRITICAL for user retention. If users don't like the personality, they stop using it.
 
 ---
 
@@ -328,6 +360,66 @@ Items flagged by `improving-plans` skill as requiring decomposition or spike tas
 ## Spike Tasks Required
 
 Research/investigation tasks that must complete before dependent implementation tasks.
+
+### Milestone 2 Spikes
+
+#### spike_m2_001: Cross-Project Reference Capability Research
+- **Status**: 🔴 Open
+- **Duration**: 2 days
+- **Priority**: P1 (blocks feature_2_3_3)
+- **Reduces Uncertainty For**: task_2_3_3_1, task_2_3_3_2
+- **Blueprint**: feature_3_3 spike
+- **Description**: Research patterns for cross-project data access (like Claude Code referencing other repos)
+- **Deliverables**:
+  - [ ] Research report on cross-project reference patterns (Claude Code, IDEs)
+  - [ ] API design for cross-project data access with permission model
+  - [ ] Proof of concept implementation
+- **Acceptance Criteria**:
+  - Uncertainty reduced from 4 → 2 for task_2_3_3_1
+  - Clear API design with permission model
+  - POC demonstrating feasibility
+
+#### spike_m2_002: React.js Refactor Assessment for File Uploads
+- **Status**: 🔴 Open
+- **Duration**: 2 days
+- **Priority**: P2 (blocks feature_2_4_2, feature_2_4_3)
+- **Reduces Uncertainty For**: feature_2_4_2, feature_2_4_3
+- **Blueprint**: feature_4_1 spike
+- **Description**: Evaluate current Vite PWA architecture's file upload capabilities vs React refactor
+- **Deliverables**:
+  - [ ] Analysis of current Vite PWA file upload capabilities
+  - [ ] Cost-benefit analysis: React refactor vs incremental enhancement
+  - [ ] Recommendation with implementation approach
+- **Acceptance Criteria**:
+  - Clear decision on refactor vs enhance
+  - Performance benchmarks documented
+  - Implementation path defined
+
+#### spike_m2_003: Character Voice Methodology Research
+- **Status**: 🔴 Open
+- **Duration**: 3 days
+- **Priority**: P1 (blocks feature_2_5_2, feature_2_5_3)
+- **Reduces Uncertainty For**: feature_2_5_2, feature_2_5_3, feature_2_5_4
+- **Blueprint**: feature_5_1 spike
+- **Description**: Research how to objectively define character personalities for LLM system prompts
+- **Research Areas**:
+  - Literary analysis: How novels describe character voice/personality objectively
+  - Grok speech modes comparison (Assistant, Motivational, Storytelling patterns)
+  - Switchable voice profile schema design
+- **Deliverables**:
+  - [ ] Literary analysis of character voice techniques from novels
+  - [ ] Grok speech modes comparison and pattern identification
+  - [ ] Voice profile schema and prompt structure template
+  - [ ] Test implementation with Adelaide and Pippin profiles
+- **Acceptance Criteria**:
+  - Methodology documented for creating character voices
+  - Voice profile schema defined and tested
+  - Both Adelaide and Pippin profiles drafted
+  - Uncertainty reduced from 4 → 2 for subsequent tasks
+
+---
+
+### Legacy Spikes
 
 ### spike_001: Chunking Strategy Spike (DEPRIORITIZED)
 - **Status**: 🟡 Deprioritized (Mem0 may replace need)
