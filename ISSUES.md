@@ -272,21 +272,21 @@
 - **Spike**: spike_m2_001 for cross-project reference patterns
 
 #### issue_014: Per-Chat Document Upload (Epic 2.4)
-- **Status**: 🔴 Open (spike-dependent)
+- **Status**: 🔴 Open (spike complete - ready to implement)
 - **Priority**: P2 (Medium - UX improvement)
 - **Component**: `packages/pwa-app`, `packages/mcp-remote-server`
 - **Blueprint**: feature_2_4_1 through feature_2_4_3
 - **Description**: Plus (+) icon in chat for attachments (standard UX pattern). Document preview below chat input field.
-- **Spike Required**: React.js refactor assessment (spike_m2_002) - 2 days
+- **Spike**: spike_m2_002 ✅ COMPLETE - Decision: Keep React, use react-dropzone
 - **Acceptance Criteria**:
-  - [ ] Complete React refactor assessment spike first
+  - [x] Complete React refactor assessment spike first
   - [ ] Design session_documents schema and storage strategy
   - [ ] File upload API with validation and size limits
-  - [ ] Plus (+) icon attachment button with drag-and-drop
+  - [ ] Plus (+) icon attachment button with drag-and-drop (use react-dropzone)
   - [ ] Document preview component below chat input
   - [ ] Documents list in sidebar with download/delete
 - **Complexity**: 2.0-2.8/5 (Medium)
-- **Depends On**: spike_m2_002 outcome
+- **Unblocked By**: spike_m2_002 (2025-12-01)
 
 #### issue_015: Pip's Voice/Personality (Epic 2.5)
 - **Status**: 🔴 Open (spike-dependent)
@@ -380,20 +380,25 @@ Research/investigation tasks that must complete before dependent implementation 
   - POC demonstrating feasibility
 
 #### spike_m2_002: React.js Refactor Assessment for File Uploads
-- **Status**: 🔴 Open
-- **Duration**: 2 days
-- **Priority**: P2 (blocks feature_2_4_2, feature_2_4_3)
+- **Status**: ✅ Complete
+- **Duration**: 2 days (completed in 1)
+- **Completed**: 2025-12-01
+- **Priority**: - (Done - unblocks feature_2_4_2, feature_2_4_3)
 - **Reduces Uncertainty For**: feature_2_4_2, feature_2_4_3
 - **Blueprint**: feature_4_1 spike
 - **Description**: Evaluate current Vite PWA architecture's file upload capabilities vs React refactor
 - **Deliverables**:
-  - [ ] Analysis of current Vite PWA file upload capabilities
-  - [ ] Cost-benefit analysis: React refactor vs incremental enhancement
-  - [ ] Recommendation with implementation approach
-- **Acceptance Criteria**:
-  - Clear decision on refactor vs enhance
-  - Performance benchmarks documented
-  - Implementation path defined
+  - [x] Analysis of current Vite PWA file upload capabilities
+  - [x] Cost-benefit analysis: React refactor vs incremental enhancement
+  - [x] Recommendation with implementation approach
+- **Decision**: **KEEP REACT** - No framework migration needed
+- **Key Findings**:
+  - ChatGPT uses React + Next.js
+  - Claude Code uses TypeScript + React (Ink) + Bun
+  - Anthropic hiring requires "React development expertise"
+  - Migration cost (3-5 weeks) not justified
+- **File Upload Recommendation**: react-dropzone for + icon UX
+- **Output**: `docs/research-notes/SPIKE-m2-002-react-refactor-assessment.md`
 
 #### spike_m2_003: Character Voice Methodology Research
 - **Status**: 🔴 Open
