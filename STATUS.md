@@ -60,16 +60,24 @@ Based on consolidated Joplin research, Pip adopts:
 | G | Community TS (mem0-ts) | Not recommended - OpenAI only, unmaintained |
 | **H** | **Official mem0ai npm** | **RECOMMENDED** |
 
-#### Mem0 Memory Stack Implementation (Priority 1 - NOW UNBLOCKED)
+#### Mem0 Memory Stack Implementation (Priority 1 - IN PROGRESS)
 | Task | Status | Notes |
 |------|--------|-------|
-| Install mem0ai package | ⚪ Pending | `npm install mem0ai` |
-| Configure Memory instance | ⚪ Pending | In-memory vector + SQLite history |
-| Add memory operations to MCP | ⚪ Pending | add, search, list, delete |
-| Memory injection to prompts | ⚪ Pending | Retrieve relevant memories per request |
+| Install mem0ai package | ✅ Done | v2.1.38 |
+| Configure Memory instance | ✅ Done | In-memory vector + SQLite history |
+| Add memory operations to MCP | ✅ Done | 5 tools in memory category |
+| Update system prompt | ✅ Done | Memory guidelines for Pip |
 | ChatGPT memory import | ⚪ Pending | Parse conversations.json |
 | Memory management UI | ⚪ Pending | PWA interface |
 
+**Memory Tools Available**:
+- `add_memory`: Store preferences, goals, context
+- `search_memory`: Semantic search across memories
+- `list_memories`: View all memories
+- `delete_memory`: Remove by ID
+- `clear_all_memories`: Reset all (with confirmation)
+
+**Requires**: `OPENAI_API_KEY` env var for embeddings
 **Guide Ready**: docs/CHATGPT-MEMORY-GUIDE.md (export instructions)
 
 #### Safety Guardrails (Priority 2)
@@ -125,7 +133,7 @@ Based on consolidated Joplin research, Pip adopts:
 | **Claude.ai Integration** | 🟢 | Fully validated and working |
 | **ChatGPT Integration** | 🟡 | Working, but memory disabled for Plus users |
 | **spike_mem0** | ✅ | COMPLETE - Use `mem0ai` npm package |
-| **Mem0 Memory Stack** | 🔵 | Ready to implement (unblocked) |
+| **Mem0 Memory Stack** | 🟡 | Core tools done, import/UI pending |
 | **Safety Guardrails** | 🔵 | Architecture designed, implementation pending |
 | PWA Frontend | 🟢 | Live at app.pip.arcforge.au |
 | Xero Integration | 🟢 | OAuth + 10 READ-ONLY tools |
@@ -220,6 +228,15 @@ See **ISSUES.md** for detailed tracking.
 ---
 
 ## Recent Achievements
+
+### 2025-11-30: Mem0 Memory Tools Implemented!
+- **IMPLEMENTATION**: Core memory functionality now working
+  - Installed `mem0ai` v2.1.38 (official Node.js SDK)
+  - Created memory service with in-memory vector + SQLite history
+  - Added 5 memory tools to MCP: add, search, list, delete, clear_all
+  - Updated system prompt with memory guidelines for Pip
+- **TOOLS READY**: Memory category now discoverable via get_tools_in_category
+- **PENDING**: ChatGPT memory import endpoint, PWA memory management UI
 
 ### 2025-11-30: spike_mem0 COMPLETE - Key Discovery!
 - **DISCOVERY**: Official `mem0ai` npm package provides native TypeScript support!
