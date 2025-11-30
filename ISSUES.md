@@ -80,8 +80,9 @@
   - Pre-creating the .db file didn't help
 - **Workaround Applied**:
   - Disabled `historyDbPath` in Mem0 config
-  - Memory now works but doesn't persist across container restarts
-  - Memories still stored in in-memory vector store during session
+  - **What works**: Memories persist across new chats, browser sessions, devices (stored server-side in RAM)
+  - **What doesn't**: Memories lost on Docker container restart, VPS reboot, or redeploy
+  - Users won't notice during normal use - only operators restarting the server causes data loss
 - **Acceptance Criteria**:
   - [ ] Investigate mem0ai's SQLite library (sql.js? sqlite3?)
   - [ ] Try alternative: use Mem0 Cloud API instead of local storage
