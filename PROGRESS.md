@@ -390,8 +390,8 @@ Deep research into alternative memory architectures. Key findings:
 - Voice UI in PWA
 
 ### Epic 2.2: Enhanced Features
-- Relationship progression (colleague → partner → friend)
-- Extended memory with semantic search
+- ~~Relationship progression~~ (REMOVED - overcomplicated, not relevant for bookkeeping tool)
+- Semantic search (if needed - currently text-based search works fine)
 - Premium subscription tiers
 
 ---

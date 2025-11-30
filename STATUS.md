@@ -132,12 +132,28 @@
 
 ---
 
+## Design Decisions (2025-11-30)
+
+### Removed: Relationship Progression System
+
+**Decision**: Remove the planned "colleague → partner → friend" progression model.
+
+**Rationale**:
+- Vague and overcomplicated for a bookkeeping tool
+- Not relevant to core user needs (preferences, key details, business context)
+- Anthropic's official MCP Memory Server validates simpler approach (~350 lines, no progression)
+- Current text-based memory is sufficient for MVP
+
+**What we kept**: Simple memory that stores preferences, remembers key details, works across chats, and persists between Docker restarts.
+
+---
+
 ## Next Steps
 
 1. **Onboard beta users** - Share with trusted users for feedback
 2. **Monitor production** - Watch for errors, memory usage
 3. **Iterate on UX** - Based on user feedback
-4. **Consider Debian Docker** - If semantic search is needed later
+4. **Consider simplifying memory** - Adopt Anthropic's ~350 line pattern if maintenance burden grows
 
 ---
 
