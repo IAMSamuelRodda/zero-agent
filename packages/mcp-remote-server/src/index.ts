@@ -427,6 +427,7 @@ function createMcpServer(userId?: string): Server {
   // Handle tool calls with lazy-loading support
   server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
     const { name, arguments: args } = request.params;
+    console.log(`[Tool Call] ${name} with args:`, JSON.stringify(args));
 
     // Meta-tool: get_tools_in_category (filter based on permission level)
     if (name === "get_tools_in_category") {
@@ -553,24 +554,43 @@ function createMcpServer(userId?: string): Server {
       }
 
       // Execute the actual tool
-      if (isMemoryTool) {
-        return await executeMemoryTool(userId!, tool_name, toolArgs || {});
-      } else {
-        // Check permission level for Xero tools
-        const permissionCheck = await safetyService.checkToolPermission(userId!, tool_name);
-        if (!permissionCheck.allowed) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: safetyService.formatPermissionError(permissionCheck),
-              },
-            ],
-            isError: true,
-          };
-        }
+      try {
+        if (isMemoryTool) {
+          console.log(`[Execute] Memory tool: ${tool_name}`);
+          return await executeMemoryTool(userId!, tool_name, toolArgs || {});
+        } else {
+          // Check permission level for Xero tools
+          console.log(`[Execute] Checking permissions for Xero tool: ${tool_name}`);
+          const permissionCheck = await safetyService.checkToolPermission(userId!, tool_name);
+          if (!permissionCheck.allowed) {
+            console.log(`[Execute] Permission denied for ${tool_name}`);
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: safetyService.formatPermissionError(permissionCheck),
+                },
+              ],
+              isError: true,
+            };
+          }
 
-        return await executeXeroTool(userId!, tool_name, toolArgs || {});
+          console.log(`[Execute] Executing Xero tool: ${tool_name}`);
+          const result = await executeXeroTool(userId!, tool_name, toolArgs || {});
+          console.log(`[Execute] Xero tool ${tool_name} completed successfully`);
+          return result;
+        }
+      } catch (error) {
+        console.error(`[Execute] Error executing ${tool_name}:`, error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error executing ${tool_name}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            },
+          ],
+          isError: true,
+        };
       }
     }
 
