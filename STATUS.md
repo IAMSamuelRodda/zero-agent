@@ -3,9 +3,9 @@
 > **Purpose**: Current state snapshot (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-11-30 (Evening)
+**Last Updated**: 2025-11-30 (Late Evening)
 **Current Phase**: Memory Testing & ChatGPT Verification
-**Version**: 0.3.1
+**Version**: 0.3.2
 
 ---
 
@@ -16,12 +16,11 @@
 | **MCP Server** | 🟢 | Live at mcp.pip.arcforge.au |
 | **Claude.ai** | 🟢 | Fully validated (Xero tools working) |
 | **ChatGPT** | 🟡 | Needs verification with memory tools |
-| **Memory Stack** | 🟡 | Deployed (Option A - mem0), needs testing |
+| **Memory Stack** | 🟢 | Option B deployed (native, text-based search) |
 | **Safety Guardrails** | 🟢 | Complete (tiered permissions) |
 | **PWA Frontend** | 🟢 | Live at app.pip.arcforge.au |
 | **Landing Page** | 🟢 | Live at pip.arcforge.au |
 | **Xero Integration** | 🟢 | 10 READ-ONLY tools verified |
-| **VPS Ollama** | 🟢 | Running, nomic-embed-text ready |
 
 **Legend**: 🟢 Good | 🟡 Attention | 🔴 Critical | 🔵 In Progress
 
@@ -31,30 +30,30 @@
 
 **Objective**: Test memory tools and verify ChatGPT integration.
 
-### Just Completed (2025-11-30 Evening)
+### Just Completed (2025-11-30 Late Evening)
 
-1. **Full Deployment** ✅
-   - Memory-enabled container deployed with `MEMORY_VARIANT=mem0`
-   - Ollama accessible from container via `host.docker.internal`
-   - Landing page live at pip.arcforge.au
+1. **Memory System Fixed (issue_010)** ✅
+   - Option A (mem0) crashed with `SQLITE_CANTOPEN` - mem0ai bug in Docker/Alpine
+   - Option B (native) crashed with `ld-linux-x86-64.so.2` - onnxruntime needs glibc
+   - **Solution**: Removed @xenova/transformers, use text-based search
+   - Memory tools now working with better-sqlite3
+   - Trade-off: Text search vs semantic search (acceptable for MVP)
 
-2. **Claude.ai Integration Fixed** ✅
-   - OAuth debounce prevents double-submit race condition
-   - Session persistence (60s keep-alive after SSE close)
-   - Login button UX: loading state + disabled on click
-   - `user_settings` table migration added
-   - **Xero tools verified working** (get_invoices tested successfully)
+2. **Technical Fixes** ✅
+   - memory-native.ts creates its own tables on init
+   - Embedding code commented out (Alpine/musl incompatible)
+   - Fixed getAllMemories bug (was calling wrong method)
+   - Server starts cleanly without crashes
 
-3. **Bug Fixes** ✅
-   - OAuth double-code generation fixed
-   - MCP session expiring before tool calls fixed
-   - Missing database table created
+3. **Previous Session** ✅
+   - Claude.ai OAuth and Xero tools fully working
+   - Login page UI fixed (centered, no emoji)
+   - Landing page live
 
-### Pending Tests
+### Ready for Testing
 
 - [ ] Memory tools via Claude.ai (`add_memory`, `search_memory`, etc.)
 - [ ] Memory tools via ChatGPT Dev Mode
-- [ ] If Option A fails: Switch to Option B (`MEMORY_VARIANT=native`)
 
 ---
 

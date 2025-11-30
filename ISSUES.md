@@ -58,43 +58,26 @@
 
 ### Bugs
 
-#### issue_010: Mem0 SQLite CANTOPEN in Docker (BLOCKING)
-- **Status**: 🔴 Blocked (Option A unusable - switching to Option B)
-- **Priority**: P1 (High - memory features completely broken)
-- **Component**: `packages/mcp-remote-server` (memory-mem0.ts)
+#### issue_010: Mem0 SQLite CANTOPEN in Docker (RESOLVED)
+- **Status**: 🟢 Resolved (Switched to Option B native memory)
+- **Priority**: - (Complete)
+- **Component**: `packages/mcp-remote-server` (memory-native.ts)
 - **Discovered**: 2025-11-30
+- **Resolved**: 2025-11-30
 - **Description**: Mem0's internal SQLite throws `SQLITE_CANTOPEN` regardless of configuration, crashing the MCP server.
-- **Error Details**:
-  ```
-  [Memory] Mem0 initialized successfully (no history persistence)
-  <anonymous_script>:0
-  [Error: SQLITE_CANTOPEN: unable to open database file
-  Emitted 'error' event on Database instance at:
-  ] { errno: 14, code: 'SQLITE_CANTOPEN' }
-  ```
-- **Attempted Fixes (ALL FAILED)**:
-  1. ❌ Commenting out `historyDbPath` - still crashes
-  2. ❌ Setting `historyDbPath: ":memory:"` - still crashes
-  3. ❌ Pre-creating the .db file - still crashes
-  4. ❌ Verifying container can write files - permissions OK, still crashes
-- **Root Cause Analysis**:
-  - Mem0 uses internal SQLite (not our better-sqlite3)
-  - Error occurs AFTER "initialized successfully" - lazy async init
-  - Mem0 appears to create/use SQLite internally regardless of config
-  - `<anonymous_script>:0` suggests eval'd code or bundled module
-  - **Conclusion**: This is a mem0ai library bug in Docker/Alpine environments
-- **Decision**: Abandon Option A (mem0), implement Option B (native memory)
-- **Option B Benefits**:
-  - Uses our own better-sqlite3 (already working in container)
-  - Full control over implementation
-  - $0 API cost (local embeddings via @xenova/transformers)
-  - Works with ChatGPT (no Dev Mode limitations)
-- **Acceptance Criteria**:
-  - [x] Document issue thoroughly
-  - [ ] Implement Option B native memory with same interface as mem0
-  - [ ] Test native memory via Claude.ai
-  - [ ] Test native memory via ChatGPT
-  - [ ] Open issue on mem0ai GitHub for their awareness
+- **Root Cause**: mem0ai library has internal SQLite that fails in Docker/Alpine
+- **Additional Issue**: @xenova/transformers requires glibc (onnxruntime), but Alpine uses musl
+- **Resolution**:
+  - Switched to Option B (native memory implementation)
+  - Removed @xenova/transformers import (crashes Alpine at import time)
+  - Implemented text-based search instead of semantic/embedding search
+  - Memory tools now functional with better-sqlite3
+- **Trade-offs**:
+  - Text search instead of semantic search (less intelligent matching)
+  - Embeddings available if we switch to Debian-based Docker image
+- **Commits**:
+  - `d508336` - Initial Option B implementation with table creation
+  - `3c839bd` - Remove @xenova/transformers import to fix Alpine crash
 - **Notes**: Report to https://github.com/mem0ai/mem0/issues when time permits.
 
 ---
