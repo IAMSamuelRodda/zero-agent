@@ -1,0 +1,440 @@
+# Memory Architecture A/B Testing Blueprint
+# Generated: 2025-11-30
+# Branch: feature/memory-mcp-native
+# Purpose: Enable parallel testing of mem0 (Option A) vs MCP-native (Option B) memory approaches
+
+type: feature
+name: memory-ab-testing
+status: draft
+complexity: 3.5
+
+# ============================================================================
+# Executive Summary
+# ============================================================================
+
+summary: |
+  Implement A/B testing infrastructure to compare two memory architectures:
+  - Option A (mem0): Server-side LLM extraction + Ollama embeddings (~$0.001/req)
+  - Option B (MCP-native): Client LLM extraction + local embeddings ($0)
+
+  Key requirements:
+  - Parallel deployments with no conflicts
+  - Support multiple blind testers per variant
+  - Easy side-by-side comparison
+  - Same user experience, different backend
+
+# ============================================================================
+# Architecture Decision
+# ============================================================================
+
+decision:
+  approach: "Separate subdomains with shared database"
+  rationale: |
+    - Cleaner isolation than feature flags (no runtime conditionals)
+    - Same codebase, different memory service implementations
+    - Users connect to different URLs, blind to implementation
+    - Shared SQLite for users/auth, separate memory storage per variant
+
+  alternatives_rejected:
+    - feature_flags: "Adds complexity, risk of contamination"
+    - separate_databases: "Harder to compare users, auth duplication"
+    - single_codebase_with_env: "Runtime branching is error-prone"
+
+# ============================================================================
+# Infrastructure Design
+# ============================================================================
+
+infrastructure:
+  subdomains:
+    option_a:
+      url: "mcp-a.pip.arcforge.au"
+      container: "pip-mcp-a"
+      branch: "feature/memory-mem0-ollama"
+      description: "Mem0 + Claude LLM + Ollama embeddings"
+
+    option_b:
+      url: "mcp-b.pip.arcforge.au"
+      container: "pip-mcp-b"
+      branch: "feature/memory-mcp-native"
+      description: "MCP-native storage + local embeddings"
+
+    production:
+      url: "mcp.pip.arcforge.au"
+      container: "pip-mcp"
+      note: "Winner gets deployed here after testing"
+
+  database:
+    shared:
+      - users
+      - oauth_tokens
+      - invite_codes
+      - sessions
+      - core_memory
+
+    per_variant:
+      option_a:
+        file: "/app/data/pip-memory-a.db"  # Mem0 SQLite history
+
+      option_b:
+        file: "/app/data/pip-memory-b.db"  # MCP-native storage
+        tables:
+          - memory_entities      # Nodes (people, concepts, businesses)
+          - memory_observations  # Facts about entities
+          - memory_relations     # Connections between entities
+          - memory_embeddings    # Vector embeddings (BGE-M3)
+
+  user_assignment:
+    method: "Admin-assigned via invite codes"
+    flow:
+      - Admin creates invite codes tagged with variant (A or B)
+      - User signs up with invite code
+      - User's variant stored in database
+      - User given appropriate MCP URL
+
+    blind_testing:
+      - Both URLs look identical (mcp-X.pip.arcforge.au)
+      - Same Pip personality and tools
+      - Same OAuth flow
+      - Difference only in memory backend
+
+# ============================================================================
+# Option B: MCP-Native Implementation
+# ============================================================================
+
+option_b_implementation:
+  philosophy: |
+    "Bring Your Own LLM" - The calling LLM (Claude.ai/ChatGPT) handles:
+    - Fact extraction from conversation
+    - Entity recognition
+    - Relationship identification
+    - Conflict resolution
+
+    The MCP server just stores and retrieves structured data.
+
+  components:
+    memory_tools:
+      - name: "store_entity"
+        description: "Store a named entity (person, business, concept)"
+        input:
+          name: "string"
+          entity_type: "person | business | concept | event | other"
+          observations: "string[]"
+
+      - name: "store_observation"
+        description: "Add a fact/observation about an entity"
+        input:
+          entity_name: "string"
+          observation: "string"
+          importance: "critical | important | normal | temporary"
+
+      - name: "store_relation"
+        description: "Store relationship between two entities"
+        input:
+          from_entity: "string"
+          to_entity: "string"
+          relation_type: "string"  # e.g., "owns", "works_for", "located_in"
+
+      - name: "search_memory"
+        description: "Semantic search across all memories"
+        input:
+          query: "string"
+          limit: "number"
+        output:
+          - entities with relevant observations
+          - scored by relevance
+
+      - name: "get_entity"
+        description: "Get all information about a specific entity"
+        input:
+          name: "string"
+          include_relations: "boolean"
+
+      - name: "delete_entity"
+        description: "Remove an entity and its observations"
+        input:
+          name: "string"
+
+    embeddings:
+      provider: "@xenova/transformers"
+      model: "Xenova/bge-m3"  # 1024 dimensions
+      note: "Runs in Node.js, no external API needed"
+
+    storage:
+      type: "SQLite with better-sqlite3"
+      vector_search: "In-memory cosine similarity (like existing extended_memory)"
+
+    deduplication:
+      strategy: |
+        - Exact match: Skip duplicate observations
+        - Semantic similarity > 0.9: Merge into existing observation
+        - Conflict detection: Flag for LLM resolution on retrieval
+
+# ============================================================================
+# System Prompt Changes
+# ============================================================================
+
+system_prompt_option_b: |
+  ## Memory Guidelines (MCP-Native)
+
+  You are responsible for extracting and storing facts about the user.
+
+  **When to Store:**
+  - User shares business context → store_entity("business name", "business", [...facts])
+  - User mentions goals → store_observation("user", "Goal: hire by Q2")
+  - User states preferences → store_observation("user", "Prefers weekly reports")
+  - User mentions relationships → store_relation("user", "Acme Corp", "owns")
+
+  **Before Answering:**
+  - Always search_memory for relevant context
+  - Use entity info to personalize responses
+
+  **Entity Types:**
+  - person: People the user mentions (employees, clients, family)
+  - business: Companies, organizations
+  - concept: Abstract ideas, goals, plans
+  - event: Meetings, deadlines, milestones
+
+  **Important:**
+  - Extract atomic facts (one idea per observation)
+  - Be specific: "Revenue target: $500k by Dec 2025" not "has revenue goals"
+  - Update entities when new info conflicts with old
+
+# ============================================================================
+# Database Schema: Option B
+# ============================================================================
+
+database_schema_option_b:
+  tables:
+    memory_entities: |
+      CREATE TABLE memory_entities (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        entity_type TEXT NOT NULL,  -- person, business, concept, event, other
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE(user_id, name)
+      );
+      CREATE INDEX idx_entities_user ON memory_entities(user_id);
+      CREATE INDEX idx_entities_name ON memory_entities(user_id, name);
+
+    memory_observations: |
+      CREATE TABLE memory_observations (
+        id TEXT PRIMARY KEY,
+        entity_id TEXT NOT NULL,
+        observation TEXT NOT NULL,
+        importance TEXT DEFAULT 'normal',  -- critical, important, normal, temporary
+        embedding BLOB,  -- 1024-dim BGE-M3 vector
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
+      );
+      CREATE INDEX idx_observations_entity ON memory_observations(entity_id);
+
+    memory_relations: |
+      CREATE TABLE memory_relations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        from_entity_id TEXT NOT NULL,
+        to_entity_id TEXT NOT NULL,
+        relation_type TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (from_entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE,
+        FOREIGN KEY (to_entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
+      );
+      CREATE INDEX idx_relations_user ON memory_relations(user_id);
+
+# ============================================================================
+# Implementation Tasks
+# ============================================================================
+
+tasks:
+  phase_1_infrastructure:
+    - id: task_1_1
+      title: "Add variant field to users table"
+      description: |
+        ALTER TABLE users ADD COLUMN memory_variant TEXT DEFAULT 'a';
+        Values: 'a' (mem0), 'b' (mcp-native), 'control' (no memory)
+      complexity: 1
+
+    - id: task_1_2
+      title: "Add variant tag to invite codes"
+      description: |
+        ALTER TABLE invite_codes ADD COLUMN variant TEXT DEFAULT 'a';
+        Admin creates codes pre-tagged with variant
+      complexity: 1
+
+    - id: task_1_3
+      title: "Create Docker Compose for A/B deployment"
+      description: |
+        docker-compose.ab-testing.yml with:
+        - pip-mcp-a (port 3002)
+        - pip-mcp-b (port 3003)
+        - Shared volume for SQLite
+        - Separate memory DB paths
+      complexity: 2
+
+    - id: task_1_4
+      title: "Configure Caddy for A/B subdomains"
+      description: |
+        mcp-a.pip.arcforge.au → localhost:3002
+        mcp-b.pip.arcforge.au → localhost:3003
+      complexity: 1
+
+  phase_2_option_b_implementation:
+    - id: task_2_1
+      title: "Create memory-native.ts service"
+      description: |
+        New service replacing memory.ts for Option B:
+        - SQLite storage (no external LLM)
+        - Entity/observation/relation CRUD
+        - Semantic search with local embeddings
+      complexity: 3
+
+    - id: task_2_2
+      title: "Integrate @xenova/transformers for embeddings"
+      description: |
+        npm install @xenova/transformers
+        Load BGE-M3 model on startup
+        Generate 1024-dim embeddings for observations
+      complexity: 2.5
+      dependencies: [task_2_1]
+
+    - id: task_2_3
+      title: "Implement MCP-native memory tools"
+      description: |
+        Add to tool registry:
+        - store_entity
+        - store_observation
+        - store_relation
+        - search_memory
+        - get_entity
+        - delete_entity
+      complexity: 2.5
+      dependencies: [task_2_1]
+
+    - id: task_2_4
+      title: "Update system prompt for Option B"
+      description: |
+        Modify PIP_SYSTEM_PROMPT to guide LLM on fact extraction
+        Include entity types and storage guidelines
+      complexity: 1.5
+      dependencies: [task_2_3]
+
+  phase_3_testing_infrastructure:
+    - id: task_3_1
+      title: "Create admin variant assignment UI"
+      description: |
+        PWA admin page to:
+        - View users by variant
+        - Generate variant-tagged invite codes
+        - Reassign user variants
+      complexity: 2
+
+    - id: task_3_2
+      title: "Add metrics collection"
+      description: |
+        Track per request:
+        - Response time
+        - Memory operations count
+        - Memory search results count
+        - API costs (for Option A)
+      complexity: 2
+
+    - id: task_3_3
+      title: "Create comparison dashboard"
+      description: |
+        Admin view showing:
+        - Users per variant
+        - Average response time per variant
+        - Memory storage size
+        - API costs
+      complexity: 2.5
+      dependencies: [task_3_2]
+
+# ============================================================================
+# Deployment Plan
+# ============================================================================
+
+deployment:
+  steps:
+    1_prepare:
+      - Merge feature/memory-mem0-ollama to create Option A baseline
+      - Ensure Ollama is running on VPS with nomic-embed-text model
+      - Create DNS records for mcp-a and mcp-b subdomains
+
+    2_option_a:
+      - Build pip-mcp-a image from feature/memory-mem0-ollama
+      - Deploy to mcp-a.pip.arcforge.au
+      - Test with test user
+
+    3_option_b:
+      - Complete Option B implementation on this branch
+      - Build pip-mcp-b image from feature/memory-mcp-native
+      - Deploy to mcp-b.pip.arcforge.au
+      - Test with test user
+
+    4_blind_testing:
+      - Create variant-tagged invite codes
+      - Recruit testers (assign codes without revealing variant)
+      - Monitor metrics for 1-2 weeks
+
+    5_evaluation:
+      - Compare response times, accuracy, user feedback
+      - Decide winner
+      - Deploy winner to mcp.pip.arcforge.au
+
+# ============================================================================
+# Success Criteria
+# ============================================================================
+
+success_criteria:
+  functional:
+    - Both variants return relevant memories on search
+    - Memory persists across sessions
+    - No cross-contamination between variants
+
+  performance:
+    option_a:
+      - Response time: < 3s including LLM extraction
+      - API cost: < $0.005 per memory operation
+
+    option_b:
+      - Response time: < 500ms for memory operations
+      - API cost: $0 (local only)
+
+  comparison_metrics:
+    - Memory accuracy (manual evaluation)
+    - Response latency (p50, p95)
+    - User preference (blind survey)
+    - Total API costs per user
+
+# ============================================================================
+# Risks
+# ============================================================================
+
+risks:
+  - id: risk_1
+    description: "BGE-M3 model too large for VPS memory"
+    probability: medium
+    mitigation: "Use smaller model (all-MiniLM-L6-v2) or load on-demand"
+
+  - id: risk_2
+    description: "Client LLM doesn't extract facts well"
+    probability: medium
+    mitigation: "Iterate on system prompt, add examples, consider few-shot"
+
+  - id: risk_3
+    description: "Ollama not available on VPS for Option A"
+    probability: low
+    mitigation: "Already running for other services; fallback to OpenAI embeddings"
+
+# ============================================================================
+# References
+# ============================================================================
+
+references:
+  - Memento MCP Server: https://github.com/iachilles/memento
+  - BGE-M3 Model: https://huggingface.co/BAAI/bge-m3
+  - Xenova Transformers: https://github.com/xenova/transformers.js
+  - MCP Architecture: https://modelcontextprotocol.io/docs/learn/architecture

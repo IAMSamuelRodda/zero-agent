@@ -87,6 +87,14 @@ export interface OAuthTokens {
 }
 
 /**
+ * Memory variant for A/B testing
+ * - 'a': Option A (mem0 + Claude LLM + Ollama embeddings)
+ * - 'b': Option B (MCP-native + local embeddings)
+ * - 'control': No memory features
+ */
+export type MemoryVariant = 'a' | 'b' | 'control';
+
+/**
  * User Account
  * Stores user authentication and profile information
  */
@@ -96,6 +104,7 @@ export interface User {
   passwordHash: string;
   name?: string;
   isAdmin?: boolean;
+  memoryVariant?: MemoryVariant; // A/B testing variant assignment
   createdAt: number;
   updatedAt: number;
   lastLoginAt?: number;
@@ -109,6 +118,7 @@ export interface InviteCode {
   code: string;
   createdBy?: string;
   usedBy?: string;
+  variant?: MemoryVariant; // Pre-assigned A/B testing variant
   createdAt: number;
   usedAt?: number;
   expiresAt?: number;
@@ -210,13 +220,13 @@ export interface DatabaseProvider {
   deleteOAuthTokens(userId: string, provider: string): Promise<void>;
 
   // User operations
-  createUser(user: { email: string; passwordHash: string; name?: string; isAdmin?: boolean }): Promise<User>;
+  createUser(user: { email: string; passwordHash: string; name?: string; isAdmin?: boolean; memoryVariant?: MemoryVariant }): Promise<User>;
   getUserByEmail(email: string): Promise<User | null>;
   getUserById(id: string): Promise<User | null>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
 
   // Invite code operations
-  createInviteCode(code: string, createdBy?: string, expiresAt?: number): Promise<void>;
+  createInviteCode(code: string, createdBy?: string, expiresAt?: number, variant?: MemoryVariant): Promise<void>;
   getInviteCode(code: string): Promise<InviteCode | null>;
   useInviteCode(code: string, userId: string): Promise<void>;
   listInviteCodes(): Promise<InviteCode[]>;

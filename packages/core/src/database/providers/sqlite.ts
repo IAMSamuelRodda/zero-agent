@@ -21,6 +21,7 @@ import type {
   MemoryFilter,
   User,
   InviteCode,
+  MemoryVariant,
 } from "../types.js";
 import {
   ConnectionError,
@@ -175,6 +176,7 @@ export class SQLiteProvider implements DatabaseProvider {
         password_hash TEXT NOT NULL,
         name TEXT,
         is_admin INTEGER DEFAULT 0,
+        memory_variant TEXT DEFAULT 'a',  -- A/B testing: 'a', 'b', or 'control'
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         last_login_at INTEGER
@@ -182,17 +184,77 @@ export class SQLiteProvider implements DatabaseProvider {
       CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     `);
 
+    // Migration: Add memory_variant column if it doesn't exist
+    try {
+      this.db.exec(`ALTER TABLE users ADD COLUMN memory_variant TEXT DEFAULT 'a'`);
+    } catch {
+      // Column already exists, ignore
+    }
+
     // Invite codes table
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS invite_codes (
         code TEXT PRIMARY KEY,
         created_by TEXT,
         used_by TEXT,
+        variant TEXT DEFAULT 'a',  -- Pre-assigned A/B testing variant
         created_at INTEGER NOT NULL,
         used_at INTEGER,
         expires_at INTEGER
       );
       CREATE INDEX IF NOT EXISTS idx_invite_codes_used_by ON invite_codes(used_by);
+    `);
+
+    // Migration: Add variant column to invite_codes if it doesn't exist
+    try {
+      this.db.exec(`ALTER TABLE invite_codes ADD COLUMN variant TEXT DEFAULT 'a'`);
+    } catch {
+      // Column already exists, ignore
+    }
+
+    // MCP-Native Memory tables (Option B)
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS memory_entities (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        entity_type TEXT NOT NULL,  -- person, business, concept, event, other
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE(user_id, name)
+      );
+      CREATE INDEX IF NOT EXISTS idx_entities_user ON memory_entities(user_id);
+      CREATE INDEX IF NOT EXISTS idx_entities_name ON memory_entities(user_id, name);
+    `);
+
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS memory_observations (
+        id TEXT PRIMARY KEY,
+        entity_id TEXT NOT NULL,
+        observation TEXT NOT NULL,
+        importance TEXT DEFAULT 'normal',  -- critical, important, normal, temporary
+        embedding BLOB,  -- Vector for semantic search
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_observations_entity ON memory_observations(entity_id);
+    `);
+
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS memory_relations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        from_entity_id TEXT NOT NULL,
+        to_entity_id TEXT NOT NULL,
+        relation_type TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (from_entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE,
+        FOREIGN KEY (to_entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_relations_user ON memory_relations(user_id);
+      CREATE INDEX IF NOT EXISTS idx_relations_from ON memory_relations(from_entity_id);
+      CREATE INDEX IF NOT EXISTS idx_relations_to ON memory_relations(to_entity_id);
     `);
   }
 
@@ -988,6 +1050,7 @@ export class SQLiteProvider implements DatabaseProvider {
     passwordHash: string;
     name?: string;
     isAdmin?: boolean;
+    memoryVariant?: MemoryVariant;
   }): Promise<User> {
     if (!this.db) throw new DatabaseError("Database not connected", this.name);
 
@@ -996,8 +1059,8 @@ export class SQLiteProvider implements DatabaseProvider {
       const now = Date.now();
 
       const stmt = this.db.prepare(`
-        INSERT INTO users (id, email, password_hash, name, is_admin, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (id, email, password_hash, name, is_admin, memory_variant, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
@@ -1006,6 +1069,7 @@ export class SQLiteProvider implements DatabaseProvider {
         user.passwordHash,
         user.name || null,
         user.isAdmin ? 1 : 0,
+        user.memoryVariant || 'a',
         now,
         now
       );
@@ -1016,6 +1080,7 @@ export class SQLiteProvider implements DatabaseProvider {
         passwordHash: user.passwordHash,
         name: user.name,
         isAdmin: user.isAdmin || false,
+        memoryVariant: user.memoryVariant || 'a',
         createdAt: now,
         updatedAt: now,
       };
@@ -1049,6 +1114,7 @@ export class SQLiteProvider implements DatabaseProvider {
         passwordHash: row.password_hash,
         name: row.name,
         isAdmin: row.is_admin === 1,
+        memoryVariant: (row.memory_variant as MemoryVariant) || 'a',
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         lastLoginAt: row.last_login_at,
@@ -1080,6 +1146,7 @@ export class SQLiteProvider implements DatabaseProvider {
         passwordHash: row.password_hash,
         name: row.name,
         isAdmin: row.is_admin === 1,
+        memoryVariant: (row.memory_variant as MemoryVariant) || 'a',
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         lastLoginAt: row.last_login_at,
@@ -1105,13 +1172,14 @@ export class SQLiteProvider implements DatabaseProvider {
       const now = Date.now();
       const stmt = this.db.prepare(`
         UPDATE users
-        SET name = ?, is_admin = ?, updated_at = ?, last_login_at = ?
+        SET name = ?, is_admin = ?, memory_variant = ?, updated_at = ?, last_login_at = ?
         WHERE id = ?
       `);
 
       stmt.run(
         updates.name ?? existing.name ?? null,
         updates.isAdmin !== undefined ? (updates.isAdmin ? 1 : 0) : (existing.isAdmin ? 1 : 0),
+        updates.memoryVariant ?? existing.memoryVariant ?? 'a',
         now,
         updates.lastLoginAt ?? existing.lastLoginAt ?? null,
         id
@@ -1139,17 +1207,18 @@ export class SQLiteProvider implements DatabaseProvider {
   async createInviteCode(
     code: string,
     createdBy?: string,
-    expiresAt?: number
+    expiresAt?: number,
+    variant?: MemoryVariant
   ): Promise<void> {
     if (!this.db) throw new DatabaseError("Database not connected", this.name);
 
     try {
       const stmt = this.db.prepare(`
-        INSERT INTO invite_codes (code, created_by, created_at, expires_at)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO invite_codes (code, created_by, variant, created_at, expires_at)
+        VALUES (?, ?, ?, ?, ?)
       `);
 
-      stmt.run(code, createdBy || null, Date.now(), expiresAt || null);
+      stmt.run(code, createdBy || null, variant || 'a', Date.now(), expiresAt || null);
     } catch (error) {
       throw new DatabaseError(
         `Failed to create invite code: ${code}`,
@@ -1175,6 +1244,7 @@ export class SQLiteProvider implements DatabaseProvider {
         code: row.code,
         createdBy: row.created_by,
         usedBy: row.used_by,
+        variant: (row.variant as MemoryVariant) || 'a',
         createdAt: row.created_at,
         usedAt: row.used_at,
         expiresAt: row.expires_at,
@@ -1222,6 +1292,7 @@ export class SQLiteProvider implements DatabaseProvider {
         code: row.code,
         createdBy: row.created_by,
         usedBy: row.used_by,
+        variant: (row.variant as MemoryVariant) || 'a',
         createdAt: row.created_at,
         usedAt: row.used_at,
         expiresAt: row.expires_at,
