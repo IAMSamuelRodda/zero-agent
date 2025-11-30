@@ -56,6 +56,41 @@
 
 ---
 
+### Bugs
+
+#### issue_010: Mem0 SQLite CANTOPEN in Docker
+- **Status**: 🟡 In Progress (Workaround applied)
+- **Priority**: P2 (Medium - memory works but without persistence)
+- **Component**: `packages/mcp-remote-server` (memory-mem0.ts)
+- **Discovered**: 2025-11-30
+- **Description**: Mem0's internal SQLite (for history storage) throws `SQLITE_CANTOPEN: unable to open database file` when running in Docker container, crashing the entire MCP server.
+- **Error Details**:
+  ```
+  [Memory] Mem0 initialized successfully
+  <anonymous_script>:0
+  [Error: SQLITE_CANTOPEN: unable to open database file
+  Emitted 'error' event on Database instance at:
+  ] { errno: 14, code: 'SQLITE_CANTOPEN' }
+  ```
+- **Root Cause Analysis**:
+  - Mem0 uses its own SQLite library (not our better-sqlite3)
+  - The `<anonymous_script>:0` suggests lazy/async SQLite initialization
+  - Error occurs AFTER "initialized successfully" logs
+  - Directory permissions verified OK (container can create files)
+  - Pre-creating the .db file didn't help
+- **Workaround Applied**:
+  - Disabled `historyDbPath` in Mem0 config
+  - Memory now works but doesn't persist across container restarts
+  - Memories still stored in in-memory vector store during session
+- **Acceptance Criteria**:
+  - [ ] Investigate mem0ai's SQLite library (sql.js? sqlite3?)
+  - [ ] Try alternative: use Mem0 Cloud API instead of local storage
+  - [ ] Alternative: switch to Option B (native memory with better-sqlite3)
+  - [ ] Long-term: open issue on mem0ai GitHub if library bug
+- **Notes**: May be related to Docker alpine image or Node.js 20 SQLite bindings.
+
+---
+
 ### Improvements
 
 #### issue_003: Email Verification for Sign-Up

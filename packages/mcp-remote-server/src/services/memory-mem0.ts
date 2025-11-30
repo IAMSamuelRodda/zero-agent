@@ -61,38 +61,43 @@ export async function getMemory(): Promise<Mem0Memory> {
   console.log(`  - LLM: Anthropic Claude (${CLAUDE_MODEL})`);
   console.log(`  - Embeddings: Ollama (${OLLAMA_EMBED_MODEL}) at ${OLLAMA_BASE_URL}`);
 
-  memoryInstance = new Mem0Memory({
-    version: "v1.1",
-    // In-memory vector store (no Qdrant needed, fits VPS constraints)
-    vectorStore: {
-      provider: "memory",
-      config: {
-        collectionName: "pip_memories",
-        dimension: 768, // nomic-embed-text dimension
+  try {
+    memoryInstance = new Mem0Memory({
+      version: "v1.1",
+      // In-memory vector store (no Qdrant needed, fits VPS constraints)
+      vectorStore: {
+        provider: "memory",
+        config: {
+          collectionName: "pip_memories",
+          dimension: 768, // nomic-embed-text dimension
+        },
       },
-    },
-    // Ollama for embeddings (local, $0 cost)
-    embedder: {
-      provider: "ollama",
-      config: {
-        model: OLLAMA_EMBED_MODEL,
-        url: OLLAMA_BASE_URL,  // mem0ai uses 'url' not 'ollamaBaseUrl'
+      // Ollama for embeddings (local, $0 cost)
+      embedder: {
+        provider: "ollama",
+        config: {
+          model: OLLAMA_EMBED_MODEL,
+          url: OLLAMA_BASE_URL,  // mem0ai uses 'url' not 'ollamaBaseUrl'
+        },
       },
-    },
-    // Anthropic Claude for memory extraction/summarization
-    llm: {
-      provider: "anthropic",
-      config: {
-        apiKey: process.env.ANTHROPIC_API_KEY,
-        model: CLAUDE_MODEL,
+      // Anthropic Claude for memory extraction/summarization
+      llm: {
+        provider: "anthropic",
+        config: {
+          apiKey: process.env.ANTHROPIC_API_KEY,
+          model: CLAUDE_MODEL,
+        },
       },
-    },
-    // SQLite for history (persistent)
-    historyDbPath,
-  });
+      // Disable history for now - mem0's SQLite has issues in Docker
+      // historyDbPath,
+    });
 
-  console.log("[Memory] Mem0 initialized successfully");
-  return memoryInstance;
+    console.log("[Memory] Mem0 initialized successfully (no history persistence)");
+    return memoryInstance;
+  } catch (error) {
+    console.error("[Memory] Failed to initialize Mem0:", error);
+    throw new Error("Memory service initialization failed. Check Ollama and Anthropic API key.");
+  }
 }
 
 /**
