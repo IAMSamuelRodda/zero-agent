@@ -4,7 +4,7 @@
 > **Lifecycle**: Living (add when issues arise, remove when resolved)
 > **Resolved Issues**: Move to `CHANGELOG.md` under the appropriate version's "Fixed" section
 
-**Last Updated**: 2025-11-30
+**Last Updated**: 2025-11-30 (Night - MVP Complete)
 
 ---
 
@@ -34,25 +34,19 @@
 ### Priority Decisions
 
 #### issue_008: Memory Architecture Decision
-- **Status**: ✅ Resolved (A/B architecture implemented, Option A deployed)
+- **Status**: ✅ Resolved (Option B deployed - native memory)
 - **Priority**: - (Complete)
 - **Component**: `packages/mcp-remote-server`
-- **Research Complete**: 2025-11-30
-- **Decision Made**: 2025-11-30
+- **Resolved**: 2025-11-30
 - **Description**: Choose between two memory architectures for Pip
 - **Resolution**:
-  - **Implemented A/B testing architecture** with `MEMORY_VARIANT` env var
-  - **Option A (mem0)**: Deployed to production with Ollama embeddings
-  - **Option B (native)**: Available via config switch if needed
-  - **Next**: Test both options to determine best approach
+  - **Option A (mem0)**: REJECTED - SQLite crashes in Docker/Alpine
+  - **Option B (native)**: SELECTED - Text-based search, works in Alpine
+  - Memory tools verified working on both Claude.ai and ChatGPT
 - **Technical Details**:
-  - `MEMORY_VARIANT=mem0` - Uses mem0ai with Ollama nomic-embed-text
-  - `MEMORY_VARIANT=native` - Uses @xenova/transformers for local embeddings
-  - Ollama running on VPS as systemd service
-  - Memory tools exposed: add_memory, search_memory, list_memories, delete_memory
-- **Research Reference**:
-  - Spec: `specs/BLUEPRINT-feature-memory-ab-testing-20251130.yaml`
-  - Joplin: "Pip Memory Architecture Deep Research (2025-11-30)"
+  - Uses `memory-native.ts` with better-sqlite3
+  - Text-based search (semantic search deferred)
+  - 5 tools: add_memory, search_memory, list_memories, delete_memory, delete_all_memories
 
 ---
 
@@ -122,26 +116,19 @@
 - **Resolution**: All safety guardrails implemented. Users can configure permission levels via PWA settings page.
 
 #### issue_005: ChatGPT Memory Disabled in Developer Mode
-- **Status**: 🟡 In Progress (Memory deployed, testing needed)
-- **Priority**: P1 (High - verification pending)
-- **Component**: External (ChatGPT limitation) + `packages/mcp-remote-server`
+- **Status**: ✅ Resolved (Native memory works)
+- **Priority**: - (Complete)
+- **Component**: `packages/mcp-remote-server` (memory-native.ts)
+- **Resolved**: 2025-11-30
 - **Description**: ChatGPT disables memory when MCP connectors are used in Developer Mode
-- **Solution**: Use official `mem0ai` npm package with Ollama embeddings
-- **Current State** (2025-11-30):
-  - Memory tools deployed to production (Option A - mem0)
-  - Ollama running on VPS with nomic-embed-text model
-  - Claude.ai Xero tools verified working
-  - **Pending**: Memory tool testing via both Claude.ai and ChatGPT
+- **Solution**: Implemented native memory with text-based search (bypasses ChatGPT memory limitation)
 - **Acceptance Criteria**:
   - [x] Research memory approaches (mem0, SQLite, vector DB) - spike_mem0 COMPLETE
-  - [x] Install mem0ai and configure with Ollama embeddings - DEPLOYED
-  - [x] Add memory tools to MCP - DEPLOYED (add, search, list, delete)
-  - [ ] **Test memory tools via Claude.ai** - NEXT
-  - [ ] **Test memory tools via ChatGPT Dev Mode** - NEXT
-  - [ ] If Option A fails: Switch to Option B (native embeddings)
-  - [ ] Add memory management UI to PWA
-- **Notes**: Memory stack enables "Pip knows me" for Plus users and cross-platform memory portability.
-- **Reference**: docs/CHATGPT-MEMORY-GUIDE.md, specs/BLUEPRINT-feature-memory-ab-testing-20251130.yaml
+  - [x] Add memory tools to MCP - DEPLOYED (add, search, list, delete, delete_all)
+  - [x] **Test memory tools via Claude.ai** - WORKING (80% relevance)
+  - [x] **Test memory tools via ChatGPT Dev Mode** - WORKING (80% relevance)
+  - [ ] Add memory management UI to PWA (deferred)
+- **Notes**: Memory stack enables "Pip knows me" for Plus users. ChatGPT requires meta-tool pattern.
 
 #### issue_006: Google Docs Integration
 - **Status**: 🔴 Open

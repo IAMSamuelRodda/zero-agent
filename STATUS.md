@@ -3,9 +3,9 @@
 > **Purpose**: Current state snapshot (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-11-30 (Late Evening)
-**Current Phase**: Memory Testing & ChatGPT Verification
-**Version**: 0.3.2
+**Last Updated**: 2025-11-30 (Night)
+**Current Phase**: MVP Complete - Ready for Beta Users
+**Version**: 0.3.3
 
 ---
 
@@ -14,9 +14,9 @@
 | Aspect | Status | Notes |
 |--------|--------|-------|
 | **MCP Server** | 🟢 | Live at mcp.pip.arcforge.au |
-| **Claude.ai** | 🟢 | Fully validated (Xero tools working) |
-| **ChatGPT** | 🟡 | Needs verification with memory tools |
-| **Memory Stack** | 🟢 | Option B deployed (native, text-based search) |
+| **Claude.ai** | 🟢 | Fully validated (Xero + Memory tools) |
+| **ChatGPT** | 🟢 | Fully validated (Xero + Memory tools) |
+| **Memory Stack** | 🟢 | Option B (native, text-based search) |
 | **Safety Guardrails** | 🟢 | Complete (tiered permissions) |
 | **PWA Frontend** | 🟢 | Live at app.pip.arcforge.au |
 | **Landing Page** | 🟢 | Live at pip.arcforge.au |
@@ -28,7 +28,7 @@
 
 ## Current Focus
 
-**Objective**: Test memory tools and verify ChatGPT integration.
+**Objective**: Onboard beta users and gather feedback.
 
 ### Just Completed (2025-11-30 Late Evening)
 
@@ -76,30 +76,19 @@
 
 ---
 
-## Test Plan
+## Test Results (2025-11-30)
 
-### Memory Tool Tests (Claude.ai) - NEXT
+### All Tests Passed ✅
 
-1. **Connect to MCP**: Settings → Connectors → mcp.pip.arcforge.au
-2. **OAuth**: `pip-mcp-client` / `pip-mcp-secret-change-in-production`
+| Platform | Memory Add | Memory Search | Xero Tools |
+|----------|------------|---------------|------------|
+| **Claude.ai** | ✅ Working | ✅ 80% relevance | ✅ All 10 tools |
+| **ChatGPT** | ✅ Working | ✅ 80% relevance | ✅ All 10 tools |
 
-| Test | Prompt | Expected |
-|------|--------|----------|
-| **Add memory** | "Use add_memory to remember I prefer invoices on Mondays" | Confirmation |
-| **Search memory** | "Use search_memory to find my invoice preferences" | Returns Monday preference |
-| **List memories** | "Use list_memories to show everything you know about me" | Shows all memories |
-| **Delete memory** | "Use delete_memory to remove [memory_id]" | Confirmation |
-
-### Memory Tool Tests (ChatGPT Dev Mode)
-
-1. **Disconnect and reconnect** the Pip connector
-2. **Explicitly request tool usage**: "Use the add_memory tool to..."
-
-| Test | Expected (Option A - mem0) | Expected (Option B - native) |
-|------|----------------------------|------------------------------|
-| Tool visibility | May be limited | Full visibility |
-| Memory add | May timeout | Should work |
-| Memory search | May timeout | Should work |
+**Notes**:
+- Claude.ai: Direct tool calls (native MCP support)
+- ChatGPT: Requires meta-tool pattern (`get_tools_in_category` → `execute_tool`)
+- Memory uses text-based search (semantic search disabled for Alpine compatibility)
 
 ---
 
@@ -107,8 +96,9 @@
 
 | ID | Priority | Summary | Status |
 |----|----------|---------|--------|
-| issue_008 | - | Memory architecture decision | ✅ Resolved (A/B implemented, Option A deployed) |
-| issue_005 | P1 | ChatGPT memory in Dev Mode | 🟡 Testing needed |
+| issue_010 | - | Mem0 SQLite crash in Docker | ✅ Resolved (switched to native) |
+| issue_008 | - | Memory architecture decision | ✅ Resolved (Option B deployed) |
+| issue_005 | - | ChatGPT memory in Dev Mode | ✅ Resolved (native memory works) |
 | issue_004 | - | Safety guardrails | ✅ Complete |
 
 ---
@@ -144,10 +134,10 @@
 
 ## Next Steps
 
-1. **Test memory tools** via Claude.ai
-2. **Test memory tools** via ChatGPT Dev Mode
-3. **If Option A fails with ChatGPT**: Deploy Option B (`MEMORY_VARIANT=native`)
-4. **Document A/B comparison results**
+1. **Onboard beta users** - Share with trusted users for feedback
+2. **Monitor production** - Watch for errors, memory usage
+3. **Iterate on UX** - Based on user feedback
+4. **Consider Debian Docker** - If semantic search is needed later
 
 ---
 

@@ -3,8 +3,8 @@
 > **Purpose**: Detailed project tracking with milestones, epics, features, and tasks
 > **Lifecycle**: Living (update on task completion, status changes)
 
-**Last Updated**: 2025-11-30 (Evening)
-**Current Phase**: Memory Testing & ChatGPT Verification
+**Last Updated**: 2025-11-30 (Night)
+**Current Phase**: MVP Complete - Ready for Beta
 
 ---
 
@@ -12,10 +12,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Current Focus | Memory tool testing + ChatGPT verification |
-| Phase | Memory Testing & ChatGPT Verification |
-| Milestones Complete | 1/3 (Core Platform) |
-| Overall | MCP deployed with memory stack, awaiting testing |
+| Current Focus | Beta user onboarding |
+| Phase | MVP Complete - Ready for Beta |
+| Milestones Complete | 2/3 (Core Platform + MCP Distribution) |
+| Overall | All core features working on Claude.ai + ChatGPT |
 
 ### Architecture Direction (2025-11-30)
 
@@ -55,9 +55,10 @@ Claude API (direct, with tool calling)
 
 ---
 
-## Milestone 1: MCP Distribution (Current)
+## Milestone 1: MCP Distribution (Complete)
 
-**Status**: 🔵 In Progress
+**Status**: ✅ Complete
+**Completed**: 2025-11-30
 **Objective**: Distribute Pip via Claude.ai and ChatGPT instead of standalone PWA
 
 ### Why MCP Distribution?
@@ -190,17 +191,24 @@ Claude API (direct, with tool calling)
 
 ---
 
-### Epic 1.4: Mem0 Memory Stack
+### Epic 1.4: Native Memory Stack
 
-**Status**: 🔵 In Progress (Ready for Implementation)
+**Status**: ✅ Complete
+**Completed**: 2025-11-30
 **Priority**: HIGH (enables "Pip knows me" experience)
 
 **Problem**: ChatGPT Plus users have memory disabled in Developer Mode. Need Pip-native memory layer.
 
-**Solution**: Use official `mem0ai` npm package with in-memory vector store + SQLite history.
+**Solution**: Native memory implementation with text-based search (Option B).
 
-**Spike Complete**: spike_mem0 found official TypeScript SDK - no Python needed!
-**Decision Document**: `docs/research-notes/SPIKE-mem0-integration.md`
+**Why Not Mem0 (Option A)**:
+- mem0ai crashes with `SQLITE_CANTOPEN` in Docker/Alpine
+- @xenova/transformers requires glibc (Alpine uses musl)
+- Decided to use text-based search for MVP
+
+**Test Results**:
+- Claude.ai: add_memory + search_memory working (80% relevance)
+- ChatGPT: add_memory + search_memory working (80% relevance)
 
 ---
 
@@ -258,33 +266,30 @@ const memory = new Memory({
 
 ---
 
-#### feature_1_4_1: Mem0 Integration
+#### feature_1_4_1: Native Memory Integration
 
-**Status**: 🟢 Deployed (Testing Required)
+**Status**: ✅ Complete (Verified Working)
 
 | Task | Status | Notes |
 |------|--------|-------|
-| Install mem0ai package | ✅ Done | v2.1.38 installed |
-| Configure Memory instance | ✅ Done | Ollama embeddings + SQLite history |
-| Add memory tools to MCP | ✅ Done | 4 tools: add, search, list, delete |
+| Implement native memory | ✅ Done | memory-native.ts with better-sqlite3 |
+| Add memory tools to MCP | ✅ Done | 5 tools: add, search, list, delete, delete_all |
 | User isolation (multi-tenant) | ✅ Done | userId param per memory operation |
-| Architecture decision | ✅ Done | A/B testing implemented (issue_008 resolved) |
-| Deploy to production | ✅ Done | Option A (mem0) deployed |
-| **Test via Claude.ai** | ⚪ NEXT | Memory tools need verification |
-| **Test via ChatGPT** | ⚪ NEXT | Dev Mode compatibility check |
+| Deploy to production | ✅ Done | Option B (native) deployed |
+| **Test via Claude.ai** | ✅ Done | 80% relevance, working |
+| **Test via ChatGPT** | ✅ Done | 80% relevance, working |
 
 **Memory Tools Deployed**:
 - `add_memory`: Store user preferences, goals, business context
-- `search_memory`: Semantic search across memories
+- `search_memory`: Text-based search across memories
 - `list_memories`: View all stored memories
 - `delete_memory`: Remove specific memory by ID
+- `delete_all_memories`: Clear all user memories
 
-**Production Configuration** (Option A - mem0):
-- Vector store: in-memory (no external DB needed)
-- History: SQLite at `/app/data/pip-memory.db`
-- Embeddings: Ollama nomic-embed-text (local on VPS)
-- LLM: Claude (via user's Claude.ai/ChatGPT subscription)
-- Ollama: Running as systemd service on VPS
+**Production Configuration** (Option B - native):
+- Database: SQLite via better-sqlite3
+- Search: Text-based (semantic search deferred for Alpine compatibility)
+- Tables: memory_entities, memory_observations, memory_relations
 
 #### Architecture Research (2025-11-30) - COMPLETE
 

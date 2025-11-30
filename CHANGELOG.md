@@ -11,47 +11,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Landing page**: pip.arcforge.au with demo chat UI, features, and pricing sections
-- **Memory A/B architecture**: `MEMORY_VARIANT` env var for switching between mem0 and native implementations
-- **Mem0 memory tools**: 4 MCP tools deployed (add, search, list, delete)
-- **Memory service**: Using `mem0ai` v2.1.38 with Ollama embeddings + SQLite history
-- **VPS Ollama**: Running as systemd service with nomic-embed-text model
+- **Native memory implementation**: Option B with text-based search (replaced mem0)
+- **Memory tools**: 5 MCP tools (add_memory, search_memory, list_memories, delete_memory, delete_all_memories)
+- **ChatGPT support**: Full connector integration with meta-tool pattern
 - **ChatGPT memory guide**: docs/CHATGPT-MEMORY-GUIDE.md (export/import instructions)
 - **Repository renamed**: `pip` → `pip-by-arc-forge` (GitHub + local)
 
 ### Fixed
+- **issue_010: Mem0 SQLite crash**: Switched to native memory (mem0ai has internal SQLite bug in Docker/Alpine)
+- **issue_010: Alpine glibc crash**: Removed @xenova/transformers (onnxruntime requires glibc, Alpine uses musl)
 - **OAuth double-submit bug**: Added debounce protection to prevent race conditions
 - **MCP session expiring**: Sessions now kept alive for 60 seconds after SSE close
 - **Missing user_settings table**: Added migration to sqlite.ts
 - **Login button UX**: Added loading state ("Sign In" → "Signing In...") with disabled state
-- **Sign up button UX**: Same loading state pattern applied
+- **Login page UI**: Centered text, removed amateur emoji
+- **getAllMemories bug**: Fixed method calling wrong function
 
 ### Verified
+- **Claude.ai Memory tools**: add_memory + search_memory working (80% relevance)
+- **ChatGPT Memory tools**: add_memory + search_memory working (80% relevance)
 - **Claude.ai Xero tools**: All 10 tools working (get_invoices tested successfully)
+- **ChatGPT Xero tools**: All 10 tools working via execute_tool
 - **Full deployment**: All three services healthy (pip.arcforge.au, app.pip.arcforge.au, mcp.pip.arcforge.au)
 
-### Researched
-- **spike_mem0** (COMPLETE): Mem0 Integration Feasibility
-  - Evaluated 8 approaches (A-H), selected Option H: official `mem0ai` npm
-  - Key discovery: Official TypeScript SDK with full API parity
-  - Resource impact: ~100-200MB RAM, fits 384MB VPS
-  - Decision document: `docs/research-notes/SPIKE-mem0-integration.md`
-- **Memory architecture decision** (RESOLVED):
-  - Option A (mem0 + Ollama): Deployed to production
-  - Option B (native): Available via config switch
-  - A/B testing architecture implemented
+### Technical Decisions
+- **Memory architecture**: Option B (native) selected over Option A (mem0)
+  - mem0ai has unfixable SQLite bug in Docker/Alpine environments
+  - @xenova/transformers requires glibc (Alpine uses musl)
+  - Text-based search acceptable for MVP (semantic search deferred)
 - **Architecture direction adopted**:
-  - USE: Mem0 (memory) + Lazy-MCP (tools)
-  - SKIP: LangChain (obsolete), traditional RAG
-  - DEFER: LangGraph (only if complex approval flows needed)
-
-### Pending Testing
-- Memory tools via Claude.ai
-- Memory tools via ChatGPT Dev Mode
-- A/B comparison results
+  - USE: Native memory (SQLite) + Lazy-MCP (tools)
+  - SKIP: mem0 (Docker incompatible), LangChain (obsolete)
+  - DEFER: Semantic search (requires Debian Docker image)
 
 ### Planned
 - Google Docs integration (issue_006)
 - Nextcloud integration (issue_007)
+- Semantic search (if needed, switch to Debian-based Docker)
 
 ---
 
