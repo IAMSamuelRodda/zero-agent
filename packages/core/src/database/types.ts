@@ -143,6 +143,87 @@ export const PERMISSION_LEVEL_NAMES: Record<PermissionLevel, string> = {
   3: "Delete & Void",
 };
 
+// ============================================================================
+// Personality System
+// ============================================================================
+
+/**
+ * Personality ID
+ * Available personality modes for Pip
+ */
+export type PersonalityId = "adelaide" | "pippin";
+
+export const PERSONALITY_NAMES: Record<PersonalityId, string> = {
+  adelaide: "Adelaide",
+  pippin: "Pip",
+};
+
+/**
+ * Personality Traits
+ * Dimensions on 1-10 scale
+ */
+export interface PersonalityTraits {
+  formality: number;    // 1=casual, 10=formal
+  warmth: number;       // 1=distant, 10=warm
+  playfulness: number;  // 1=serious, 10=playful
+  confidence: number;   // 1=uncertain, 10=confident
+  verbosity: number;    // 1=terse, 10=verbose
+}
+
+/**
+ * Personality Speech Patterns
+ * How the character communicates
+ */
+export interface PersonalitySpeech {
+  sentenceStyle: string;      // "short and direct" | "flowing and detailed"
+  vocabularyLevel: string;    // "simple" | "professional" | "technical"
+  verbalTics: string[];       // Unique phrases or habits
+  greetings: string[];        // How they say hello
+  signOffs: string[];         // How they end conversations
+}
+
+/**
+ * Personality Behavioral Anchors
+ * How the character acts in specific situations
+ */
+export interface PersonalityBehavior {
+  underPressure: string;      // How they act when user is stressed
+  withErrors: string;         // How they handle mistakes
+  withUncertainty: string;    // How they express "I don't know"
+}
+
+/**
+ * Personality Example Exchange
+ * Example user/assistant interactions for multishot prompting
+ */
+export interface PersonalityExample {
+  user: string;
+  assistant: string;
+}
+
+/**
+ * Personality
+ * Complete personality definition for Pip
+ */
+export interface Personality {
+  id: PersonalityId;
+  name: string;
+  description: string;
+
+  identity: {
+    role: string;
+    background: string;
+    expertise: string[];
+  };
+
+  traits: PersonalityTraits;
+  speech: PersonalitySpeech;
+  behavior: PersonalityBehavior;
+
+  never: string[];              // Things this character would never say/do
+  examples: PersonalityExample[]; // Multishot prompting examples
+}
+
 /**
  * User Settings
  * Stores user preferences including safety settings
@@ -150,6 +231,7 @@ export const PERMISSION_LEVEL_NAMES: Record<PermissionLevel, string> = {
 export interface UserSettings {
   userId: string;
   permissionLevel: PermissionLevel;
+  personality: PersonalityId;
   requireConfirmation: boolean;
   dailyEmailSummary: boolean;
   require2FA: boolean;
