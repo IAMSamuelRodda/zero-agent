@@ -92,12 +92,49 @@ export class MemoryNativeService {
     // Ensure foreign keys are enabled
     this.db.pragma("foreign_keys = ON");
 
+    // Create memory tables if they don't exist
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS memory_entities (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        entity_type TEXT NOT NULL DEFAULT 'other',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_entities_user ON memory_entities(user_id);
+      CREATE INDEX IF NOT EXISTS idx_entities_name ON memory_entities(user_id, name);
+
+      CREATE TABLE IF NOT EXISTS memory_observations (
+        id TEXT PRIMARY KEY,
+        entity_id TEXT NOT NULL,
+        observation TEXT NOT NULL,
+        importance TEXT NOT NULL DEFAULT 'normal',
+        embedding TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_observations_entity ON memory_observations(entity_id);
+
+      CREATE TABLE IF NOT EXISTS memory_relations (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        from_entity_id TEXT NOT NULL,
+        to_entity_id TEXT NOT NULL,
+        relation_type TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (from_entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE,
+        FOREIGN KEY (to_entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS idx_relations_user ON memory_relations(user_id);
+    `);
+
     console.log(`✓ MemoryNative connected to: ${this.dbPath}`);
 
-    // Pre-load embedder in background (don't block startup)
-    this.loadEmbedder().catch((err) => {
-      console.error("Failed to pre-load embedder:", err);
-    });
+    // Skip embedding model loading in Docker Alpine (onnxruntime glibc issue)
+    // Semantic search will fallback to text matching
+    console.log(`[Memory Native] Embeddings disabled (Alpine/glibc compatibility)`);
   }
 
   private async loadEmbedder(): Promise<FeatureExtractionPipeline> {
@@ -359,16 +396,14 @@ export class MemoryNativeService {
     const now = Date.now();
     const id = crypto.randomUUID();
 
-    // Generate embedding
-    const embedding = await this.generateEmbedding(observation);
-    const embeddingBlob = Buffer.from(new Float32Array(embedding).buffer);
-
+    // Skip embedding generation (Alpine/glibc compatibility)
+    // Using text-based search instead of semantic search
     this.db
       .prepare(
         `INSERT INTO memory_observations (id, entity_id, observation, importance, embedding, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+         VALUES (?, ?, ?, ?, NULL, ?, ?)`
       )
-      .run(id, entityId, observation, importance, embeddingBlob, now, now);
+      .run(id, entityId, observation, importance, now, now);
 
     // Update entity's updated_at
     this.db
@@ -380,7 +415,6 @@ export class MemoryNativeService {
       entityId,
       observation,
       importance,
-      embedding,
       createdAt: now,
       updatedAt: now,
     };
@@ -575,27 +609,37 @@ export class MemoryNativeService {
   ): Promise<SearchResult[]> {
     if (!this.db) throw new Error("Database not initialized");
 
-    // Generate query embedding
-    const queryEmbedding = await this.generateEmbedding(query);
+    // Text-based search (embeddings disabled for Alpine compatibility)
+    const queryLower = query.toLowerCase();
+    const queryWords = queryLower.split(/\s+/).filter(w => w.length > 2);
 
-    // Get all observations for this user with embeddings
+    // Get all observations for this user
     const rows = this.db
       .prepare(
         `SELECT o.*, e.name as entity_name, e.entity_type, e.user_id
          FROM memory_observations o
          JOIN memory_entities e ON o.entity_id = e.id
-         WHERE e.user_id = ? AND o.embedding IS NOT NULL`
+         WHERE e.user_id = ?`
       )
       .all(userId) as any[];
 
-    // Calculate similarity scores
+    // Calculate text similarity scores
     const results: SearchResult[] = [];
 
     for (const row of rows) {
-      if (!row.embedding) continue;
+      const obsLower = row.observation.toLowerCase();
 
-      const embedding = Array.from(new Float32Array(row.embedding.buffer));
-      const score = this.cosineSimilarity(queryEmbedding, embedding);
+      // Simple text matching score
+      let matchCount = 0;
+      for (const word of queryWords) {
+        if (obsLower.includes(word)) matchCount++;
+      }
+
+      // Skip if no matches
+      if (matchCount === 0 && !obsLower.includes(queryLower)) continue;
+
+      // Score: exact phrase match = 1.0, word matches = proportion
+      let score = obsLower.includes(queryLower) ? 1.0 : (matchCount / Math.max(queryWords.length, 1)) * 0.8;
 
       // Apply importance weighting
       const importanceWeight =
@@ -760,19 +804,13 @@ export async function getAllMemories(
 ): Promise<{ id: string; memory: string; createdAt?: string }[]> {
   const service = await getMemoryNativeService();
 
-  // Get all entities for this user
+  // Get user_preferences entity with observations
   const entity = await service.getEntity(userId, "user_preferences");
-  if (!entity) {
+  if (!entity || !entity.observations) {
     return [];
   }
 
-  // Get entity with all observations
-  const entityWithObs = await service.getEntityById(entity.id);
-  if (!entityWithObs || !("observations" in entityWithObs)) {
-    return [];
-  }
-
-  const memories = (entityWithObs as EntityWithObservations).observations.map((obs) => ({
+  const memories = entity.observations.map((obs) => ({
     id: obs.id,
     memory: obs.observation,
     createdAt: new Date(obs.createdAt).toISOString(),
