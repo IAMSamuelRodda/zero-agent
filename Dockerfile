@@ -1,4 +1,4 @@
-# Zero Agent - Production Dockerfile
+# Pip - Production Dockerfile
 # Multi-stage build for minimal image size
 
 # ============================================
@@ -29,10 +29,10 @@ COPY packages/server/ ./packages/server/
 COPY packages/pwa-app/ ./packages/pwa-app/
 
 # Build all packages (including PWA)
-RUN pnpm --filter @zero-agent/core run build && \
-    pnpm --filter @zero-agent/agent-core run build && \
-    pnpm --filter @zero-agent/server run build && \
-    pnpm --filter @zero-agent/pwa-app run build
+RUN pnpm --filter @pip/core run build && \
+    pnpm --filter @pip/agent-core run build && \
+    pnpm --filter @pip/server run build && \
+    pnpm --filter @pip/pwa-app run build
 
 # ============================================
 # Stage 2: Production
@@ -44,7 +44,7 @@ RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S zero-agent -u 1001 -G nodejs
+    adduser -S pip-app -u 1001 -G nodejs
 
 WORKDIR /app
 
@@ -64,10 +64,10 @@ COPY --from=builder /app/packages/server/dist ./packages/server/dist
 COPY --from=builder /app/packages/pwa-app/dist ./packages/pwa-app/dist
 
 # Create data directory for SQLite
-RUN mkdir -p /app/data && chown -R zero-agent:nodejs /app/data
+RUN mkdir -p /app/data && chown -R pip-app:nodejs /app/data
 
 # Switch to non-root user
-USER zero-agent
+USER pip-app
 
 # Environment variables
 ENV NODE_ENV=production
