@@ -1360,7 +1360,7 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
           <label for="signin-password">Password</label>
           <input type="password" id="signin-password" name="password" required placeholder="Your password">
         </div>
-        <button type="submit">Sign In & Connect</button>
+        <button type="submit" id="signin-btn" data-default="Sign In" data-loading="Signing In...">Sign In</button>
       </form>
     </div>
 
@@ -1386,7 +1386,7 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
           <input type="text" id="signup-invite" name="inviteCode" required placeholder="Enter your invite code">
           <p class="hint">Pip is in private beta. You need an invite code to sign up.</p>
         </div>
-        <button type="submit">Sign Up & Connect</button>
+        <button type="submit" id="signup-btn" data-default="Sign Up" data-loading="Signing Up...">Sign Up</button>
       </form>
     </div>
   </div>
@@ -1398,6 +1398,19 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
       document.querySelector('.tab:' + (tab === 'signin' ? 'first-child' : 'last-child')).classList.add('active');
       document.getElementById(tab + '-panel').classList.add('active');
     }
+
+    // Add loading state to form buttons
+    document.querySelectorAll('form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn && !btn.disabled) {
+          btn.disabled = true;
+          btn.textContent = btn.dataset.loading || 'Loading...';
+          btn.style.opacity = '0.7';
+          btn.style.cursor = 'not-allowed';
+        }
+      });
+    });
   </script>
 </body>
 </html>
