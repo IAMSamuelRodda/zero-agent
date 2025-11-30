@@ -1411,10 +1411,22 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
  * OAuth Authorization Submit
  * Handles login form submission with proper password verification
  */
+// Track recent OAuth submissions to prevent double-submit
+const recentOAuthSubmissions = new Map<string, { code: string; redirectUrl: string; timestamp: number }>();
+
 app.post("/oauth/authorize/submit", express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
   const { email, password, redirect_uri, state } = req.body;
 
   console.log("OAuth login attempt:", { email, redirect_uri });
+
+  // Debounce: Check if we already processed this state recently (within 10 seconds)
+  const submissionKey = `${email}:${state}`;
+  const recentSubmission = recentOAuthSubmissions.get(submissionKey);
+  if (recentSubmission && Date.now() - recentSubmission.timestamp < 10000) {
+    console.log(`Debounce: Ignoring duplicate OAuth submission for state ${state}, reusing existing code`);
+    res.redirect(recentSubmission.redirectUrl);
+    return;
+  }
 
   // Validate credentials against main database
   try {
@@ -1491,8 +1503,21 @@ app.post("/oauth/authorize/submit", express.urlencoded({ extended: true }), asyn
       redirectUrl.searchParams.set("state", state);
     }
 
-    console.log("OAuth code generated for user:", user.id, "redirecting to:", redirectUrl.toString());
-    res.redirect(redirectUrl.toString());
+    // Store this submission for debounce protection
+    const finalRedirectUrl = redirectUrl.toString();
+    recentOAuthSubmissions.set(submissionKey, {
+      code,
+      redirectUrl: finalRedirectUrl,
+      timestamp: Date.now()
+    });
+
+    // Clean up old submissions after 30 seconds
+    setTimeout(() => {
+      recentOAuthSubmissions.delete(submissionKey);
+    }, 30000);
+
+    console.log("OAuth code generated for user:", user.id, "redirecting to:", finalRedirectUrl);
+    res.redirect(finalRedirectUrl);
   } catch (error) {
     console.error("OAuth login error:", error);
     res.redirect(`/oauth/authorize?error=server_error&redirect_uri=${encodeURIComponent(redirect_uri)}&state=${state}&client_id=${OAUTH_CLIENT_ID}&response_type=code`);
