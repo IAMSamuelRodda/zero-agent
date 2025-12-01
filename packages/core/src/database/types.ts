@@ -22,6 +22,9 @@ export interface Session {
   createdAt: number; // Unix timestamp
   updatedAt: number; // Unix timestamp
   expiresAt: number; // Unix timestamp (30 days from creation)
+  // Chat history fields (added for Epic 2.2)
+  title?: string; // Auto-generated from first message
+  previewText?: string; // Last message preview for sidebar
 }
 
 /**

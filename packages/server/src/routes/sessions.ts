@@ -2,11 +2,35 @@
  * Session Management Routes
  *
  * Handles conversation session CRUD operations
+ * Epic 2.2: Chat History support
  */
 
 import { Router } from 'express';
 import { AgentOrchestrator } from '@pip/agent-core';
 import type { DatabaseProvider } from '@pip/core';
+
+/**
+ * Generate a title from the first user message
+ * Takes the first ~50 chars or first sentence, whichever is shorter
+ */
+function generateTitleFromMessage(content: string): string {
+  // Clean up whitespace
+  const cleaned = content.trim().replace(/\s+/g, ' ');
+
+  // Find first sentence ending
+  const sentenceEnd = cleaned.search(/[.!?]/);
+  const firstSentence = sentenceEnd > 0 ? cleaned.substring(0, sentenceEnd + 1) : cleaned;
+
+  // Truncate to ~50 chars if needed
+  if (firstSentence.length <= 50) {
+    return firstSentence;
+  }
+
+  // Find a good break point (word boundary)
+  const truncated = cleaned.substring(0, 50);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return lastSpace > 20 ? truncated.substring(0, lastSpace) + '...' : truncated + '...';
+}
 
 export function createSessionRoutes(db: DatabaseProvider): Router {
   const router = Router();
@@ -32,12 +56,12 @@ export function createSessionRoutes(db: DatabaseProvider): Router {
 
   /**
    * GET /api/sessions
-   * List all sessions for a user
+   * List all sessions for a user (chat history)
    */
   router.get('/', async (req, res, next) => {
     try {
       const userId = req.userId!;
-      const limit = parseInt(req.query.limit as string) || 20;
+      const limit = parseInt(req.query.limit as string) || 50;
 
       const sessions = await db.listSessions({
         userId,
@@ -46,14 +70,24 @@ export function createSessionRoutes(db: DatabaseProvider): Router {
       });
 
       res.json({
-        sessions: sessions.map(s => ({
-          sessionId: s.sessionId,
-          messageCount: s.messages.length,
-          createdAt: s.createdAt,
-          updatedAt: s.updatedAt,
-          // Include first message as preview
-          preview: s.messages[0]?.content?.substring(0, 100) || null,
-        })),
+        sessions: sessions.map(s => {
+          // Generate title from first user message if not set
+          const firstUserMsg = s.messages.find(m => m.role === 'user');
+          const title = s.title || (firstUserMsg ? generateTitleFromMessage(firstUserMsg.content) : 'New chat');
+
+          // Get preview from last message
+          const lastMsg = s.messages[s.messages.length - 1];
+          const previewText = s.previewText || lastMsg?.content?.substring(0, 100) || null;
+
+          return {
+            sessionId: s.sessionId,
+            title,
+            previewText,
+            messageCount: s.messages.length,
+            createdAt: s.createdAt,
+            updatedAt: s.updatedAt,
+          };
+        }),
       });
     } catch (error) {
       next(error);
@@ -69,11 +103,50 @@ export function createSessionRoutes(db: DatabaseProvider): Router {
       const userId = req.userId!;
       const { id: sessionId } = req.params;
 
-      const history = await orchestrator.getHistory(userId, sessionId);
+      const session = await db.getSession(userId, sessionId);
+      if (!session) {
+        res.status(404).json({ error: 'Session not found' });
+        return;
+      }
+
+      // Generate title if not set
+      const firstUserMsg = session.messages.find(m => m.role === 'user');
+      const title = session.title || (firstUserMsg ? generateTitleFromMessage(firstUserMsg.content) : 'New chat');
 
       res.json({
-        sessionId,
-        messages: history,
+        sessionId: session.sessionId,
+        title,
+        messages: session.messages,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * PATCH /api/sessions/:id
+   * Update session (rename chat)
+   */
+  router.patch('/:id', async (req, res, next) => {
+    try {
+      const userId = req.userId!;
+      const { id: sessionId } = req.params;
+      const { title } = req.body;
+
+      if (typeof title !== 'string' || !title.trim()) {
+        res.status(400).json({ error: 'Title is required' });
+        return;
+      }
+
+      const updated = await db.updateSession(userId, sessionId, {
+        title: title.trim().substring(0, 100),
+      });
+
+      res.json({
+        sessionId: updated.sessionId,
+        title: updated.title,
       });
     } catch (error) {
       next(error);

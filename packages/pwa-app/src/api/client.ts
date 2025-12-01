@@ -22,6 +22,24 @@ interface ChatResponse {
   };
 }
 
+// Chat history types
+interface ChatSummary {
+  sessionId: string;
+  title: string;
+  previewText: string | null;
+  messageCount: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface ChatSession {
+  sessionId: string;
+  title: string;
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>;
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface AuthStatus {
   connected: boolean;
   expired?: boolean;
@@ -218,6 +236,69 @@ export const api = {
     }
     return response.json();
   },
+
+  // ============================================================================
+  // Chat History (Epic 2.2)
+  // ============================================================================
+
+  /**
+   * List all chat sessions
+   */
+  async listChats(limit?: number): Promise<{ sessions: ChatSummary[] }> {
+    const params = limit ? `?limit=${limit}` : '';
+    const response = await fetch(`${API_BASE}/api/sessions${params}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to list chats');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get a chat session with messages
+   */
+  async getChat(sessionId: string): Promise<ChatSession> {
+    const response = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to get chat');
+    }
+    return response.json();
+  },
+
+  /**
+   * Rename a chat
+   */
+  async renameChat(sessionId: string, title: string): Promise<{ sessionId: string; title: string }> {
+    const response = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ title }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to rename chat');
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a chat
+   */
+  async deleteChat(sessionId: string): Promise<{ success: boolean }> {
+    const response = await fetch(`${API_BASE}/api/sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete chat');
+    }
+    return response.json();
+  },
 };
 
 // Memory types
@@ -318,4 +399,4 @@ export const memoryApi = {
   },
 };
 
-export type { PersonalityId, UserSettings, PersonalityInfo, PersonalityOption, MemoryStatus, MemoryEdit };
+export type { PersonalityId, UserSettings, PersonalityInfo, PersonalityOption, MemoryStatus, MemoryEdit, ChatSummary, ChatSession };

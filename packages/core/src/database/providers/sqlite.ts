@@ -97,11 +97,26 @@ export class SQLiteProvider implements DatabaseProvider {
         agent_context TEXT NOT NULL, -- JSON object
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
-        expires_at INTEGER NOT NULL
+        expires_at INTEGER NOT NULL,
+        title TEXT, -- Auto-generated chat title
+        preview_text TEXT -- Last message preview
       );
       CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
       CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
+      CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at);
     `);
+
+    // Migration: Add title and preview_text columns to sessions if they don't exist
+    try {
+      this.db.exec(`ALTER TABLE sessions ADD COLUMN title TEXT`);
+    } catch {
+      // Column already exists, ignore
+    }
+    try {
+      this.db.exec(`ALTER TABLE sessions ADD COLUMN preview_text TEXT`);
+    } catch {
+      // Column already exists, ignore
+    }
 
     // Core Memory table
     this.db.exec(`
@@ -302,8 +317,8 @@ export class SQLiteProvider implements DatabaseProvider {
 
     try {
       const stmt = this.db.prepare(`
-        INSERT INTO sessions (session_id, user_id, messages, agent_context, created_at, updated_at, expires_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO sessions (session_id, user_id, messages, agent_context, created_at, updated_at, expires_at, title, preview_text)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
@@ -313,7 +328,9 @@ export class SQLiteProvider implements DatabaseProvider {
         JSON.stringify(fullSession.agentContext),
         fullSession.createdAt,
         fullSession.updatedAt,
-        fullSession.expiresAt
+        fullSession.expiresAt,
+        fullSession.title || null,
+        fullSession.previewText || null
       );
 
       return fullSession;
@@ -346,6 +363,8 @@ export class SQLiteProvider implements DatabaseProvider {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         expiresAt: row.expires_at,
+        title: row.title || undefined,
+        previewText: row.preview_text || undefined,
       };
     } catch (error) {
       throw new DatabaseError(
@@ -377,7 +396,7 @@ export class SQLiteProvider implements DatabaseProvider {
 
       const stmt = this.db.prepare(`
         UPDATE sessions
-        SET messages = ?, agent_context = ?, updated_at = ?, expires_at = ?
+        SET messages = ?, agent_context = ?, updated_at = ?, expires_at = ?, title = ?, preview_text = ?
         WHERE user_id = ? AND session_id = ?
       `);
 
@@ -386,6 +405,8 @@ export class SQLiteProvider implements DatabaseProvider {
         JSON.stringify(updated.agentContext),
         updated.updatedAt,
         updated.expiresAt,
+        updated.title || null,
+        updated.previewText || null,
         userId,
         sessionId
       );
@@ -431,7 +452,8 @@ export class SQLiteProvider implements DatabaseProvider {
         params.push(filter.sessionId);
       }
 
-      query += ` ORDER BY created_at ${filter.sortOrder === "asc" ? "ASC" : "DESC"}`;
+      // Sort by updated_at for chat history (most recently active first)
+      query += ` ORDER BY updated_at ${filter.sortOrder === "asc" ? "ASC" : "DESC"}`;
 
       if (filter.limit) {
         query += ` LIMIT ?`;
@@ -449,6 +471,8 @@ export class SQLiteProvider implements DatabaseProvider {
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         expiresAt: row.expires_at,
+        title: row.title || undefined,
+        previewText: row.preview_text || undefined,
       }));
     } catch (error) {
       throw new DatabaseError(

@@ -1,6 +1,7 @@
 /**
  * Chat Page - Main conversation interface
  * Arc Forge dark theme
+ * Epic 2.2: Chat History with sidebar
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -10,6 +11,7 @@ import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
 import { api } from '../api/client';
 import type { PersonalityInfo } from '../api/client';
+import { ChatSidebar } from '../components/ChatSidebar';
 
 interface AuthStatus {
   connected: boolean;
@@ -33,12 +35,13 @@ export function ChatPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [personalityInfo, setPersonalityInfo] = useState<PersonalityInfo | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navigate = useNavigate();
-  const { messages, isLoading, error, sendMessage, clearError } = useChatStore();
+  const { messages, isLoading, error, sendMessage, clearError, currentTitle } = useChatStore();
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
@@ -168,18 +171,27 @@ export function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-arc-bg-primary font-mono">
-      {/* Header */}
-      <header className="bg-arc-bg-secondary border-b border-arc-border">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <svg className="w-8 h-8" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="50" r="44" fill="#0f1419" stroke="#7eb88e" strokeWidth="6"/>
-              <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="#7eb88e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <h1 className="text-lg font-semibold text-arc-text-primary">Pip</h1>
-            <span className="text-xs text-arc-text-dim">by Arc Forge</span>
-          </div>
+    <div className="flex h-screen bg-arc-bg-primary font-mono">
+      {/* Sidebar */}
+      <ChatSidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="bg-arc-bg-secondary border-b border-arc-border">
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <svg className="w-8 h-8" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="44" fill="#0f1419" stroke="#7eb88e" strokeWidth="6"/>
+                <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="#7eb88e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <div>
+                <h1 className="text-lg font-semibold text-arc-text-primary">
+                  {currentTitle || 'Pip'}
+                </h1>
+                {!currentTitle && <span className="text-xs text-arc-text-dim">by Arc Forge</span>}
+              </div>
+            </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setShowDocPanel(!showDocPanel)}
@@ -400,30 +412,31 @@ export function ChatPage() {
         </div>
       )}
 
-      {/* Input */}
-      <footer className="bg-arc-bg-secondary border-t border-arc-border">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex gap-3 items-center bg-arc-bg-tertiary border border-arc-border rounded-xl px-3 py-2 focus-within:border-arc-accent transition-colors">
-            <span className="text-arc-text-dim text-sm">{'>'}</span>
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your finances, business goals, or anything else..."
-              className="flex-1 bg-transparent focus:outline-none text-sm text-arc-text-primary placeholder-arc-text-dim"
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              className="px-4 py-1.5 bg-arc-accent text-arc-bg-primary rounded-lg font-medium text-sm hover:bg-arc-accent-dim disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Send
-            </button>
-          </div>
-        </form>
-      </footer>
+        {/* Input */}
+        <footer className="bg-arc-bg-secondary border-t border-arc-border">
+          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex gap-3 items-center bg-arc-bg-tertiary border border-arc-border rounded-xl px-3 py-2 focus-within:border-arc-accent transition-colors">
+              <span className="text-arc-text-dim text-sm">{'>'}</span>
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask about your finances, business goals, or anything else..."
+                className="flex-1 bg-transparent focus:outline-none text-sm text-arc-text-primary placeholder-arc-text-dim"
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={!input.trim() || isLoading}
+                className="px-4 py-1.5 bg-arc-accent text-arc-bg-primary rounded-lg font-medium text-sm hover:bg-arc-accent-dim disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Send
+              </button>
+            </div>
+          </form>
+        </footer>
+      </div>
     </div>
   );
 }

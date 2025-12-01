@@ -499,27 +499,38 @@ Key gap is **Claude.ai UI/UX patterns** - single memory with tracked user edits.
 
 ### Epic 2.2: Persistent Chat History
 
-**Status**: ⚪ Not Started
+**Status**: ✅ Complete
 **Priority**: HIGH (standard user expectation)
 
 #### feature_2_2_1: Chat History Backend Infrastructure
-**Complexity**: 2.5/5 | **Est**: 4 days
+**Complexity**: 2.5/5 | **Actual**: <1 day
 
 | Task | Status | Complexity | Notes |
 |------|--------|------------|-------|
-| task_2_2_1_1: Extend sessions table schema | ⚪ | 1.8 | title, preview_text, last_message_at |
-| task_2_2_1_2: Implement chat title auto-generation | ⚪ | 2.5 | LLM generates from first messages |
-| task_2_2_1_3: Create API endpoints | ⚪ | 2.0 | GET /api/chats, GET/:id, DELETE/:id |
+| task_2_2_1_1: Extend sessions table schema | ✅ | 1.8 | title, preview_text columns + migration |
+| task_2_2_1_2: Implement chat title auto-generation | ✅ | 2.5 | From first user message (~50 chars) |
+| task_2_2_1_3: Create API endpoints | ✅ | 2.0 | GET/PATCH/DELETE /api/sessions/:id |
+
+**Implementation**:
+- `types.ts`: Session.title, Session.previewText fields
+- `sqlite.ts`: Schema migration + updated CRUD methods
+- `sessions.ts`: Title auto-generation, PATCH for rename
 
 #### feature_2_2_2: Chat History UI - Vertical Tabs Sidebar
-**Complexity**: 3.0/5 | **Est**: 5 days
+**Complexity**: 3.0/5 | **Actual**: <1 day
 
 | Task | Status | Complexity | Notes |
 |------|--------|------------|-------|
-| task_2_2_2_1: Collapsible sidebar component | ⚪ | 2.8 | Left sidebar, responsive |
-| task_2_2_2_2: Chat list with metadata | ⚪ | 2.2 | Title, preview, timestamp |
-| task_2_2_2_3: New/delete chat actions | ⚪ | 2.0 | Plus icon, delete confirmation |
-| task_2_2_2_4: Chat switching with state | ⚪ | 2.5 | Load chat, restore scroll |
+| task_2_2_2_1: Collapsible sidebar component | ✅ | 2.8 | ChatSidebar.tsx (Claude.ai Pattern 0) |
+| task_2_2_2_2: Chat list with metadata | ✅ | 2.2 | Title, relative time, context menu |
+| task_2_2_2_3: New/delete chat actions | ✅ | 2.0 | Plus icon, delete with confirm |
+| task_2_2_2_4: Chat switching with state | ✅ | 2.5 | loadChat(), newChat() in chatStore |
+
+**Implementation**:
+- `ChatSidebar.tsx`: Collapsible sidebar with chat list
+- `chatStore.ts`: Chat history state (chatList, loadChatList, loadChat, etc.)
+- `client.ts`: listChats, getChat, renameChat, deleteChat API methods
+- `ChatPage.tsx`: Integrated sidebar with flex layout
 
 ---
 

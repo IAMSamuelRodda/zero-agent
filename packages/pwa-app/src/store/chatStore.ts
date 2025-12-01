@@ -1,9 +1,11 @@
 /**
  * Chat Store - Zustand state management for chat
+ * Epic 2.2: Chat History support
  */
 
 import { create } from 'zustand';
 import { api } from '../api/client';
+import type { ChatSummary } from '../api/client';
 
 interface Message {
   id: string;
@@ -13,13 +15,24 @@ interface Message {
 }
 
 interface ChatState {
+  // Current chat
   messages: Message[];
   sessionId: string | null;
+  currentTitle: string | null;
   isLoading: boolean;
   error: string | null;
 
+  // Chat history
+  chatList: ChatSummary[];
+  isLoadingList: boolean;
+
   // Actions
   sendMessage: (content: string) => Promise<void>;
+  loadChatList: () => Promise<void>;
+  loadChat: (sessionId: string) => Promise<void>;
+  newChat: () => void;
+  deleteChat: (sessionId: string) => Promise<void>;
+  renameChat: (sessionId: string, title: string) => Promise<void>;
   clearMessages: () => void;
   clearError: () => void;
   setError: (error: string) => void;
@@ -28,8 +41,11 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   sessionId: null,
+  currentTitle: null,
   isLoading: false,
   error: null,
+  chatList: [],
+  isLoadingList: false,
 
   sendMessage: async (content: string) => {
     const userMessage: Message = {
@@ -55,11 +71,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
         timestamp: Date.now(),
       };
 
+      const isNewChat = !get().sessionId;
       set((state) => ({
         messages: [...state.messages, assistantMessage],
         sessionId: response.sessionId,
         isLoading: false,
+        // Generate title from first message for new chats
+        currentTitle: isNewChat ? content.substring(0, 50) : state.currentTitle,
       }));
+
+      // Refresh chat list after sending message (updates preview)
+      get().loadChatList();
     } catch (error) {
       set({
         isLoading: false,
@@ -68,7 +90,79 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  clearMessages: () => set({ messages: [], sessionId: null }),
+  loadChatList: async () => {
+    set({ isLoadingList: true });
+    try {
+      const result = await api.listChats(50);
+      set({ chatList: result.sessions, isLoadingList: false });
+    } catch (error) {
+      console.error('Failed to load chat list:', error);
+      set({ isLoadingList: false });
+    }
+  },
+
+  loadChat: async (sessionId: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const chat = await api.getChat(sessionId);
+      const messages: Message[] = chat.messages.map((m, i) => ({
+        id: `${m.role}-${i}-${chat.createdAt}`,
+        role: m.role,
+        content: m.content,
+        timestamp: chat.createdAt + i * 1000,
+      }));
+      set({
+        sessionId: chat.sessionId,
+        currentTitle: chat.title,
+        messages,
+        isLoading: false,
+      });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to load chat',
+      });
+    }
+  },
+
+  newChat: () => {
+    set({
+      messages: [],
+      sessionId: null,
+      currentTitle: null,
+      error: null,
+    });
+  },
+
+  deleteChat: async (sessionId: string) => {
+    try {
+      await api.deleteChat(sessionId);
+      // If deleting current chat, clear it
+      if (get().sessionId === sessionId) {
+        get().newChat();
+      }
+      // Refresh chat list
+      get().loadChatList();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to delete chat' });
+    }
+  },
+
+  renameChat: async (sessionId: string, title: string) => {
+    try {
+      await api.renameChat(sessionId, title);
+      // Update current title if renaming current chat
+      if (get().sessionId === sessionId) {
+        set({ currentTitle: title });
+      }
+      // Refresh chat list
+      get().loadChatList();
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to rename chat' });
+    }
+  },
+
+  clearMessages: () => set({ messages: [], sessionId: null, currentTitle: null }),
 
   clearError: () => set({ error: null }),
 
