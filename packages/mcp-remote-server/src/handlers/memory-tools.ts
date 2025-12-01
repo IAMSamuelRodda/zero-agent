@@ -67,7 +67,8 @@ Both entities should exist first. Use active voice for relation types.`,
     category: "memory",
     name: "add_observations",
     description: `Add facts/observations to existing entities.
-Use when the user shares new information about something Pip already knows.`,
+Use when the user shares new information about something Pip already knows.
+Set isUserEdit=true when user explicitly asks to remember something ("remember that...", "note that...").`,
     inputSchema: {
       type: "object" as const,
       properties: {
@@ -82,6 +83,10 @@ Use when the user shares new information about something Pip already knows.`,
             required: ["entityName", "contents"],
           },
           description: "Observations to add",
+        },
+        isUserEdit: {
+          type: "boolean",
+          description: "True if user explicitly requested this memory (e.g., 'remember that...'). Default: false",
         },
       },
       required: ["observations"],
@@ -271,14 +276,18 @@ export function executeMemoryTool(
       }
 
       case "add_observations": {
-        const { observations } = args as { observations: { entityName: string; contents: string[] }[] };
-        const results = manager.addObservations(observations);
+        const { observations, isUserEdit } = args as {
+          observations: { entityName: string; contents: string[] }[];
+          isUserEdit?: boolean;
+        };
+        const results = manager.addObservations(observations, isUserEdit || false);
         if (results.length === 0) {
           return {
             content: [{ type: "text", text: "No observations added (entities not found or already exist)." }],
           };
         }
-        const output = results.map(r => `**${r.entityName}**: ${r.added.length} added`).join("\n");
+        const editLabel = isUserEdit ? " (user edit)" : "";
+        const output = results.map(r => `**${r.entityName}**: ${r.added.length} added${editLabel}`).join("\n");
         return {
           content: [{ type: "text", text: `Added observations:\n${output}` }],
         };

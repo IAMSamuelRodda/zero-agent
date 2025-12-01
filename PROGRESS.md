@@ -427,15 +427,20 @@ Key gap is **Claude.ai UI/UX patterns** - single memory with tracked user edits.
 - **Gap**: Missing `is_user_edit` flag, summary generation, management UI
 
 #### feature_2_1_2: User Edit Tracking Schema
-**Status**: ⚪ Not Started
-**Complexity**: 2.0/5 | **Est**: 2 days
+**Status**: ✅ Complete
+**Complexity**: 2.0/5 | **Actual**: <1 day
 
 | Task | Status | Complexity | Notes |
 |------|--------|------------|-------|
-| task_2_1_2_1: Add `is_user_edit` column to observations | ⚪ | 1.5 | Boolean flag for explicit requests |
-| task_2_1_2_2: Create `memory_summaries` table | ⚪ | 1.8 | user_id, project_id, summary, generated_at |
-| task_2_1_2_3: Update `add_observations` tool | ⚪ | 2.0 | Accept `isUserEdit` flag parameter |
-| task_2_1_2_4: Detect explicit memory requests | ⚪ | 2.5 | "Remember that...", "Forget that..." patterns |
+| task_2_1_2_1: Add `is_user_edit` column to observations | ✅ | 1.5 | Migration + new table creation |
+| task_2_1_2_2: Create `memory_summaries` table | ✅ | 1.8 | user_id, project_id, summary, counts |
+| task_2_1_2_3: Update `add_observations` tool | ✅ | 2.0 | Accepts `isUserEdit` flag |
+| task_2_1_2_4: Detect explicit memory requests | ⚪ | 2.5 | Deferred - LLM handles detection |
+
+**Implementation**:
+- `memory.ts`: Schema migration, `is_user_edit` column, `memory_summaries` table
+- `memory.ts`: `getUserEdits()`, `deleteUserEdit()`, `deleteAllUserEdits()` methods
+- `memory-tools.ts`: `add_observations` tool accepts `isUserEdit` param
 
 #### feature_2_1_3: Memory Summary Generation
 **Status**: ⚪ Not Started

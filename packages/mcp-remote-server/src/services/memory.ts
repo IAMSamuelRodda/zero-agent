@@ -79,9 +79,10 @@ export class KnowledgeGraphManager {
   // Write Operations
   // --------------------------------------------------------------------------
 
-  createEntities(entities: Entity[]): Entity[] {
+  createEntities(entities: Entity[], isUserEdit = false): Entity[] {
     const created: Entity[] = [];
     const now = Date.now();
+    const userEditFlag = isUserEdit ? 1 : 0;
 
     for (const entity of entities) {
       const existing = this.db.prepare(`
@@ -107,8 +108,8 @@ export class KnowledgeGraphManager {
         ).get(entityId, obs);
         if (!obsExists) {
           this.db.prepare(`
-            INSERT INTO memory_observations (id, entity_id, content, created_at) VALUES (?, ?, ?, ?)
-          `).run(crypto.randomUUID(), entityId, obs, now);
+            INSERT INTO memory_observations (id, entity_id, content, created_at, is_user_edit) VALUES (?, ?, ?, ?, ?)
+          `).run(crypto.randomUUID(), entityId, obs, now, userEditFlag);
         }
       }
       created.push(entity);
@@ -138,9 +139,13 @@ export class KnowledgeGraphManager {
     return created;
   }
 
-  addObservations(observations: { entityName: string; contents: string[] }[]): { entityName: string; added: string[] }[] {
+  addObservations(
+    observations: { entityName: string; contents: string[] }[],
+    isUserEdit = false
+  ): { entityName: string; added: string[] }[] {
     const results: { entityName: string; added: string[] }[] = [];
     const now = Date.now();
+    const userEditFlag = isUserEdit ? 1 : 0;
 
     for (const { entityName, contents } of observations) {
       const entity = this.db.prepare(`
@@ -156,8 +161,8 @@ export class KnowledgeGraphManager {
         ).get(entity.id, content);
         if (!exists) {
           this.db.prepare(
-            `INSERT INTO memory_observations (id, entity_id, content, created_at) VALUES (?, ?, ?, ?)`
-          ).run(crypto.randomUUID(), entity.id, content, now);
+            `INSERT INTO memory_observations (id, entity_id, content, created_at, is_user_edit) VALUES (?, ?, ?, ?, ?)`
+          ).run(crypto.randomUUID(), entity.id, content, now, userEditFlag);
           added.push(content);
         }
       }
@@ -326,6 +331,94 @@ export class KnowledgeGraphManager {
     }
     return { entities, relations };
   }
+
+  // --------------------------------------------------------------------------
+  // User Edit Operations (for "Manage edits" UI)
+  // --------------------------------------------------------------------------
+
+  /**
+   * Get all user-edited observations (explicit "remember that..." requests)
+   */
+  getUserEdits(): { entityName: string; observation: string; createdAt: number }[] {
+    const rows = this.db.prepare(`
+      SELECT e.name as entity_name, o.content, o.created_at
+      FROM memory_observations o
+      JOIN memory_entities e ON o.entity_id = e.id
+      WHERE e.user_id = ? AND o.is_user_edit = 1 ${this.scopeClause()}
+      ORDER BY o.created_at DESC
+    `).all(...this.scopeParams([this.userId])) as {
+      entity_name: string;
+      content: string;
+      created_at: number;
+    }[];
+
+    return rows.map(r => ({
+      entityName: r.entity_name,
+      observation: r.content,
+      createdAt: r.created_at,
+    }));
+  }
+
+  /**
+   * Delete a specific user edit by entity name and observation content
+   */
+  deleteUserEdit(entityName: string, observation: string): boolean {
+    const entity = this.db.prepare(`
+      SELECT id FROM memory_entities WHERE user_id = ? AND LOWER(name) = LOWER(?) ${this.scopeClause()}
+    `).get(...this.scopeParams([this.userId, entityName])) as { id: string } | undefined;
+
+    if (!entity) return false;
+
+    const result = this.db.prepare(`
+      DELETE FROM memory_observations
+      WHERE entity_id = ? AND LOWER(content) = LOWER(?) AND is_user_edit = 1
+    `).run(entity.id, observation);
+
+    return result.changes > 0;
+  }
+
+  /**
+   * Delete all user edits for this user/project
+   */
+  deleteAllUserEdits(): number {
+    // Get all entity IDs for this user/project
+    const entities = this.db.prepare(`
+      SELECT id FROM memory_entities WHERE user_id = ? ${this.scopeClause()}
+    `).all(...this.scopeParams([this.userId])) as { id: string }[];
+
+    if (entities.length === 0) return 0;
+
+    const entityIds = entities.map(e => e.id);
+    const placeholders = entityIds.map(() => '?').join(',');
+
+    const result = this.db.prepare(`
+      DELETE FROM memory_observations
+      WHERE entity_id IN (${placeholders}) AND is_user_edit = 1
+    `).run(...entityIds);
+
+    return result.changes;
+  }
+
+  /**
+   * Get count of user edits
+   */
+  getUserEditCount(): number {
+    const entities = this.db.prepare(`
+      SELECT id FROM memory_entities WHERE user_id = ? ${this.scopeClause()}
+    `).all(...this.scopeParams([this.userId])) as { id: string }[];
+
+    if (entities.length === 0) return 0;
+
+    const entityIds = entities.map(e => e.id);
+    const placeholders = entityIds.map(() => '?').join(',');
+
+    const result = this.db.prepare(`
+      SELECT COUNT(*) as count FROM memory_observations
+      WHERE entity_id IN (${placeholders}) AND is_user_edit = 1
+    `).get(...entityIds) as { count: number };
+
+    return result.count;
+  }
 }
 
 // ============================================================================
@@ -359,9 +452,11 @@ export function initializeMemoryDb(dbPath?: string): Database.Database {
       entity_id TEXT NOT NULL,
       content TEXT NOT NULL,
       created_at INTEGER NOT NULL,
+      is_user_edit INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_mem_obs_ent ON memory_observations(entity_id);
+    CREATE INDEX IF NOT EXISTS idx_mem_obs_user_edit ON memory_observations(is_user_edit);
 
     CREATE TABLE IF NOT EXISTS memory_relations (
       id TEXT PRIMARY KEY,
@@ -374,7 +469,27 @@ export function initializeMemoryDb(dbPath?: string): Database.Database {
     );
     CREATE INDEX IF NOT EXISTS idx_mem_rel_user ON memory_relations(user_id);
     CREATE INDEX IF NOT EXISTS idx_mem_rel_proj ON memory_relations(user_id, project_id);
+
+    -- Memory summaries: cached prose summaries per user/project
+    CREATE TABLE IF NOT EXISTS memory_summaries (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      project_id TEXT,
+      summary TEXT NOT NULL,
+      generated_at INTEGER NOT NULL,
+      entity_count INTEGER NOT NULL DEFAULT 0,
+      observation_count INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_mem_sum_user_proj ON memory_summaries(user_id, project_id);
   `);
+
+  // Migration: Add is_user_edit column to existing tables (SQLite ADD COLUMN is safe)
+  try {
+    dbInstance.exec(`ALTER TABLE memory_observations ADD COLUMN is_user_edit INTEGER NOT NULL DEFAULT 0`);
+    console.log(`[Memory] Migration: Added is_user_edit column`);
+  } catch {
+    // Column already exists, ignore
+  }
 
   console.log(`[Memory] Initialized: ${path}`);
   return dbInstance;
