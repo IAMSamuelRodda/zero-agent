@@ -9,6 +9,8 @@ import {
   createDatabaseProviderFromEnv,
   type LLMProvider,
   type DatabaseProvider,
+  type ResponseStyleId,
+  buildStylePrompt,
 } from '@pip/core';
 import { SessionManager } from './session/manager.js';
 import { MemoryManager } from './memory/manager.js';
@@ -106,11 +108,15 @@ export class AgentOrchestrator {
       // 2. Load user memory (preferences, relationship stage)
       const memory = await this.memoryManager!.getCoreMemory(userId);
 
-      // 3. Load business context (uploaded documents)
+      // 3. Load user settings (response style, permissions)
+      const userSettings = await this.dbProvider!.getUserSettings(userId);
+      const responseStyle: ResponseStyleId = userSettings?.responseStyle || 'normal';
+
+      // 4. Load business context (uploaded documents)
       const businessContext = await this.getBusinessContext(userId);
 
-      // 4. Build conversation context with system prompt and history
-      const systemPrompt = this.buildSystemPrompt(memory, businessContext);
+      // 5. Build conversation context with system prompt and history
+      const systemPrompt = this.buildSystemPrompt(memory, businessContext, responseStyle);
       const conversationHistory = [
         { role: 'system' as const, content: systemPrompt },
         ...(session?.messages || []),
@@ -230,9 +236,9 @@ export class AgentOrchestrator {
   }
 
   /**
-   * Build system prompt with user context and memory
+   * Build system prompt with user context, memory, and response style
    */
-  private buildSystemPrompt(memory: any, businessContext: string = ''): string {
+  private buildSystemPrompt(memory: any, businessContext: string = '', responseStyle: ResponseStyleId = 'normal'): string {
     const relationshipContext = memory?.relationshipStage
       ? `Your relationship with this user is at the "${memory.relationshipStage}" stage.`
       : 'This is your first conversation with this user.';
@@ -241,10 +247,14 @@ export class AgentOrchestrator {
       ? `\n\n## Business Context (from uploaded documents)\nIMPORTANT: The user has uploaded these business documents. Reference specific numbers, targets, and criteria from these documents in your answers:\n\n${businessContext}\n`
       : '\n\n## Business Context\nNo business documents uploaded yet. Encourage the user to upload their business plan, KPIs, or financial goals for personalized advice.\n';
 
+    // Get style-specific prompt modifier (empty string for 'normal')
+    const styleModifier = buildStylePrompt(responseStyle);
+    const styleSection = styleModifier ? `\n${styleModifier}\n` : '';
+
     return `You are Pip, a friendly AI bookkeeping assistant for Australian small business owners.
 
 ${relationshipContext}
-${businessSection}
+${businessSection}${styleSection}
 ## Your Approach
 
 When answering questions about finances or business decisions:

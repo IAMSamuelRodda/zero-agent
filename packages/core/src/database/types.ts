@@ -147,7 +147,36 @@ export const PERMISSION_LEVEL_NAMES: Record<PermissionLevel, string> = {
 };
 
 // ============================================================================
-// Personality System
+// Response Styles (Claude.ai Pattern)
+// ============================================================================
+
+/**
+ * Response Style ID
+ * Controls how Pip formats and delivers responses
+ */
+export type ResponseStyleId = "normal" | "formal" | "concise" | "explanatory" | "learning";
+
+export const RESPONSE_STYLE_NAMES: Record<ResponseStyleId, string> = {
+  normal: "Normal",
+  formal: "Formal",
+  concise: "Concise",
+  explanatory: "Explanatory",
+  learning: "Learning",
+};
+
+/**
+ * Response Style Definition
+ * System prompt modifier for each style
+ */
+export interface ResponseStyle {
+  id: ResponseStyleId;
+  name: string;
+  description: string;
+  promptModifier: string; // Injected into system prompt
+}
+
+// ============================================================================
+// Personality System (Deferred - kept for future use)
 // ============================================================================
 
 /**
@@ -234,7 +263,8 @@ export interface Personality {
 export interface UserSettings {
   userId: string;
   permissionLevel: PermissionLevel;
-  personality: PersonalityId;
+  responseStyle: ResponseStyleId;
+  personality: PersonalityId; // Deferred feature - kept for future use
   requireConfirmation: boolean;
   dailyEmailSummary: boolean;
   require2FA: boolean;

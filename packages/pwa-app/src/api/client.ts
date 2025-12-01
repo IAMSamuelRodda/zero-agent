@@ -61,10 +61,26 @@ interface DocumentListItem {
   createdAt: number;
 }
 
+// Response styles (Claude.ai pattern)
+type ResponseStyleId = 'normal' | 'formal' | 'concise' | 'explanatory' | 'learning';
+
+interface ResponseStyleOption {
+  id: ResponseStyleId;
+  name: string;
+  description: string;
+}
+
+interface StyleInfo {
+  name: string;
+  description: string;
+}
+
+// Personalities (deferred feature)
 type PersonalityId = 'adelaide' | 'pippin';
 
 interface UserSettings {
   permissionLevel: 0 | 1 | 2 | 3;
+  responseStyle: ResponseStyleId;
   requireConfirmation: boolean;
   dailyEmailSummary: boolean;
   require2FA: boolean;
@@ -193,7 +209,20 @@ export const api = {
   },
 
   /**
-   * Get available personalities
+   * Get available response styles
+   */
+  async getStyles(): Promise<{ styles: ResponseStyleOption[] }> {
+    const response = await fetch(`${API_BASE}/api/settings/styles`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to get styles');
+    }
+    return response.json();
+  },
+
+  /**
+   * Get available personalities (deferred feature)
    */
   async getPersonalities(): Promise<{ personalities: PersonalityOption[] }> {
     const response = await fetch(`${API_BASE}/api/settings/personalities`, {
@@ -208,7 +237,7 @@ export const api = {
   /**
    * Get user settings
    */
-  async getSettings(): Promise<{ settings: UserSettings; personalityInfo: PersonalityInfo }> {
+  async getSettings(): Promise<{ settings: UserSettings; styleInfo: StyleInfo; personalityInfo: PersonalityInfo }> {
     const response = await fetch(`${API_BASE}/api/settings`, {
       headers: getAuthHeaders(),
     });
@@ -221,7 +250,7 @@ export const api = {
   /**
    * Update user settings
    */
-  async updateSettings(settings: Partial<UserSettings>): Promise<{ settings: UserSettings; personalityInfo: PersonalityInfo }> {
+  async updateSettings(settings: Partial<UserSettings>): Promise<{ settings: UserSettings; styleInfo: StyleInfo; personalityInfo: PersonalityInfo }> {
     const response = await fetch(`${API_BASE}/api/settings`, {
       method: 'PUT',
       headers: {
@@ -399,4 +428,4 @@ export const memoryApi = {
   },
 };
 
-export type { PersonalityId, UserSettings, PersonalityInfo, PersonalityOption, MemoryStatus, MemoryEdit, ChatSummary, ChatSession };
+export type { ResponseStyleId, ResponseStyleOption, StyleInfo, PersonalityId, UserSettings, PersonalityInfo, PersonalityOption, MemoryStatus, MemoryEdit, ChatSummary, ChatSession };

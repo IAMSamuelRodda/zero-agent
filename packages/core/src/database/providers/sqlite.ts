@@ -26,6 +26,7 @@ import type {
   OperationSnapshot,
   PermissionLevel,
   PersonalityId,
+  ResponseStyleId,
 } from "../types.js";
 import {
   ConnectionError,
@@ -249,6 +250,13 @@ export class SQLiteProvider implements DatabaseProvider {
     // Migration: Add personality column if it doesn't exist
     try {
       this.db.exec(`ALTER TABLE user_settings ADD COLUMN personality TEXT DEFAULT 'adelaide'`);
+    } catch {
+      // Column already exists, ignore
+    }
+
+    // Migration: Add response_style column if it doesn't exist
+    try {
+      this.db.exec(`ALTER TABLE user_settings ADD COLUMN response_style TEXT DEFAULT 'normal'`);
     } catch {
       // Column already exists, ignore
     }
@@ -1375,6 +1383,7 @@ export class SQLiteProvider implements DatabaseProvider {
       return {
         userId: row.user_id,
         permissionLevel: row.permission_level as PermissionLevel,
+        responseStyle: (row.response_style || 'normal') as ResponseStyleId,
         personality: (row.personality || 'adelaide') as PersonalityId,
         requireConfirmation: row.require_confirmation === 1,
         dailyEmailSummary: row.daily_email_summary === 1,
@@ -1404,6 +1413,7 @@ export class SQLiteProvider implements DatabaseProvider {
       const fullSettings: UserSettings = {
         userId: settings.userId,
         permissionLevel: settings.permissionLevel ?? existing?.permissionLevel ?? 0,
+        responseStyle: settings.responseStyle ?? existing?.responseStyle ?? 'normal',
         personality: settings.personality ?? existing?.personality ?? 'adelaide',
         requireConfirmation: settings.requireConfirmation ?? existing?.requireConfirmation ?? true,
         dailyEmailSummary: settings.dailyEmailSummary ?? existing?.dailyEmailSummary ?? true,
@@ -1415,13 +1425,14 @@ export class SQLiteProvider implements DatabaseProvider {
 
       const stmt = this.db.prepare(`
         INSERT OR REPLACE INTO user_settings
-        (user_id, permission_level, personality, require_confirmation, daily_email_summary, require_2fa, vacation_mode_until, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, permission_level, response_style, personality, require_confirmation, daily_email_summary, require_2fa, vacation_mode_until, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
         fullSettings.userId,
         fullSettings.permissionLevel,
+        fullSettings.responseStyle,
         fullSettings.personality,
         fullSettings.requireConfirmation ? 1 : 0,
         fullSettings.dailyEmailSummary ? 1 : 0,

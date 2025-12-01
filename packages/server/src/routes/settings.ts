@@ -5,16 +5,25 @@
  */
 
 import { Router } from 'express';
-import type { DatabaseProvider, PermissionLevel, PersonalityId } from '@pip/core';
-import { personalities } from '@pip/core';
+import type { DatabaseProvider, PermissionLevel, PersonalityId, ResponseStyleId } from '@pip/core';
+import { personalities, responseStyles, getStyleOptions } from '@pip/core';
 import { requireAuth } from '../middleware/auth.js';
 
 export function createSettingsRoutes(db: DatabaseProvider): Router {
   const router = Router();
 
   /**
+   * GET /api/styles
+   * Get available response style options
+   */
+  router.get('/styles', requireAuth, (_req, res) => {
+    const options = getStyleOptions();
+    res.json({ styles: options });
+  });
+
+  /**
    * GET /api/personalities
-   * Get available personality options
+   * Get available personality options (deferred feature)
    */
   router.get('/personalities', requireAuth, (_req, res) => {
     const options = Object.entries(personalities).map(([id, p]) => ({
@@ -39,6 +48,7 @@ export function createSettingsRoutes(db: DatabaseProvider): Router {
         settings = await db.upsertUserSettings({
           userId: req.userId!,
           permissionLevel: 0,
+          responseStyle: 'normal',
           requireConfirmation: true,
           dailyEmailSummary: true,
           require2FA: false,
@@ -46,18 +56,27 @@ export function createSettingsRoutes(db: DatabaseProvider): Router {
         });
       }
 
-      // Get personality info
+      // Get style info
+      const styleId = settings.responseStyle || 'normal';
+      const style = responseStyles[styleId as ResponseStyleId];
+
+      // Get personality info (deferred feature)
       const personalityId = settings.personality || 'adelaide';
       const personality = personalities[personalityId as PersonalityId];
 
       res.json({
         settings: {
           permissionLevel: settings.permissionLevel,
+          responseStyle: styleId,
           requireConfirmation: settings.requireConfirmation,
           dailyEmailSummary: settings.dailyEmailSummary,
           require2FA: settings.require2FA,
           vacationModeUntil: settings.vacationModeUntil,
           personality: personalityId,
+        },
+        styleInfo: {
+          name: style.name,
+          description: style.description,
         },
         personalityInfo: {
           name: personality.name,
@@ -79,6 +98,7 @@ export function createSettingsRoutes(db: DatabaseProvider): Router {
     try {
       const {
         permissionLevel,
+        responseStyle,
         requireConfirmation,
         dailyEmailSummary,
         require2FA,
@@ -95,6 +115,15 @@ export function createSettingsRoutes(db: DatabaseProvider): Router {
         }
       }
 
+      // Validate response style
+      if (responseStyle !== undefined) {
+        if (!Object.keys(responseStyles).includes(responseStyle)) {
+          return res.status(400).json({
+            error: `Invalid response style. Must be one of: ${Object.keys(responseStyles).join(', ')}`,
+          });
+        }
+      }
+
       // Validate vacation mode date
       if (vacationModeUntil !== undefined && vacationModeUntil !== null) {
         if (typeof vacationModeUntil !== 'number' || vacationModeUntil < Date.now()) {
@@ -104,7 +133,7 @@ export function createSettingsRoutes(db: DatabaseProvider): Router {
         }
       }
 
-      // Validate personality
+      // Validate personality (deferred feature)
       if (personality !== undefined) {
         if (!Object.keys(personalities).includes(personality)) {
           return res.status(400).json({
@@ -116,6 +145,7 @@ export function createSettingsRoutes(db: DatabaseProvider): Router {
       const settings = await db.upsertUserSettings({
         userId: req.userId!,
         ...(permissionLevel !== undefined && { permissionLevel: permissionLevel as PermissionLevel }),
+        ...(responseStyle !== undefined && { responseStyle: responseStyle as ResponseStyleId }),
         ...(requireConfirmation !== undefined && { requireConfirmation }),
         ...(dailyEmailSummary !== undefined && { dailyEmailSummary }),
         ...(require2FA !== undefined && { require2FA }),
@@ -123,20 +153,29 @@ export function createSettingsRoutes(db: DatabaseProvider): Router {
         ...(personality !== undefined && { personality: personality as PersonalityId }),
       });
 
-      console.log(`✅ Settings updated for user ${req.userId}: level=${settings.permissionLevel}, personality=${settings.personality}`);
+      console.log(`✅ Settings updated for user ${req.userId}: level=${settings.permissionLevel}, style=${settings.responseStyle}`);
 
-      // Get personality info
+      // Get style info
+      const styleId = settings.responseStyle || 'normal';
+      const style = responseStyles[styleId as ResponseStyleId];
+
+      // Get personality info (deferred feature)
       const personalityId = settings.personality || 'adelaide';
       const personalityData = personalities[personalityId as PersonalityId];
 
       res.json({
         settings: {
           permissionLevel: settings.permissionLevel,
+          responseStyle: styleId,
           requireConfirmation: settings.requireConfirmation,
           dailyEmailSummary: settings.dailyEmailSummary,
           require2FA: settings.require2FA,
           vacationModeUntil: settings.vacationModeUntil,
           personality: personalityId,
+        },
+        styleInfo: {
+          name: style.name,
+          description: style.description,
         },
         personalityInfo: {
           name: personalityData.name,
