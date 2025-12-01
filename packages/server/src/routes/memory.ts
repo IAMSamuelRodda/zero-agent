@@ -12,13 +12,6 @@ import { requireAuth } from '../middleware/auth.js';
 // Database path (same as MCP server)
 const DB_PATH = process.env.DATABASE_PATH || '/app/data/zero-agent.db';
 
-interface MemorySummary {
-  summary: string;
-  entityCount: number;
-  observationCount: number;
-  generatedAt: number;
-}
-
 interface UserEdit {
   entityName: string;
   observation: string;
@@ -28,6 +21,47 @@ interface UserEdit {
 function getDb(): Database.Database {
   return new Database(DB_PATH);
 }
+
+// Run schema migrations on module load
+function runMigrations(): void {
+  const db = getDb();
+  try {
+    // Add project_id to memory_entities if missing
+    try {
+      db.exec('ALTER TABLE memory_entities ADD COLUMN project_id TEXT');
+      console.log('✅ Added project_id to memory_entities');
+    } catch {
+      // Column already exists
+    }
+
+    // Add project_id to memory_relations if missing
+    try {
+      db.exec('ALTER TABLE memory_relations ADD COLUMN project_id TEXT');
+      console.log('✅ Added project_id to memory_relations');
+    } catch {
+      // Column already exists
+    }
+
+    // Create memory_summaries table if missing
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS memory_summaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        project_id TEXT,
+        summary TEXT NOT NULL,
+        entity_count INTEGER NOT NULL,
+        observation_count INTEGER NOT NULL,
+        generated_at INTEGER NOT NULL,
+        UNIQUE(user_id, project_id)
+      )
+    `);
+  } finally {
+    db.close();
+  }
+}
+
+// Run migrations when module loads
+runMigrations();
 
 export function createMemoryRoutes(): Router {
   const router = Router();
@@ -41,40 +75,45 @@ export function createMemoryRoutes(): Router {
       const userId = req.userId!;
       const projectId = (req.query.projectId as string) || null;
 
-      // Get summary
-      const summaryRow = db.prepare(`
-        SELECT summary, entity_count, observation_count, generated_at
-        FROM memory_summaries
-        WHERE user_id = ? AND (project_id = ? OR (project_id IS NULL AND ? IS NULL))
-      `).get(userId, projectId, projectId) as MemorySummary | undefined;
+      // Build scope clause for project isolation
+      const scopeClause = projectId
+        ? 'AND me.project_id = ?'
+        : 'AND me.project_id IS NULL';
+      const scopeParams = projectId ? [userId, projectId] : [userId];
 
-      // Get edit count
+      // Get summary (if exists)
+      const summaryRow = db.prepare(`
+        SELECT summary, entity_count, observation_count, generated_at as generatedAt
+        FROM memory_summaries
+        WHERE user_id = ? AND ${projectId ? 'project_id = ?' : 'project_id IS NULL'}
+      `).get(...scopeParams) as { summary: string; entity_count: number; observation_count: number; generatedAt: number } | undefined;
+
+      // Get edit count (user edits only)
       const editCountRow = db.prepare(`
         SELECT COUNT(*) as count
         FROM memory_observations mo
         JOIN memory_entities me ON mo.entity_id = me.id
-        WHERE me.user_id = ? AND mo.is_user_edit = 1
-        AND (me.project_id = ? OR (me.project_id IS NULL AND ? IS NULL))
-      `).get(userId, projectId, projectId) as { count: number };
+        WHERE me.user_id = ? AND mo.is_user_edit = 1 ${scopeClause}
+      `).get(...scopeParams) as { count: number };
 
       // Get entity count
       const entityCountRow = db.prepare(`
-        SELECT COUNT(*) as count FROM memory_entities
-        WHERE user_id = ? AND (project_id = ? OR (project_id IS NULL AND ? IS NULL))
-      `).get(userId, projectId, projectId) as { count: number };
+        SELECT COUNT(*) as count FROM memory_entities me
+        WHERE me.user_id = ? ${scopeClause}
+      `).get(...scopeParams) as { count: number };
 
       // Get observation count
       const obsCountRow = db.prepare(`
         SELECT COUNT(*) as count
         FROM memory_observations mo
         JOIN memory_entities me ON mo.entity_id = me.id
-        WHERE me.user_id = ? AND (me.project_id = ? OR (me.project_id IS NULL AND ? IS NULL))
-      `).get(userId, projectId, projectId) as { count: number };
+        WHERE me.user_id = ? ${scopeClause}
+      `).get(...scopeParams) as { count: number };
 
-      // Check if summary is stale (if entity/obs counts changed)
+      // Check if summary is stale
       const isStale = summaryRow
-        ? summaryRow.entityCount !== entityCountRow.count ||
-          summaryRow.observationCount !== obsCountRow.count
+        ? summaryRow.entity_count !== entityCountRow.count ||
+          summaryRow.observation_count !== obsCountRow.count
         : true;
 
       res.json({
