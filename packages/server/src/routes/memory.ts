@@ -55,6 +55,14 @@ function runMigrations(): void {
         UNIQUE(user_id, project_id)
       )
     `);
+
+    // Add is_user_edit to memory_observations if missing
+    try {
+      db.exec('ALTER TABLE memory_observations ADD COLUMN is_user_edit INTEGER DEFAULT 0');
+      console.log('✅ Added is_user_edit to memory_observations');
+    } catch {
+      // Column already exists
+    }
   } finally {
     db.close();
   }
@@ -171,7 +179,7 @@ export function createMemoryRoutes(): Router {
       // Check if observation already exists
       const existingObs = db.prepare(`
         SELECT id FROM memory_observations
-        WHERE entity_id = ? AND LOWER(content) = LOWER(?)
+        WHERE entity_id = ? AND LOWER(observation) = LOWER(?)
       `).get(entityId, content);
 
       if (existingObs) {
@@ -180,9 +188,9 @@ export function createMemoryRoutes(): Router {
 
       // Add observation as user edit
       db.prepare(`
-        INSERT INTO memory_observations (id, entity_id, content, created_at, is_user_edit)
-        VALUES (?, ?, ?, ?, 1)
-      `).run(crypto.randomUUID(), entityId, content, now);
+        INSERT INTO memory_observations (id, entity_id, observation, created_at, updated_at, is_user_edit)
+        VALUES (?, ?, ?, ?, ?, 1)
+      `).run(crypto.randomUUID(), entityId, content, now, now);
 
       res.json({ success: true, entityName, content });
     } finally {
@@ -200,7 +208,7 @@ export function createMemoryRoutes(): Router {
       const projectId = (req.query.projectId as string) || null;
 
       const edits = db.prepare(`
-        SELECT me.name as entityName, mo.content as observation, mo.created_at as createdAt
+        SELECT me.name as entityName, mo.observation as observation, mo.created_at as createdAt
         FROM memory_observations mo
         JOIN memory_entities me ON mo.entity_id = me.id
         WHERE me.user_id = ? AND mo.is_user_edit = 1
@@ -245,7 +253,7 @@ export function createMemoryRoutes(): Router {
       // Delete the observation
       const result = db.prepare(`
         DELETE FROM memory_observations
-        WHERE entity_id = ? AND LOWER(content) = LOWER(?) AND is_user_edit = 1
+        WHERE entity_id = ? AND LOWER(observation) = LOWER(?) AND is_user_edit = 1
       `).run(entity.id, observation);
 
       if (result.changes === 0) {
