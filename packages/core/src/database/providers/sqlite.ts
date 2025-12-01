@@ -25,6 +25,7 @@ import type {
   UserSettings,
   OperationSnapshot,
   PermissionLevel,
+  PersonalityId,
 } from "../types.js";
 import {
   ConnectionError,
@@ -220,6 +221,7 @@ export class SQLiteProvider implements DatabaseProvider {
       CREATE TABLE IF NOT EXISTS user_settings (
         user_id TEXT PRIMARY KEY,
         permission_level TEXT NOT NULL DEFAULT 'read_only',
+        personality TEXT NOT NULL DEFAULT 'adelaide',
         require_confirmation INTEGER NOT NULL DEFAULT 0,
         daily_email_summary INTEGER NOT NULL DEFAULT 0,
         require_2fa INTEGER NOT NULL DEFAULT 0,
@@ -228,6 +230,13 @@ export class SQLiteProvider implements DatabaseProvider {
         updated_at TEXT NOT NULL
       );
     `);
+
+    // Migration: Add personality column if it doesn't exist
+    try {
+      this.db.exec(`ALTER TABLE user_settings ADD COLUMN personality TEXT DEFAULT 'adelaide'`);
+    } catch {
+      // Column already exists, ignore
+    }
 
     // MCP-Native Memory tables (Option B)
     this.db.exec(`
@@ -1342,6 +1351,7 @@ export class SQLiteProvider implements DatabaseProvider {
       return {
         userId: row.user_id,
         permissionLevel: row.permission_level as PermissionLevel,
+        personality: (row.personality || 'adelaide') as PersonalityId,
         requireConfirmation: row.require_confirmation === 1,
         dailyEmailSummary: row.daily_email_summary === 1,
         require2FA: row.require_2fa === 1,
@@ -1370,6 +1380,7 @@ export class SQLiteProvider implements DatabaseProvider {
       const fullSettings: UserSettings = {
         userId: settings.userId,
         permissionLevel: settings.permissionLevel ?? existing?.permissionLevel ?? 0,
+        personality: settings.personality ?? existing?.personality ?? 'adelaide',
         requireConfirmation: settings.requireConfirmation ?? existing?.requireConfirmation ?? true,
         dailyEmailSummary: settings.dailyEmailSummary ?? existing?.dailyEmailSummary ?? true,
         require2FA: settings.require2FA ?? existing?.require2FA ?? false,
@@ -1380,13 +1391,14 @@ export class SQLiteProvider implements DatabaseProvider {
 
       const stmt = this.db.prepare(`
         INSERT OR REPLACE INTO user_settings
-        (user_id, permission_level, require_confirmation, daily_email_summary, require_2fa, vacation_mode_until, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        (user_id, permission_level, personality, require_confirmation, daily_email_summary, require_2fa, vacation_mode_until, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
         fullSettings.userId,
         fullSettings.permissionLevel,
+        fullSettings.personality,
         fullSettings.requireConfirmation ? 1 : 0,
         fullSettings.dailyEmailSummary ? 1 : 0,
         fullSettings.require2FA ? 1 : 0,
