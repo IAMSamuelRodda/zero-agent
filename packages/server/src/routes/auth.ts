@@ -117,7 +117,7 @@ export function createAuthRoutes(db: DatabaseProvider): Router {
       res.status(400).send(`
         <!DOCTYPE html>
         <html>
-          <head><title>OAuth Error</title>
+          <head><title>Pip by Arc Forge</title>
             <style>
               body { font-family: system-ui, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
               .error { background: #fee; border: 1px solid #fcc; padding: 20px; border-radius: 8px; }

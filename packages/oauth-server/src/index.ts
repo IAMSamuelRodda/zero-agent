@@ -60,7 +60,7 @@ app.get("/", async (req, res) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Xero OAuth - Connected</title>
+          <title>Pip by Arc Forge</title>
           <style>
             body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
             .status { padding: 20px; border-radius: 8px; margin: 20px 0; }
@@ -102,7 +102,7 @@ app.get("/", async (req, res) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Xero OAuth - Not Connected</title>
+          <title>Pip by Arc Forge</title>
           <style>
             body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
             .status { padding: 20px; border-radius: 8px; margin: 20px 0; background: #fff3cd; border: 1px solid #ffeeba; color: #856404; }
@@ -223,7 +223,7 @@ app.get("/auth/callback", async (req, res) => {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Xero Connected!</title>
+          <title>Pip by Arc Forge</title>
           <style>
             body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; text-align: center; }
             .success { padding: 30px; border-radius: 8px; background: #d4edda; border: 1px solid #c3e6cb; color: #155724; margin: 20px 0; }

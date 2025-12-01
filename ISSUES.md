@@ -78,6 +78,21 @@
 
 ### Improvements
 
+#### issue_016: Light/Dark Mode Theme Support
+- **Status**: 🔴 Open
+- **Priority**: P3 (Low - future enhancement)
+- **Component**: All frontend packages (`packages/pwa-app`, `packages/mcp-remote-server`, `landing-page.html`)
+- **Description**: Add light/dark mode toggle with CSS variables for easy theme switching
+- **Current State**: All pages use hardcoded dark theme colors
+- **Target State**: CSS variables with theme toggle, respects system preference
+- **Acceptance Criteria**:
+  - [ ] Extract colors to CSS variables (already partially done in landing page)
+  - [ ] Add theme toggle in settings
+  - [ ] Persist theme preference in localStorage
+  - [ ] Respect `prefers-color-scheme` media query
+  - [ ] Consistent theming across all pages (PWA, MCP login, landing)
+- **Notes**: Low priority - current dark theme is consistent with brand. Implement when user feedback requests it.
+
 #### issue_003: Email Verification for Sign-Up
 - **Status**: 🔴 Open
 - **Priority**: P3 (Low - deferred)

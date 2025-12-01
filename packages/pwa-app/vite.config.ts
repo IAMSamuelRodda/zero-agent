@@ -8,13 +8,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Zero Agent',
-        short_name: 'ZeroAgent',
-        description: 'AI-powered accounting assistant for Xero',
-        theme_color: '#13B5EA',
-        background_color: '#ffffff',
+        name: 'Pip by Arc Forge',
+        short_name: 'Pip',
+        description: 'Ask questions about your Xero finances in plain English',
+        theme_color: '#0a0e14',
+        background_color: '#0a0e14',
         display: 'standalone',
         icons: [
           {

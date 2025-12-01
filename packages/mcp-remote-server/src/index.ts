@@ -892,7 +892,7 @@ app.get("/auth/xero/callback", async (req: Request, res: Response) => {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>Xero Connected</title>
+          <title>Pip by Arc Forge</title>
           <style>
             body { font-family: system-ui; background: #0a0e14; color: #e6e6e6; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
             .container { text-align: center; padding: 2rem; }
@@ -987,7 +987,7 @@ app.get("/oauth/authorize", (req: Request, res: Response) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connect Pip to Claude</title>
+  <title>Pip by Arc Forge</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
