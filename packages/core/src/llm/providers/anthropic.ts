@@ -20,8 +20,8 @@ import { AuthenticationError, LLMProviderError } from "../types.js";
 export class AnthropicProvider implements LLMProvider {
   readonly name = "anthropic" as const;
   readonly supportedModels = [
-    "claude-opus-4-20250514",
-    "claude-sonnet-4-20250514",
+    "claude-opus-4-5-20251101",
+    "claude-sonnet-4-5-20250929",
     "claude-haiku-4-5-20251001",
     "claude-3-5-sonnet-20241022",
     "claude-3-5-haiku-20241022",
@@ -29,7 +29,7 @@ export class AnthropicProvider implements LLMProvider {
 
   private client: Anthropic | null = null;
   private apiKey: string | null = null;
-  private defaultModel = process.env.LLM_DEFAULT_MODEL || "claude-sonnet-4-20250514";
+  private defaultModel = process.env.LLM_DEFAULT_MODEL || "claude-sonnet-4-5-20250929";
   private usageStats: UsageMetrics = {
     inputTokens: 0,
     outputTokens: 0,

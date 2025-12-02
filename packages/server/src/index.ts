@@ -31,6 +31,7 @@ import { createDocumentRoutes } from './routes/documents.js';
 import { createSettingsRoutes } from './routes/settings.js';
 import { createMemoryRoutes } from './routes/memory.js';
 import { createProjectRoutes } from './routes/projects.js';
+import { createModelsRoutes } from './routes/models.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requireAuth } from './middleware/auth.js';
 
@@ -99,6 +100,7 @@ async function createApp(db: DatabaseProvider): Promise<express.Application> {
   app.use('/api/settings', createSettingsRoutes(db));
   app.use('/api/memory', createMemoryRoutes());
   app.use('/api/projects', requireAuth, createProjectRoutes(db));
+  app.use('/api/models', createModelsRoutes()); // Public - for Ollama warmup
 
   // Auth routes (public)
   app.use('/auth', createUserAuthRoutes(db)); // signup, login, me

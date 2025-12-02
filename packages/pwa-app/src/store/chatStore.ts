@@ -27,8 +27,8 @@ export interface ModelOption {
   provider: ModelProvider;
 }
 
-// Default model
-const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+// Default model (Sonnet 4.5 - balanced performance)
+const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
 
 interface ChatState {
   // Current chat

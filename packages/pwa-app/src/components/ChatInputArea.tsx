@@ -43,10 +43,10 @@ interface ModelOption {
   provider: 'anthropic' | 'ollama';
 }
 
-// Available models
+// Available models (correct API model IDs)
 const MODELS: ModelOption[] = [
-  { id: 'claude-sonnet-4-20250514', name: 'Sonnet 4.5', description: 'Smartest for everyday tasks', provider: 'anthropic' },
-  { id: 'claude-opus-4-20250514', name: 'Opus 4.5', description: 'Most capable for complex work', provider: 'anthropic' },
+  { id: 'claude-sonnet-4-5-20250929', name: 'Sonnet 4.5', description: 'Smartest for everyday tasks', provider: 'anthropic' },
+  { id: 'claude-opus-4-5-20251101', name: 'Opus 4.5', description: 'Most capable for complex work', provider: 'anthropic' },
   { id: 'claude-haiku-4-5-20251001', name: 'Haiku 4.5', description: 'Fastest for quick answers', provider: 'anthropic' },
 ];
 
@@ -370,6 +370,12 @@ export function ChatInputArea({
 
   const handleModelChange = useCallback((modelId: string) => {
     setSelectedModel(modelId);
+
+    // Pre-warm Ollama when selected (fire-and-forget)
+    // This loads the model into memory while user types their message
+    if (modelId === 'ollama-local') {
+      api.warmupOllama();
+    }
   }, [setSelectedModel]);
 
   const handleSubmit = useCallback((e?: React.FormEvent) => {

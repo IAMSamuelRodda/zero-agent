@@ -331,6 +331,33 @@ export const api = {
     }
     return response.json();
   },
+
+  /**
+   * Pre-warm Ollama model (fire-and-forget)
+   * Call when user selects Ollama to reduce first-message latency
+   */
+  warmupOllama(): void {
+    // Fire and forget - don't await or handle errors
+    // This is a background optimization
+    fetch(`${API_BASE}/api/models/ollama/warmup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    }).catch(() => {
+      // Silently ignore - warmup is optional
+    });
+  },
+
+  /**
+   * Check Ollama status
+   */
+  async getOllamaStatus(): Promise<{ available: boolean; models?: string[]; error?: string }> {
+    try {
+      const response = await fetch(`${API_BASE}/api/models/ollama/status`);
+      return response.json();
+    } catch {
+      return { available: false, error: 'Failed to check Ollama status' };
+    }
+  },
 };
 
 // Memory types
