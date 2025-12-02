@@ -328,11 +328,11 @@
 - **Component**: `packages/mcp-remote-server/src/services/memory.ts`
 - **Created**: 2025-12-02
 - **Resolved**: 2025-12-02
-- **Description**: Memory read operations failing with "no such column: o.content"
-- **Root Cause**: Code referenced `o.content` but schema uses `observation` column
-- **Resolution**: Changed all `o.content` → `o.observation` in SQL queries
-- **Commit**: `af62747`
-- **Discovered via**: Claude.ai MCP connector testing
+- **Description**: Memory operations failing with "no such column: content"
+- **Root Cause**: Code referenced `content` but schema uses `observation` column
+- **Resolution**: Changed all `content` → `observation` in SQL queries (SELECT, INSERT, DELETE) and schema definition
+- **Scope**: All CRUD operations - createEntities, addObservations, deleteObservations, deleteUserEdit, getUserEdits
+- **Discovered via**: Claude.ai MCP connector testing (read issue found first, then write issue discovered during testing)
 
 #### issue_029: MCP Auth Flow - Missing OAuth Env Vars
 - **Status**: 🟢 Resolved

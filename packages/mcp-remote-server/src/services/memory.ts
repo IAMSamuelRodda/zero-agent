@@ -104,11 +104,11 @@ export class KnowledgeGraphManager {
       // Add observations (skip duplicates)
       for (const obs of entity.observations || []) {
         const obsExists = this.db.prepare(
-          `SELECT id FROM memory_observations WHERE entity_id = ? AND LOWER(content) = LOWER(?)`
+          `SELECT id FROM memory_observations WHERE entity_id = ? AND LOWER(observation) = LOWER(?)`
         ).get(entityId, obs);
         if (!obsExists) {
           this.db.prepare(`
-            INSERT INTO memory_observations (id, entity_id, content, created_at, is_user_edit) VALUES (?, ?, ?, ?, ?)
+            INSERT INTO memory_observations (id, entity_id, observation, created_at, is_user_edit) VALUES (?, ?, ?, ?, ?)
           `).run(crypto.randomUUID(), entityId, obs, now, userEditFlag);
         }
       }
@@ -157,11 +157,11 @@ export class KnowledgeGraphManager {
       const added: string[] = [];
       for (const content of contents) {
         const exists = this.db.prepare(
-          `SELECT id FROM memory_observations WHERE entity_id = ? AND LOWER(content) = LOWER(?)`
+          `SELECT id FROM memory_observations WHERE entity_id = ? AND LOWER(observation) = LOWER(?)`
         ).get(entity.id, content);
         if (!exists) {
           this.db.prepare(
-            `INSERT INTO memory_observations (id, entity_id, content, created_at, is_user_edit) VALUES (?, ?, ?, ?, ?)`
+            `INSERT INTO memory_observations (id, entity_id, observation, created_at, is_user_edit) VALUES (?, ?, ?, ?, ?)`
           ).run(crypto.randomUUID(), entity.id, content, now, userEditFlag);
           added.push(content);
         }
@@ -202,7 +202,7 @@ export class KnowledgeGraphManager {
       const deleted: string[] = [];
       for (const obs of observations) {
         const result = this.db.prepare(
-          `DELETE FROM memory_observations WHERE entity_id = ? AND LOWER(content) = LOWER(?)`
+          `DELETE FROM memory_observations WHERE entity_id = ? AND LOWER(observation) = LOWER(?)`
         ).run(entity.id, obs);
         if (result.changes > 0) deleted.push(obs);
       }
@@ -348,13 +348,13 @@ export class KnowledgeGraphManager {
       ORDER BY o.created_at DESC
     `).all(...this.scopeParams([this.userId])) as {
       entity_name: string;
-      content: string;
+      observation: string;
       created_at: number;
     }[];
 
     return rows.map(r => ({
       entityName: r.entity_name,
-      observation: r.content,
+      observation: r.observation,
       createdAt: r.created_at,
     }));
   }
@@ -371,7 +371,7 @@ export class KnowledgeGraphManager {
 
     const result = this.db.prepare(`
       DELETE FROM memory_observations
-      WHERE entity_id = ? AND LOWER(content) = LOWER(?) AND is_user_edit = 1
+      WHERE entity_id = ? AND LOWER(observation) = LOWER(?) AND is_user_edit = 1
     `).run(entity.id, observation);
 
     return result.changes > 0;
@@ -534,7 +534,7 @@ export function initializeMemoryDb(dbPath?: string): Database.Database {
     CREATE TABLE IF NOT EXISTS memory_observations (
       id TEXT PRIMARY KEY,
       entity_id TEXT NOT NULL,
-      content TEXT NOT NULL,
+      observation TEXT NOT NULL,
       created_at INTEGER NOT NULL,
       is_user_edit INTEGER NOT NULL DEFAULT 0,
       FOREIGN KEY (entity_id) REFERENCES memory_entities(id) ON DELETE CASCADE
