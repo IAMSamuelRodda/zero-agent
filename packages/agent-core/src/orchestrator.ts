@@ -119,15 +119,19 @@ export class AgentOrchestrator {
 
   /**
    * Get the appropriate LLM provider based on model selection
+   * Supports formats: "ollama:modelname" or "ollama-local" (legacy)
    */
-  private getProvider(model?: string): LLMProvider {
-    if (model === 'ollama-local') {
+  private getProvider(model?: string): { provider: LLMProvider; modelOverride?: string } {
+    // Check for Ollama models (format: "ollama:modelname" or legacy "ollama-local")
+    if (model?.startsWith('ollama:') || model === 'ollama-local') {
       if (!this.ollamaProvider || !this.ollamaProvider.isReady()) {
         throw new Error('Ollama is not available. Make sure Ollama is running locally.');
       }
-      return this.ollamaProvider;
+      // Extract specific model name if provided (e.g., "ollama:deepseek-coder:33b" -> "deepseek-coder:33b")
+      const modelOverride = model?.startsWith('ollama:') ? model.replace('ollama:', '') : undefined;
+      return { provider: this.ollamaProvider, modelOverride };
     }
-    return this.llmProvider!;
+    return { provider: this.llmProvider! };
   }
 
   /**
@@ -177,14 +181,15 @@ export class AgentOrchestrator {
       }));
 
       // 8. Get the appropriate provider for the selected model
-      const provider = this.getProvider(model);
+      const { provider, modelOverride } = this.getProvider(model);
+      const isOllamaModel = model?.startsWith('ollama:') || model === 'ollama-local';
 
       // 9. Invoke LLM provider to generate response with tools
       // Note: Ollama doesn't support tools, so only pass them for Anthropic
-      const useTools = model !== 'ollama-local' && anthropicTools.length > 0;
+      const useTools = !isOllamaModel && anthropicTools.length > 0;
       let llmResponse = await provider.chat(conversationHistory, {
         tools: useTools ? anthropicTools : undefined,
-        model: model === 'ollama-local' ? undefined : model, // Ollama uses its default model
+        model: modelOverride || (isOllamaModel ? undefined : model), // Use specific Ollama model or cloud model
       });
 
       // 9. Check if LLM wants to use a tool
@@ -213,7 +218,7 @@ export class AgentOrchestrator {
           ];
 
           llmResponse = await provider.chat(followUpConversation, {
-            model: model === 'ollama-local' ? undefined : model,
+            model: modelOverride || (isOllamaModel ? undefined : model),
           });
         }
       }
