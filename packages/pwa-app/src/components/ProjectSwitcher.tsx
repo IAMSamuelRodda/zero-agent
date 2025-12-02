@@ -153,18 +153,13 @@ export function ProjectSwitcher() {
 
           {/* Empty state / Create first project */}
           {!hasProjects && !isCreating && (
-            <div className="px-3 py-4 text-center">
-              <svg className="w-8 h-8 mx-auto mb-2 text-arc-text-dim" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
-              <p className="text-sm text-arc-text-secondary mb-3">
-                Organize your work with projects
-              </p>
+            <div className="px-3 py-3">
+              <p className="text-xs text-arc-text-dim mb-2">No projects yet</p>
               <button
                 onClick={() => setIsCreating(true)}
-                className="px-3 py-1.5 bg-arc-accent text-arc-bg-primary text-sm rounded-lg hover:bg-arc-accent-dim transition-colors"
+                className="w-full px-3 py-1.5 bg-arc-accent text-arc-bg-primary text-sm rounded-lg hover:bg-arc-accent-dim transition-colors"
               >
-                Create your first project
+                Create project
               </button>
             </div>
           )}
