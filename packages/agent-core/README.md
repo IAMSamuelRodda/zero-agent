@@ -1,6 +1,6 @@
 # Agent Core
 
-Claude Agent SDK orchestrator for Zero Agent.
+Claude Agent SDK orchestrator for Pip.
 
 ## Overview
 

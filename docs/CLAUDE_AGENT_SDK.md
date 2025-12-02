@@ -184,14 +184,14 @@ agent.registerTools(tools);
 
 ### Lambda-Based MCP Integration
 
-For serverless architectures (like Zero Agent):
+For serverless architectures (like Pip):
 
 ```typescript
 class AgentOrchestrator {
   async invokeMCPTool(toolName: string, args: any) {
     // Invoke MCP Lambda function
     const result = await lambda.invoke({
-      FunctionName: 'zero-agent-dev-mcp',
+      FunctionName: 'pip-dev-mcp',
       Payload: JSON.stringify({ tool: toolName, arguments: args }),
     });
 
@@ -394,7 +394,7 @@ class AgentOrchestrator {
 
 ---
 
-## Zero Agent Implementation
+## Pip Implementation
 
 ### Architecture
 

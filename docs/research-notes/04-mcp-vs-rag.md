@@ -95,7 +95,7 @@ For sophisticated AI workflows, combine both:
 
 **For CodeForge**: MCP tools only, skip RAG
 **For Star Atlas**: Mem0 (memory) + MCP tools, minimal RAG for game knowledge
-**For Zero Agent**: MCP (Xero API) + Mem0 (business context), RAG for uploaded documents
+**For Pip**: MCP (Xero API) + Mem0 (business context), RAG for uploaded documents
 
 ---
 

@@ -44,7 +44,7 @@
 
 **Do not build new production systems on LangChain.**
 
-For CodeForge/Star Atlas/Zero Agent:
+For CodeForge/Star Atlas/Pip:
 - Use **Claude Agent SDK** as the base
 - Use **LangGraph** only if you need complex state machines
 - Skip LangChain entirely

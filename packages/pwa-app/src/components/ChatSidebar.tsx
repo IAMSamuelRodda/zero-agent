@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useChatStore } from '../store/chatStore';
 import { useCurrentProject } from '../store/projectStore';
 import { ProfileDropdown } from './ProfileDropdown';
+import { ChatActionsMenu } from './ChatActionsMenu';
 
 // ============================================================================
 // Icons
@@ -27,11 +28,11 @@ const SidebarToggleIcon = () => (
   </svg>
 );
 
-// Pip Logo icon
+// Official Pip Logo (matches favicon.svg)
 const PipLogo = () => (
-  <svg className="h-7 w-7" viewBox="0 0 32 32" fill="none">
-    <circle cx="16" cy="16" r="14" className="fill-arc-accent" />
-    <text x="16" y="21" textAnchor="middle" className="fill-arc-bg-primary font-bold" style={{ fontSize: '14px' }}>P</text>
+  <svg className="h-7 w-7" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="44" fill="#0f1419" stroke="#7eb88e" strokeWidth="6"/>
+    <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="#7eb88e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
@@ -72,37 +73,6 @@ const ClockIcon = () => (
   </svg>
 );
 
-const MoreIcon = () => (
-  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-    <circle cx="12" cy="5" r="2" />
-    <circle cx="12" cy="12" r="2" />
-    <circle cx="12" cy="19" r="2" />
-  </svg>
-);
-
-const StarIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-  </svg>
-);
-
-const RenameIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-  </svg>
-);
-
-const FolderIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-  </svg>
-);
 
 // ============================================================================
 // Types
@@ -139,23 +109,11 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
   const currentProject = useCurrentProject();
 
   const [recentsHidden, setRecentsHidden] = useState(false);
-  const [menuOpenFor, setMenuOpenFor] = useState<string | null>(null);
-  const [renamingChat, setRenamingChat] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
 
   // Load chat list on mount
   useEffect(() => {
     loadChatList();
   }, [loadChatList]);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClick = () => setMenuOpenFor(null);
-    if (menuOpenFor) {
-      document.addEventListener('click', handleClick);
-      return () => document.removeEventListener('click', handleClick);
-    }
-  }, [menuOpenFor]);
 
   // Get recent chats (last 5)
   const recentChats = useMemo(() => {
@@ -183,44 +141,21 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
     }
   };
 
-  // Handle delete chat
-  const handleDeleteChat = async (e: React.MouseEvent, chatSessionId: string) => {
-    e.stopPropagation();
-    if (confirm('Delete this chat?')) {
-      await deleteChat(chatSessionId);
-    }
-    setMenuOpenFor(null);
-  };
-
-  // Handle bookmark chat
-  const handleBookmarkChat = async (e: React.MouseEvent, chatSessionId: string) => {
-    e.stopPropagation();
+  // Chat action handlers for ChatActionsMenu
+  const handleBookmark = async (chatSessionId: string) => {
     await bookmarkChat(chatSessionId);
-    setMenuOpenFor(null);
   };
 
-  // Handle start rename
-  const handleStartRename = (e: React.MouseEvent, chatSessionId: string, currentTitle: string) => {
-    e.stopPropagation();
-    setRenamingChat(chatSessionId);
-    setRenameValue(currentTitle);
-    setMenuOpenFor(null);
+  const handleRename = async (chatSessionId: string, newTitle: string) => {
+    await renameChat(chatSessionId, newTitle);
   };
 
-  // Handle rename submit
-  const handleRenameSubmit = async (chatSessionId: string) => {
-    if (renameValue.trim()) {
-      await renameChat(chatSessionId, renameValue.trim());
-    }
-    setRenamingChat(null);
-    setRenameValue('');
+  const handleDelete = async (chatSessionId: string) => {
+    await deleteChat(chatSessionId);
   };
 
-  // Handle add to project (TODO: implement)
-  const handleAddToProject = (e: React.MouseEvent, _chatSessionId: string) => {
-    e.stopPropagation();
+  const handleAddToProject = (_chatSessionId: string) => {
     // TODO: Implement add to project
-    setMenuOpenFor(null);
   };
 
   const isChatsPage = location.pathname === '/chats';
@@ -386,37 +321,18 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-sm truncate flex-1">{chat.title}</span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setMenuOpenFor(menuOpenFor === `bm-${chat.sessionId}` ? null : `bm-${chat.sessionId}`);
-                          }}
-                          className="p-0.5 rounded opacity-0 group-hover/chat:opacity-100 hover:bg-arc-bg-secondary text-arc-text-dim hover:text-arc-text-primary transition-all"
-                        >
-                          <MoreIcon />
-                        </button>
+                        <ChatActionsMenu
+                          sessionId={chat.sessionId}
+                          title={chat.title}
+                          isBookmarked={true}
+                          onBookmark={handleBookmark}
+                          onRename={handleRename}
+                          onAddToProject={handleAddToProject}
+                          onDelete={handleDelete}
+                          variant="dots"
+                        />
                       </div>
                     </button>
-
-                    {/* Context Menu for bookmarked chat */}
-                    {menuOpenFor === `bm-${chat.sessionId}` && (
-                      <div className="absolute right-0 top-full mt-1 bg-arc-bg-tertiary border border-arc-border rounded-lg shadow-lg z-50 py-1 min-w-36">
-                        <button
-                          onClick={(e) => handleBookmarkChat(e, chat.sessionId)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-secondary transition-colors"
-                        >
-                          <StarIcon />
-                          Unbookmark
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteChat(e, chat.sessionId)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-arc-bg-secondary transition-colors"
-                        >
-                          <TrashIcon />
-                          Delete
-                        </button>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
@@ -455,79 +371,28 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
                   <div className="px-2 py-1 space-y-0.5">
                     {recentChats.map((chat) => (
                       <div key={chat.sessionId} className="relative group/chat">
-                        {renamingChat === chat.sessionId ? (
-                          <input
-                            type="text"
-                            value={renameValue}
-                            onChange={(e) => setRenameValue(e.target.value)}
-                            onBlur={() => handleRenameSubmit(chat.sessionId)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleRenameSubmit(chat.sessionId);
-                              if (e.key === 'Escape') {
-                                setRenamingChat(null);
-                                setRenameValue('');
-                              }
-                            }}
-                            autoFocus
-                            className="w-full px-2 py-1.5 text-sm bg-arc-bg-tertiary border border-arc-accent rounded text-arc-text-primary focus:outline-none"
-                          />
-                        ) : (
-                          <button
-                            onClick={() => handleChatClick(chat.sessionId)}
-                            className={`w-full text-left px-2 py-1.5 rounded transition-colors ${
-                              chat.sessionId === sessionId
-                                ? 'bg-arc-accent/20 text-arc-accent'
-                                : 'hover:bg-arc-bg-tertiary text-arc-text-primary'
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm truncate flex-1">{chat.title}</span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setMenuOpenFor(menuOpenFor === chat.sessionId ? null : chat.sessionId);
-                                }}
-                                className="p-0.5 rounded opacity-0 group-hover/chat:opacity-100 hover:bg-arc-bg-secondary text-arc-text-dim hover:text-arc-text-primary transition-all"
-                              >
-                                <MoreIcon />
-                              </button>
-                            </div>
-                          </button>
-                        )}
-
-                        {/* Context Menu */}
-                        {menuOpenFor === chat.sessionId && (
-                          <div className="absolute right-0 top-full mt-1 bg-arc-bg-tertiary border border-arc-border rounded-lg shadow-lg z-50 py-1 min-w-36">
-                            <button
-                              onClick={(e) => handleBookmarkChat(e, chat.sessionId)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-secondary transition-colors"
-                            >
-                              <StarIcon />
-                              {chat.isBookmarked ? 'Unbookmark' : 'Bookmark'}
-                            </button>
-                            <button
-                              onClick={(e) => handleStartRename(e, chat.sessionId, chat.title)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-secondary transition-colors"
-                            >
-                              <RenameIcon />
-                              Rename
-                            </button>
-                            <button
-                              onClick={(e) => handleAddToProject(e, chat.sessionId)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-secondary transition-colors"
-                            >
-                              <FolderIcon />
-                              Add to project
-                            </button>
-                            <button
-                              onClick={(e) => handleDeleteChat(e, chat.sessionId)}
-                              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-arc-bg-secondary transition-colors"
-                            >
-                              <TrashIcon />
-                              Delete
-                            </button>
+                        <button
+                          onClick={() => handleChatClick(chat.sessionId)}
+                          className={`w-full text-left px-2 py-1.5 rounded transition-colors ${
+                            chat.sessionId === sessionId
+                              ? 'bg-arc-accent/20 text-arc-accent'
+                              : 'hover:bg-arc-bg-tertiary text-arc-text-primary'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-sm truncate flex-1">{chat.title}</span>
+                            <ChatActionsMenu
+                              sessionId={chat.sessionId}
+                              title={chat.title}
+                              isBookmarked={chat.isBookmarked}
+                              onBookmark={handleBookmark}
+                              onRename={handleRename}
+                              onAddToProject={handleAddToProject}
+                              onDelete={handleDelete}
+                              variant="dots"
+                            />
                           </div>
-                        )}
+                        </button>
                       </div>
                     ))}
                   </div>

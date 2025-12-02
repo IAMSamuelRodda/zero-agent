@@ -1,7 +1,7 @@
 {
   "name": "@pip/pwa-app",
   "version": "0.1.0",
-  "description": "Progressive Web App for Zero Agent",
+  "description": "Progressive Web App for Pip",
   "type": "module",
   "scripts": {
     "dev": "vite",

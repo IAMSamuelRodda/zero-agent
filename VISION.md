@@ -1,4 +1,4 @@
-# Agent Zero (Zero Agent) - Vision
+# Agent Zero (Pip) - Vision
 
 **Your AI bookkeeping assistant.**
 

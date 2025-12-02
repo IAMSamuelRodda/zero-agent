@@ -8,7 +8,7 @@
 
 ## Problem Statement
 
-Zero Agent is a multi-tenant SaaS application built on Anthropic's Claude API. However, Anthropic's API:
+Pip is a multi-tenant SaaS application built on Anthropic's Claude API. However, Anthropic's API:
 - Uses pay-per-token billing (no flat-rate subscriptions)
 - Provides no native cost attribution per tenant/customer
 - Offers no built-in rate limiting or budget controls per API key

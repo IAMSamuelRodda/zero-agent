@@ -103,7 +103,7 @@
    - ✅ spike_m2_004: Multi-Model Architecture - LiteLLM + Tailscale + Ollama
 
 4. **Tech Debt**:
-   - ~~debt_003: Legacy "zero-agent" naming~~ ✅ Resolved (migrated to pip-data/pip.db)
+   - ~~debt_003: Legacy "pip" naming~~ ✅ Resolved (migrated to pip-data/pip.db)
    - debt_004: ESLint v9 flat config migration (P3 - deferred)
 
 5. **Infrastructure**:
@@ -180,7 +180,7 @@
   - Column `observation` not `content`
   - Added `is_user_edit` and `updated_at` migrations
   - Memory UI now fully functional
-- **Naming Migration Complete**: zero-agent → pip fully resolved
+- **Naming Migration Complete**: pip → pip fully resolved
   - Updated all Dockerfiles, code defaults, and READMEs
   - Deploy script now sources `.env` for secrets
   - Backup script updated to use `pip` naming (14-day retention)
@@ -216,7 +216,7 @@
 - Safety architecture implemented (tiered permissions)
 - ChatGPT integration validated
 - Xero tools audit complete (10 tools hardened)
-- Full rebrand: zero-agent → pip
+- Full rebrand: pip → pip
 
 ### 2025-11-28
 - User authentication with invite codes

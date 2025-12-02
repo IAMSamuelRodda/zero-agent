@@ -1,13 +1,13 @@
-# Zero Agent - Caddyfile Snippet
+# Pip - Caddyfile Snippet
 #
 # Add this to your existing Caddyfile on the VPS
 # Location: /opt/do-vps-prod/docker/droplet/Caddyfile
 #
-# Example domain: zero-agent.rodda.xyz or xero.rodda.xyz
+# Example domain: app.pip.arcforge.au
 
-{$ZERO_AGENT_DOMAIN:zero.rodda.xyz} {
-    # Reverse proxy to Zero Agent container
-    reverse_proxy zero-agent:3000 {
+{$PIP_DOMAIN:app.pip.arcforge.au} {
+    # Reverse proxy to Pip container
+    reverse_proxy pip-app:3000 {
         # Health checks
         health_uri /health
         health_interval 30s
@@ -30,7 +30,7 @@
 
     # Logging (optional - comment out to reduce disk usage)
     log {
-        output file /var/log/caddy/zero-agent.log {
+        output file /var/log/caddy/pip.log {
             roll_size 10mb
             roll_keep 3
         }

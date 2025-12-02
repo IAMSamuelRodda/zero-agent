@@ -1,32 +1,32 @@
-# Zero Agent - systemd Service File
+# Pip - systemd Service File
 #
 # Installation:
-#   sudo cp deploy/zero-agent.service /etc/systemd/system/
+#   sudo cp deploy/pip.service /etc/systemd/system/
 #   sudo systemctl daemon-reload
-#   sudo systemctl enable zero-agent
-#   sudo systemctl start zero-agent
+#   sudo systemctl enable pip
+#   sudo systemctl start pip
 #
 # Logs:
-#   sudo journalctl -u zero-agent -f
+#   sudo journalctl -u pip -f
 
 [Unit]
-Description=Zero Agent - AI Accounting Assistant
-Documentation=https://github.com/IAMSamuelRodda/zero-agent
+Description=Pip - AI Accounting Assistant
+Documentation=https://github.com/IAMSamuelRodda/pip
 After=network.target
 
 [Service]
 Type=simple
-User=zero-agent
-Group=zero-agent
+User=pip
+Group=pip
 
 # Working directory (adjust path as needed)
-WorkingDirectory=/opt/zero-agent
+WorkingDirectory=/opt/pip
 
 # Node.js executable (adjust if using nvm or different path)
 ExecStart=/usr/bin/node packages/server/dist/index.js
 
 # Environment file with secrets
-EnvironmentFile=/opt/zero-agent/.env
+EnvironmentFile=/opt/pip/.env
 
 # Environment variables
 Environment=NODE_ENV=production
@@ -45,7 +45,7 @@ PrivateDevices=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
-ReadWritePaths=/opt/zero-agent/data
+ReadWritePaths=/opt/pip/data
 
 # Resource limits
 MemoryMax=512M
@@ -54,7 +54,7 @@ CPUQuota=100%
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=zero-agent
+SyslogIdentifier=pip
 
 [Install]
 WantedBy=multi-user.target

@@ -34,14 +34,14 @@ pip.arcforge.au {
 }
 
 # ===========================================
-# Zero Agent Main Server (existing)
+# Pip Main Server (existing)
 # ===========================================
 zero.rodda.xyz {
-    reverse_proxy zero-agent:3000
+    reverse_proxy pip:3000
     encode gzip
 
     log {
-        output file /var/log/caddy/zero-agent.log {
+        output file /var/log/caddy/pip.log {
             roll_size 10mb
             roll_keep 3
         }

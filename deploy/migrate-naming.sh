@@ -1,17 +1,17 @@
 #!/bin/bash
-# Migrate from zero-agent naming to pip naming
+# Migrate from legacy zero-agent naming to pip naming
 # Run ONCE from /opt/pip on VPS: ./deploy/migrate-naming.sh
 #
 # This script:
 # 1. Stops containers
 # 2. Creates new pip-data volume
-# 3. Copies database from zero-agent-data to pip-data
-# 4. Renames database file from zero-agent.db to pip.db
+# 3. Copies database from legacy volume to pip-data
+# 4. Renames database file if needed
 # 5. Starts containers with new volume
 
 set -e
 
-echo "🔄 Migrating from zero-agent to pip naming..."
+echo "🔄 Migrating to Pip naming..."
 echo ""
 
 # Stop containers
@@ -23,38 +23,38 @@ echo ""
 echo "📦 Creating pip-data volume..."
 docker volume create pip-data 2>/dev/null || echo "  Volume already exists"
 
-# Copy data using a temporary container
-echo "📋 Copying data from zero-agent-data to pip-data..."
-docker run --rm \
-  -v zero-agent-data:/source:ro \
-  -v pip-data:/dest \
-  alpine sh -c "cp -av /source/. /dest/"
+# Check if legacy volume exists
+if docker volume inspect zero-agent-data >/dev/null 2>&1; then
+  echo "📋 Copying data from legacy volume to pip-data..."
+  docker run --rm \
+    -v zero-agent-data:/source:ro \
+    -v pip-data:/dest \
+    alpine sh -c "cp -av /source/. /dest/"
 
-# Rename database file
-echo "📝 Renaming database file..."
-docker run --rm \
-  -v pip-data:/data \
-  alpine sh -c "
-    if [ -f /data/zero-agent.db ]; then
-      mv /data/zero-agent.db /data/pip.db
-      echo '  Renamed zero-agent.db → pip.db'
-    else
-      echo '  Database already named pip.db or does not exist'
-    fi
-  "
+  # Rename database file if needed
+  echo "📝 Renaming database file if needed..."
+  docker run --rm \
+    -v pip-data:/data \
+    alpine sh -c "
+      if [ -f /data/zero-agent.db ]; then
+        mv /data/zero-agent.db /data/pip.db
+        echo '  Renamed legacy database → pip.db'
+      else
+        echo '  Database already named pip.db or does not exist'
+      fi
+    "
+else
+  echo "ℹ No legacy volume found (zero-agent-data)"
+fi
 
 echo ""
 echo "✅ Migration complete!"
 echo ""
 echo "📌 Next steps:"
-echo "  1. Update deploy/deploy.sh to use:"
-echo "     - Volume: pip-data (instead of zero-agent-data)"
-echo "     - DATABASE_PATH: /app/data/pip.db"
+echo "  1. Run: ./deploy/deploy.sh"
 echo ""
-echo "  2. Run: ./deploy/deploy.sh"
+echo "  2. Verify everything works"
 echo ""
-echo "  3. Verify everything works"
-echo ""
-echo "  4. (Optional) Remove old resources:"
+echo "  3. (Optional) Remove old resources:"
 echo "     docker volume rm zero-agent-data"
 echo "     docker network rm zero-agent-network"

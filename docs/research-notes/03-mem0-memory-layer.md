@@ -107,7 +107,7 @@ relevant = memory.search("communication style", user_id="user123")
 - Game knowledge base
 - Relationship memory
 
-### Zero Agent (Pip)
+### Pip (Pip)
 **GOOD FIT** - Mem0 for:
 - Business document context
 - User communication preferences

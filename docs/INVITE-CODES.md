@@ -46,7 +46,7 @@ ssh root@170.64.169.203
 docker exec pip-app pnpm admin generate-codes 5
 
 # Or manually insert into database
-sqlite3 /var/lib/docker/volumes/zero-agent-data/_data/zero-agent.db \
+sqlite3 /var/lib/docker/volumes/pip-data/_data/pip.db \
   "INSERT INTO invite_codes (code, created_at) VALUES ('NEWCODE01', strftime('%s','now') * 1000);"
 ```
 
@@ -56,7 +56,7 @@ sqlite3 /var/lib/docker/volumes/zero-agent-data/_data/zero-agent.db \
 
 ```bash
 ssh root@170.64.169.203
-sqlite3 /var/lib/docker/volumes/zero-agent-data/_data/zero-agent.db \
+sqlite3 /var/lib/docker/volumes/pip-data/_data/pip.db \
   "SELECT code, used_by, created_at FROM invite_codes;"
 ```
 

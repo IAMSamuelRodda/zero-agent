@@ -9,7 +9,7 @@
 
 ## Context
 
-Zero Agent started as a proprietary SaaS product, but we're pivoting to an **open source platform** model. The vision:
+Pip started as a proprietary SaaS product, but we're pivoting to an **open source platform** model. The vision:
 
 > **"Open source Xero AI assistant that works with ANY LLM backend - self-hostable, vendor-agnostic, with optional managed hosting"**
 
@@ -178,7 +178,7 @@ interface DatabaseProvider {
 
 #### Mode 2: OAuth Proxy (Convenience)
 - User self-hosts app, but uses OUR Xero app credentials
-- OAuth flow redirects to our proxy: `https://api.zero-agent.com/oauth/callback`
+- OAuth flow redirects to our proxy: `https://api.pip.com/oauth/callback`
 - Proxy forwards tokens back to user's self-hosted instance
 
 **Architecture**:
@@ -264,7 +264,7 @@ User's Self-Hosted App → Xero OAuth → Our Proxy API → User's App
 ### Monorepo Structure
 
 ```
-zero-agent/
+pip/
 ├── packages/
 │   ├── core/                    # Shared types, abstractions
 │   │   ├── llm/                 # LLM provider abstraction
@@ -458,7 +458,7 @@ psql -U xero -d xero_agent -f backup.sql
 
 ## Xero OAuth Proxy Implementation
 
-**Service**: `https://api.zero-agent.com/oauth/*`
+**Service**: `https://api.pip.com/oauth/*`
 
 **Endpoints**:
 1. `GET /oauth/authorize` - Initiate OAuth flow

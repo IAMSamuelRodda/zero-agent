@@ -1,5 +1,5 @@
 /**
- * API Client for Zero Agent backend
+ * API Client for Pip backend
  */
 
 import { useAuthStore } from '../store/authStore';

@@ -1,6 +1,6 @@
 # @pip/server
 
-Unified HTTP server for Zero Agent - designed for VPS deployment.
+Unified HTTP server for Pip - designed for VPS deployment.
 
 ## Overview
 

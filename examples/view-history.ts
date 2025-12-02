@@ -10,7 +10,7 @@ import { createDatabaseProviderFromEnv } from "../packages/core/dist/index.js";
 config();
 
 async function main() {
-  console.log("\n📜 Zero Agent - Chat History\n");
+  console.log("\n📜 Pip - Chat History\n");
 
   try {
     const db = await createDatabaseProviderFromEnv();

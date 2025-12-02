@@ -70,7 +70,7 @@ Claude Agent SDK
     └── LangGraph (if trust progression workflow complex)
 ```
 
-### Zero Agent / Pip (Bookkeeping)
+### Pip / Pip (Bookkeeping)
 
 ```
 Claude Agent SDK
@@ -116,7 +116,7 @@ The future is:
 
 ## Action Items
 
-1. [ ] Evaluate Mem0 integration for Star Atlas/Zero Agent
+1. [ ] Evaluate Mem0 integration for Star Atlas/Pip
 2. [ ] Implement lazy-mcp for tool scaling
 3. [ ] Remove RAG complexity from CodeForge
 4. [ ] Keep LangGraph as optional layer

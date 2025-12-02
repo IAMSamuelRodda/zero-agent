@@ -12,11 +12,7 @@ import type { PersonalityInfo } from '../api/client';
 import { ChatSidebar } from '../components/ChatSidebar';
 import { ChatInputArea } from '../components/ChatInputArea';
 import { QuickActionCategories } from '../components/QuickActionCategories';
-
-interface AuthStatus {
-  connected: boolean;
-  tenantName?: string;
-}
+import { ChatHeader } from '../components/ChatHeader';
 
 interface Document {
   docName: string;
@@ -27,8 +23,6 @@ interface Document {
 
 export function ChatPage() {
   const [input, setInput] = useState('');
-  const [authStatus, setAuthStatus] = useState<AuthStatus | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [showDocPanel, setShowDocPanel] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -39,7 +33,40 @@ export function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { messages, isLoading, error, sendMessage, clearError, currentTitle } = useChatStore();
+  const {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    clearError,
+    currentTitle,
+    sessionId,
+    chatList,
+    bookmarkChat,
+    renameChat,
+    deleteChat,
+  } = useChatStore();
+
+  // Get current chat's bookmark status
+  const currentChat = chatList.find(c => c.sessionId === sessionId);
+  const isCurrentChatBookmarked = currentChat?.isBookmarked ?? false;
+
+  // Chat action handlers for header
+  const handleBookmark = async (chatSessionId: string) => {
+    await bookmarkChat(chatSessionId);
+  };
+
+  const handleRename = async (chatSessionId: string, newTitle: string) => {
+    await renameChat(chatSessionId, newTitle);
+  };
+
+  const handleDelete = async (chatSessionId: string) => {
+    await deleteChat(chatSessionId);
+  };
+
+  const handleAddToProject = (_chatSessionId: string) => {
+    // TODO: Implement add to project
+  };
 
   // Timer for loading state
   useEffect(() => {
@@ -108,23 +135,13 @@ export function ChatPage() {
     }
   };
 
-  // Check auth status on mount and handle OAuth callback
+  // Handle OAuth callback errors
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const authResult = params.get('auth');
-    const orgName = params.get('org');
     const authError = params.get('error');
-
-    if (authResult === 'success' && orgName) {
-      setAuthStatus({ connected: true, tenantName: orgName });
-      window.history.replaceState({}, '', window.location.pathname);
-    } else if (authError) {
+    if (authError) {
       useChatStore.getState().setError(`Xero connection failed: ${authError}`);
       window.history.replaceState({}, '', window.location.pathname);
-    } else {
-      api.getAuthStatus()
-        .then(setAuthStatus)
-        .catch(() => setAuthStatus({ connected: false }));
     }
   }, []);
 
@@ -152,11 +169,6 @@ export function ChatPage() {
     // TODO: Handle attachments when file upload is implemented (Epic 2.4)
   };
 
-  const handleConnectXero = () => {
-    setIsConnecting(true);
-    window.location.href = api.getXeroAuthUrl();
-  };
-
   return (
     <div className="flex h-screen bg-arc-bg-primary font-mono">
       {/* Sidebar */}
@@ -170,37 +182,17 @@ export function ChatPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <header className="bg-arc-bg-secondary border-b border-arc-border">
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {/* Logo + Title (tighter spacing) */}
-              <svg className="w-7 h-7" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="44" fill="#0f1419" stroke="#7eb88e" strokeWidth="6"/>
-                <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="#7eb88e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span className="text-base font-medium text-arc-text-primary">
-                {currentTitle || 'Pip'}
-              </span>
-            </div>
-          <div className="flex items-center gap-4">
-            {authStatus?.connected ? (
-              <span className="text-sm text-arc-accent flex items-center gap-2">
-                <span className="w-2 h-2 bg-arc-accent rounded-full animate-pulse"></span>
-                {authStatus.tenantName || 'Connected'}
-              </span>
-            ) : (
-              <button
-                onClick={handleConnectXero}
-                disabled={isConnecting}
-                className="text-sm px-3 py-1.5 rounded-lg border border-arc-border text-arc-text-secondary hover:border-arc-accent hover:text-arc-accent disabled:opacity-50 transition-colors"
-              >
-                {isConnecting ? 'Connecting...' : 'Connect Xero'}
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+        {/* Header - seamless background */}
+        <ChatHeader
+          sessionId={sessionId}
+          title={currentTitle || 'Pip'}
+          isBookmarked={isCurrentChatBookmarked}
+          hasMessages={messages.length > 0}
+          onBookmark={handleBookmark}
+          onRename={handleRename}
+          onAddToProject={handleAddToProject}
+          onDelete={handleDelete}
+        />
 
       {/* Document Panel */}
       {showDocPanel && (

@@ -1,6 +1,6 @@
 # @pip/core
 
-Core abstractions for Zero Agent platform.
+Core abstractions for Pip platform.
 
 ## Features
 

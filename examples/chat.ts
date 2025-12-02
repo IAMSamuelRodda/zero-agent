@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Interactive CLI Chat with Zero Agent
+ * Interactive CLI Chat with Pip
  *
  * Simple REPL for chatting with the agent
  */
@@ -15,7 +15,7 @@ config();
 const TEST_USER_ID = "test-user-001";
 
 async function main() {
-  console.log("\n🤖 Zero Agent - Interactive Chat\n");
+  console.log("\n🤖 Pip - Interactive Chat\n");
   console.log("Type your questions about Xero data. Type 'exit' to quit.\n");
 
   try {

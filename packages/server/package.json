@@ -1,7 +1,7 @@
 {
   "name": "@pip/server",
   "version": "0.1.0",
-  "description": "Unified HTTP server for Zero Agent (VPS deployment)",
+  "description": "Unified HTTP server for Pip (VPS deployment)",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

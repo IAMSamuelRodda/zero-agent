@@ -1,8 +1,8 @@
-# Zero Agent - Deployment Guide
+# Pip - Deployment Guide
 
 ## Quick Start: Deploy to VPS
 
-This guide will get your Zero Agent deployed and ready for use.
+This guide will get Pip deployed and ready for use.
 
 **Cost:** $0/month (using existing VPS) or ~$6/month (new droplet)
 
@@ -23,7 +23,7 @@ You need a VPS with:
 2. Sign up / Log in
 3. Click "My Apps" → "New App"
 4. Fill in:
-   - **App name:** Zero Agent
+   - **App name:** Pip
    - **Integration type:** Web app
    - **Company/App URL:** https://yourdomain.com
    - **Redirect URI:** https://yourdomain.com/auth/xero/callback
@@ -47,8 +47,8 @@ ssh root@your-vps-ip
 
 # Clone to /opt
 cd /opt
-git clone https://github.com/IAMSamuelRodda/zero-agent.git
-cd zero-agent
+git clone https://github.com/IAMSamuelRodda/pip.git
+cd pip
 ```
 
 ---
@@ -85,7 +85,7 @@ Add to your Caddyfile (typically `/opt/docker/droplet/Caddyfile`):
 
 ```
 yourdomain.com {
-    reverse_proxy zero-agent:3000
+    reverse_proxy pip-app:3000
 }
 ```
 
@@ -95,13 +95,13 @@ yourdomain.com {
 
 ```bash
 # Build Docker image
-docker build -t zero-agent .
+docker build -t pip-app .
 
 # Start with docker-compose
 docker compose up -d
 
 # Check logs
-docker logs zero-agent -f
+docker logs pip-app -f
 ```
 
 ---
@@ -132,26 +132,26 @@ Set up daily SQLite backups:
 
 ```bash
 # Create backup script
-cat > /opt/backups/backup-zero-agent.sh << 'EOF'
+cat > /opt/backups/backup-pip.sh << 'EOF'
 #!/bin/bash
-BACKUP_DIR=/opt/backups/zero-agent
+BACKUP_DIR=/opt/backups/pip
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p $BACKUP_DIR
 
 # Copy database from container
-docker cp zero-agent:/app/data/pip.db "$BACKUP_DIR/zero-agent_$TIMESTAMP.db"
+docker cp pip-app:/app/data/pip.db "$BACKUP_DIR/pip_$TIMESTAMP.db"
 
 # Keep only last 7 days
-find $BACKUP_DIR -name "zero-agent_*.db" -mtime +7 -delete
+find $BACKUP_DIR -name "pip_*.db" -mtime +7 -delete
 
-echo "Backup completed: zero-agent_$TIMESTAMP.db"
+echo "Backup completed: pip_$TIMESTAMP.db"
 EOF
 
-chmod +x /opt/backups/backup-zero-agent.sh
+chmod +x /opt/backups/backup-pip.sh
 
 # Add to cron (daily at 3am)
-echo "0 3 * * * /opt/backups/backup-zero-agent.sh" | crontab -
+echo "0 3 * * * /opt/backups/backup-pip.sh" | crontab -
 ```
 
 ---
@@ -162,7 +162,7 @@ echo "0 3 * * * /opt/backups/backup-zero-agent.sh" | crontab -
 
 Check logs:
 ```bash
-docker logs zero-agent
+docker logs pip-app
 ```
 
 Common issues:
@@ -180,10 +180,10 @@ Common issues:
 
 ```bash
 # Check if database directory exists
-docker exec zero-agent ls -la /app/data
+docker exec pip-app ls -la /app/data
 
 # Restart container
-docker compose restart zero-agent
+docker compose restart pip-app
 ```
 
 ---
@@ -191,13 +191,13 @@ docker compose restart zero-agent
 ## Updating
 
 ```bash
-cd /opt/zero-agent
+cd /opt/pip
 
 # Pull latest changes
 git pull
 
 # Rebuild and restart
-docker build -t zero-agent .
+docker build -t pip-app .
 docker compose up -d
 ```
 
@@ -233,4 +233,4 @@ docker compose up -d
 
 ---
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-12-02

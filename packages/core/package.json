@@ -1,7 +1,7 @@
 {
   "name": "@pip/core",
   "version": "0.1.0",
-  "description": "Core abstractions for LLM providers and database backends (Zero Agent)",
+  "description": "Core abstractions for LLM providers and database backends (Pip)",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

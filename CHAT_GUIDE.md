@@ -1,8 +1,8 @@
-# Zero Agent - Chat Interface Guide
+# Pip - Chat Interface Guide
 
 ## Quick Start
 
-You can chat with Zero Agent using the interactive CLI:
+You can chat with Pip using the interactive CLI:
 
 ```bash
 pnpm chat
@@ -13,7 +13,7 @@ This starts an interactive chat session where you can ask questions about your X
 ## Example Conversation
 
 ```
-🤖 Zero Agent - Interactive Chat
+🤖 Pip - Interactive Chat
 
 Type your questions about Xero data. Type 'exit' to quit.
 
@@ -50,7 +50,7 @@ Goodbye! 👋
 
 ## What You Can Ask
 
-Zero Agent can answer questions about:
+Pip can answer questions about:
 
 - **Invoices**: "How many unpaid invoices do I have?", "Show me paid invoices"
 - **Organization**: "What is my company name?", "What currency do I use?"

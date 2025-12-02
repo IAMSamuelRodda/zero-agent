@@ -1,7 +1,7 @@
 {
   "name": "@pip/agent-core",
   "version": "0.1.0",
-  "description": "Claude Agent SDK orchestrator for Zero Agent",
+  "description": "Claude Agent SDK orchestrator for Pip",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

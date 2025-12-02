@@ -1,26 +1,26 @@
-# Zero Agent - Docker Compose Configuration
+# Pip - Docker Compose Configuration
 # Usage: docker compose up -d
 
 services:
   # ===========================================
-  # Zero Agent Server
+  # Pip Server
   # ===========================================
-  zero-agent:
+  pip-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: zero-agent
+    container_name: pip-app
     restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
       # Persist SQLite database
-      - zero-agent-data:/app/data
+      - pip-data:/app/data
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_PROVIDER=sqlite
-      - DATABASE_PATH=/app/data/zero-agent.db
+      - DATABASE_PATH=/app/data/pip.db
       # Required: Set these in .env file or environment
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - XERO_CLIENT_ID=${XERO_CLIENT_ID}
@@ -34,7 +34,7 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - zero-agent-network
+      - pip-network
       - droplet_frontend  # Connect to existing Caddy network on VPS
 
   # ===========================================
@@ -42,7 +42,7 @@ services:
   # ===========================================
   caddy:
     image: caddy:2-alpine
-    container_name: zero-agent-caddy
+    container_name: pip-caddy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -54,24 +54,24 @@ services:
     environment:
       - DOMAIN=${DOMAIN:-localhost}
     depends_on:
-      zero-agent:
+      pip-app:
         condition: service_healthy
     networks:
-      - zero-agent-network
+      - pip-network
     profiles:
       - with-caddy  # Only starts with: docker compose --profile with-caddy up
 
 volumes:
-  zero-agent-data:
-    name: zero-agent-data
+  pip-data:
+    name: pip-data
   caddy-data:
-    name: zero-agent-caddy-data
+    name: pip-caddy-data
   caddy-config:
-    name: zero-agent-caddy-config
+    name: pip-caddy-config
 
 networks:
-  zero-agent-network:
-    name: zero-agent-network
+  pip-network:
+    name: pip-network
     driver: bridge
   droplet_frontend:
     external: true  # Use existing network from VPS Caddy setup

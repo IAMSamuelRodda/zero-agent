@@ -11,7 +11,7 @@
 This document consolidates research from:
 1. **Star Atlas Agent** - Four-tier memory architecture with RAG
 2. **Claude Agent SDK** - Anthropic's production agent framework
-3. **Current Zero Agent** - Baseline for comparison
+3. **Current Pip** - Baseline for comparison
 
 **Key Recommendation**: Design RAG-ready architecture from the start, but implement in phases (simple context for demo, full RAG post-demo).
 
@@ -31,7 +31,7 @@ This document consolidates research from:
 
 ## 1. Current State Analysis
 
-### Current Zero Agent Architecture (`orchestrator.ts`)
+### Current Pip Architecture (`orchestrator.ts`)
 
 ```
 User Message → Load Session → Load Core Memory → Build Static Prompt → LLM → Store Session

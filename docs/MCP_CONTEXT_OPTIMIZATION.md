@@ -17,7 +17,7 @@
 7. [ResourceLink Pattern for Large Datasets](#resourcelink-pattern-for-large-datasets)
 8. [Implementation Guidelines](#implementation-guidelines)
 9. [Performance Metrics](#performance-metrics)
-10. [Application to Zero Agent](#application-to-zero-agent)
+10. [Application to Pip](#application-to-pip)
 
 ---
 
@@ -981,11 +981,11 @@ class MetricsCollector {
 
 ---
 
-## Application to Zero Agent
+## Application to Pip
 
 ### Current Architecture Assessment
 
-**Zero Agent MCP Server** (`packages/mcp-xero-server/`):
+**Pip MCP Server** (`packages/mcp-xero-server/`):
 - 14 tools across 4 categories (invoices, banking, reporting, expenses)
 - Single monolithic server
 - Full API responses returned (not optimized)

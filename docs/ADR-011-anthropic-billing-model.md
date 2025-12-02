@@ -9,7 +9,7 @@
 
 ## Context
 
-Zero Agent needs to integrate with Anthropic's Claude API for conversational AI. We must decide how to handle Anthropic API costs and billing in a multi-tenant SaaS context.
+Pip needs to integrate with Anthropic's Claude API for conversational AI. We must decide how to handle Anthropic API costs and billing in a multi-tenant SaaS context.
 
 **Key Constraint**: Anthropic does NOT provide:
 - Public OAuth API for third-party apps
@@ -18,7 +18,7 @@ Zero Agent needs to integrate with Anthropic's Claude API for conversational AI.
 
 **Two Primary Options**:
 1. **BYOK (Bring Your Own Key)** - Users provide their own Anthropic API keys
-2. **Shared Key with Usage Tracking** - Zero Agent uses a single API key and tracks usage
+2. **Shared Key with Usage Tracking** - Pip uses a single API key and tracks usage
 
 ---
 
@@ -41,20 +41,20 @@ Zero Agent needs to integrate with Anthropic's Claude API for conversational AI.
 **User Flow**:
 1. User creates Anthropic Console account (https://console.anthropic.com)
 2. User generates API key in Console
-3. User pastes API key into Zero Agent settings
-4. Zero Agent makes API calls using user's key
+3. User pastes API key into Pip settings
+4. Pip makes API calls using user's key
 5. Anthropic bills user directly based on their usage
 
 **Architecture**:
 ```
-User → Zero Agent (stores encrypted API key) → Claude API
+User → Pip (stores encrypted API key) → Claude API
                                                     ↓
                                             User's Anthropic Account
                                                     ↓
                                             Anthropic bills user directly
 ```
 
-**Zero Agent Subscription Model**:
+**Pip Subscription Model**:
 - Free: Xero integration only (no agent features)
 - Pro: $10/month - Access to agent features, unlimited conversations
 - Enterprise: $50/month - Multi-user, custom integrations
@@ -74,10 +74,10 @@ User → Zero Agent (stores encrypted API key) → Claude API
    - Create Anthropic account
    - Add payment method to Anthropic
    - Generate API key
-   - Paste into Zero Agent
+   - Paste into Pip
    - Manage two billing relationships
 
-2. **Support Burden**: Users may blame Zero Agent for Anthropic billing issues
+2. **Support Burden**: Users may blame Pip for Anthropic billing issues
 3. **Feature Limitations**: Can't offer "free tier" with agent features
 4. **Key Management**: Users may lose/leak API keys
 5. **Churn Risk**: Extra billing complexity may reduce conversions
@@ -87,7 +87,7 @@ User → Zero Agent (stores encrypted API key) → Claude API
 **For User**:
 - Anthropic Pro subscription: $20/month (for Haiku, Sonnet, Opus access)
   - OR pay-per-use: ~$1-10/month depending on usage
-- Zero Agent subscription: $10/month
+- Pip subscription: $10/month
 - **Total: $11-30/month**
 
 **For Us**:
@@ -104,25 +104,25 @@ User → Zero Agent (stores encrypted API key) → Claude API
 **Similar to**: ChatGPT, Midjourney, most consumer AI SaaS
 
 **User Flow**:
-1. User signs up for Zero Agent
+1. User signs up for Pip
 2. User selects subscription tier (Free/Pro/Enterprise)
-3. Zero Agent uses its own Anthropic API key
+3. Pip uses its own Anthropic API key
 4. Usage is tracked and enforced per tier limits
-5. Zero Agent bills user for subscription
+5. Pip bills user for subscription
 
 **Architecture**:
 ```
-User → Zero Agent (shared API key, usage tracking) → Claude API
+User → Pip (shared API key, usage tracking) → Claude API
           ↓                                             ↓
-    DynamoDB tracks                          Zero Agent's Anthropic Account
+    DynamoDB tracks                          Pip's Anthropic Account
     user token usage                                    ↓
-          ↓                                   Zero Agent pays Anthropic
+          ↓                                   Pip pays Anthropic
     Enforce tier limits
           ↓
     Bill user monthly
 ```
 
-**Zero Agent Subscription Model** (from SPIKE doc):
+**Pip Subscription Model** (from SPIKE doc):
 - Free: 5 conversations/month (Haiku model) - $0, cost: $0.12
 - Pro: 100 conversations/month (Sonnet 4.5) - $20/month, cost: $9
 - Enterprise: 500 conversations/month (Sonnet 4.5) - $100/month, cost: $45
@@ -132,7 +132,7 @@ User → Zero Agent (shared API key, usage tracking) → Claude API
 1. **Simple User Experience**: One signup, one billing relationship
 2. **True Free Tier**: Can offer limited free access to attract users
 3. **Predictable User Costs**: Fixed monthly price, no surprise bills
-4. **Brand Control**: Users see Zero Agent as single service
+4. **Brand Control**: Users see Pip as single service
 5. **Upsell Opportunities**: Easy tier upgrades within app
 
 ### Cons ❌
@@ -152,7 +152,7 @@ User → Zero Agent (shared API key, usage tracking) → Claude API
 ### Cost Analysis
 
 **For User**:
-- Zero Agent Pro: $20/month (includes 100 conversations)
+- Pip Pro: $20/month (includes 100 conversations)
 - **Total: $20/month**
 
 **For Us** (Pro tier):
@@ -173,8 +173,8 @@ User → Zero Agent (shared API key, usage tracking) → Claude API
 **Best of both worlds**: Let users choose
 
 **Two Paths**:
-1. **BYOK Path**: User provides API key → Pay $10/month for Zero Agent
-2. **Managed Path**: Zero Agent provides API access → Pay $20/month all-in
+1. **BYOK Path**: User provides API key → Pay $10/month for Pip
+2. **Managed Path**: Pip provides API access → Pay $20/month all-in
 
 **User Segments**:
 - **Developers/Power Users**: Choose BYOK (lower cost, more control)
@@ -275,7 +275,7 @@ interface User {
 
 **API Key Storage**:
 - Encrypt with KMS before storing in Secrets Manager
-- Separate secret per user: `zero-agent/users/{userId}/anthropic-key`
+- Separate secret per user: `pip/users/{userId}/anthropic-key`
 - IAM policy: Lambda can only read user's own secret
 
 **Validation**:
@@ -301,7 +301,7 @@ interface User {
 **Settings Page Copy**:
 > **Connect Your Anthropic Account**
 >
-> Zero Agent uses Claude AI to power conversational features. You'll need an Anthropic API key to use agent features.
+> Pip uses Claude AI to power conversational features. You'll need an Anthropic API key to use agent features.
 >
 > 1. Create account at https://console.anthropic.com
 > 2. Generate an API key

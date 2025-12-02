@@ -1095,18 +1095,18 @@ Research/investigation tasks that must complete before dependent implementation 
 - **Reference**: https://eslint.org/docs/latest/use/configure/migration-guide
 - **Notes**: TypeScript compilation (`pnpm build`) provides primary type safety. Lint is secondary quality gate.
 
-#### debt_003: Legacy "zero-agent" Naming Convention
+#### debt_003: Legacy "pip" Naming Convention
 - **Status**: 🟢 Resolved
 - **Priority**: - (Complete)
 - **Resolved**: 2025-12-01
 - **Component**: Multiple (Docker, database, documentation)
-- **Description**: Project was rebranded from "Zero Agent" to "Pip" but legacy naming persisted
+- **Description**: Project was rebranded from "Pip" to "Pip" but legacy naming persisted
 - **Resolution**:
   - [x] Created `deploy/migrate-naming.sh` for data migration
-  - [x] Renamed Docker containers: `zero-agent` → `pip-app`, `pip-mcp`
-  - [x] Updated database path: `zero-agent.db` → `pip.db`
-  - [x] Updated volume: `zero-agent-data` → `pip-data`
-  - [x] Removed unused `zero-agent-network`
+  - [x] Renamed Docker containers: `pip` → `pip-app`, `pip-mcp`
+  - [x] Updated database path: `pip.db` → `pip.db`
+  - [x] Updated volume: `pip-data` → `pip-data`
+  - [x] Removed unused `pip-network`
   - [x] Updated `deploy/deploy.sh` with new naming
   - [x] Updated `CLAUDE.md` with correct paths
 - **Commits**: `24e7419` - migration scripts, `33e3571` - deploy script

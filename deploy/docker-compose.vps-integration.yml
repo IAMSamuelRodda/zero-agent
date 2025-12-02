@@ -1,40 +1,40 @@
-# Zero Agent + Pip MCP Server - VPS Integration Configuration
+# Pip - VPS Integration Configuration
 #
 # Use this when deploying alongside existing services on do-vps-prod
 #
 # Usage:
 #   1. Copy to VPS: /opt/do-vps-prod/docker/droplet/
-#   2. Add entries to Caddyfile (zero.rodda.xyz + pip.arcforge.au)
-#   3. docker compose -f docker-compose.yml -f docker-compose.zero-agent.yml up -d
+#   2. Add entries to Caddyfile (app.pip.arcforge.au + mcp.pip.arcforge.au)
+#   3. docker compose -f docker-compose.yml -f docker-compose.pip.yml up -d
 
 services:
   # ===========================================
-  # Zero Agent Main Server (PWA + API)
-  # Domain: zero.rodda.xyz
+  # Pip Main Server (PWA + API)
+  # Domain: app.pip.arcforge.au
   # ===========================================
-  zero-agent:
-    image: ghcr.io/iamsamuelrodda/zero-agent:latest
+  pip-app:
+    image: ghcr.io/iamsamuelrodda/pip:latest
     # Or build locally:
     # build:
-    #   context: /opt/zero-agent
+    #   context: /opt/pip
     #   dockerfile: Dockerfile
-    container_name: zero-agent
+    container_name: pip-app
     restart: unless-stopped
     networks:
       - frontend
     volumes:
-      - zero-agent-data:/app/data
+      - pip-data:/app/data
     environment:
       - NODE_ENV=production
       - PORT=3000
       - DATABASE_PROVIDER=sqlite
-      - DATABASE_PATH=/app/data/zero-agent.db
-      - ANTHROPIC_API_KEY=${ZERO_AGENT_ANTHROPIC_KEY}
-      - XERO_CLIENT_ID=${ZERO_AGENT_XERO_CLIENT_ID}
-      - XERO_CLIENT_SECRET=${ZERO_AGENT_XERO_CLIENT_SECRET}
-      - JWT_SECRET=${ZERO_AGENT_JWT_SECRET}
-      - BASE_URL=https://${ZERO_AGENT_DOMAIN:-zero.rodda.xyz}
-      - FRONTEND_URL=https://${ZERO_AGENT_DOMAIN:-zero.rodda.xyz}
+      - DATABASE_PATH=/app/data/pip.db
+      - ANTHROPIC_API_KEY=${PIP_ANTHROPIC_KEY}
+      - XERO_CLIENT_ID=${PIP_XERO_CLIENT_ID}
+      - XERO_CLIENT_SECRET=${PIP_XERO_CLIENT_SECRET}
+      - JWT_SECRET=${PIP_JWT_SECRET}
+      - BASE_URL=https://${PIP_DOMAIN:-app.pip.arcforge.au}
+      - FRONTEND_URL=https://${PIP_DOMAIN:-app.pip.arcforge.au}
     deploy:
       resources:
         limits:
@@ -56,13 +56,13 @@ services:
 
   # ===========================================
   # Pip MCP Remote Server (Claude.ai/ChatGPT)
-  # Domain: pip.arcforge.au
+  # Domain: mcp.pip.arcforge.au
   # ===========================================
   pip-mcp:
     image: ghcr.io/iamsamuelrodda/pip-mcp:latest
     # Or build locally:
     # build:
-    #   context: /opt/zero-agent
+    #   context: /opt/pip
     #   dockerfile: packages/mcp-remote-server/Dockerfile
     container_name: pip-mcp
     restart: unless-stopped
@@ -70,15 +70,15 @@ services:
       - frontend
     volumes:
       # Share SQLite database with main server
-      - zero-agent-data:/app/data
+      - pip-data:/app/data
     environment:
       - NODE_ENV=production
       - MCP_PORT=3001
-      - DATABASE_PATH=/app/data/zero-agent.db
-      - XERO_CLIENT_ID=${ZERO_AGENT_XERO_CLIENT_ID}
-      - XERO_CLIENT_SECRET=${ZERO_AGENT_XERO_CLIENT_SECRET}
-      - JWT_SECRET=${ZERO_AGENT_JWT_SECRET}
-      - BASE_URL=https://${PIP_MCP_DOMAIN:-pip.arcforge.au}
+      - DATABASE_PATH=/app/data/pip.db
+      - XERO_CLIENT_ID=${PIP_XERO_CLIENT_ID}
+      - XERO_CLIENT_SECRET=${PIP_XERO_CLIENT_SECRET}
+      - JWT_SECRET=${PIP_JWT_SECRET}
+      - BASE_URL=https://${PIP_MCP_DOMAIN:-mcp.pip.arcforge.au}
     deploy:
       resources:
         limits:
@@ -98,12 +98,12 @@ services:
         max-size: "10m"
         max-file: "3"
     depends_on:
-      zero-agent:
+      pip-app:
         condition: service_healthy
 
 volumes:
-  zero-agent-data:
-    name: zero-agent-data
+  pip-data:
+    name: pip-data
 
 # Network should already exist from main docker-compose.yml
 networks:

@@ -200,7 +200,7 @@ docker build --platform linux/amd64 -t pip-app .
 
 ### Lessons Learned (2025-12-01)
 
-**Incident**: User account lost during zero-agent → pip naming migration
+**Incident**: User account lost during pip → pip naming migration
 
 **What went wrong:**
 - Migration script ran correctly

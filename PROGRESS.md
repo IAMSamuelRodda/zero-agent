@@ -1029,7 +1029,7 @@ Goal: Research optimal architecture for:
 
 ### 2025-11-29 - Full Pip Rebrand
 
-- Renamed repo from zero-agent to pip
+- Renamed repo from pip to pip
 - Updated all @pip/* package names
 - Updated VPS deployment
 - Version 0.2.0

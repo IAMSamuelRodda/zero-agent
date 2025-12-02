@@ -25,7 +25,7 @@ async function testSQLiteProvider() {
   console.log("\n=== Testing SQLite Provider ===\n");
 
   // Ensure data directory exists
-  const dbPath = "./data/test-zero-agent.db";
+  const dbPath = "./data/test-pip.db";
   const dataDir = path.dirname(dbPath);
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });

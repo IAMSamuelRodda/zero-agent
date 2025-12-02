@@ -1,6 +1,6 @@
-# Zero Agent - VPS Deployment Guide
+# Pip - VPS Deployment Guide
 
-Deploy Zero Agent to a DigitalOcean Droplet (or any VPS) in under 15 minutes.
+Deploy Pip to a DigitalOcean Droplet (or any VPS) in under 15 minutes.
 
 ## Prerequisites
 
@@ -28,8 +28,8 @@ curl -fsSL https://get.docker.com | sh
 
 ```bash
 cd /opt
-git clone https://github.com/IAMSamuelRodda/zero-agent.git
-cd zero-agent
+git clone https://github.com/IAMSamuelRodda/pip.git
+cd pip
 ```
 
 ### 4. Configure environment
@@ -88,54 +88,54 @@ corepack prepare pnpm@9.15.0 --activate
 ### 3. Create application user
 
 ```bash
-sudo useradd -r -s /bin/false zero-agent
-sudo mkdir -p /opt/zero-agent
-sudo chown zero-agent:zero-agent /opt/zero-agent
+sudo useradd -r -s /bin/false pip
+sudo mkdir -p /opt/pip
+sudo chown pip:pip /opt/pip
 ```
 
 ### 4. Clone and build
 
 ```bash
-cd /opt/zero-agent
-sudo -u zero-agent git clone https://github.com/IAMSamuelRodda/zero-agent.git .
-sudo -u zero-agent pnpm install
-sudo -u zero-agent pnpm --filter @pip/core run build
-sudo -u zero-agent pnpm --filter @pip/agent-core run build
-sudo -u zero-agent pnpm --filter @pip/server run build
+cd /opt/pip
+sudo -u pip git clone https://github.com/IAMSamuelRodda/pip.git .
+sudo -u pip pnpm install
+sudo -u pip pnpm --filter @pip/core run build
+sudo -u pip pnpm --filter @pip/agent-core run build
+sudo -u pip pnpm --filter @pip/server run build
 ```
 
 ### 5. Configure environment
 
 ```bash
-sudo -u zero-agent cp .env.example .env
-sudo -u zero-agent nano .env
+sudo -u pip cp .env.example .env
+sudo -u pip nano .env
 # Add your credentials
 
 # Secure the file
-sudo chmod 600 /opt/zero-agent/.env
+sudo chmod 600 /opt/pip/.env
 ```
 
 ### 6. Create data directory
 
 ```bash
-sudo mkdir -p /opt/zero-agent/data
-sudo chown zero-agent:zero-agent /opt/zero-agent/data
+sudo mkdir -p /opt/pip/data
+sudo chown pip:pip /opt/pip/data
 ```
 
 ### 7. Install systemd service
 
 ```bash
-sudo cp deploy/zero-agent.service /etc/systemd/system/
+sudo cp deploy/pip.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable zero-agent
-sudo systemctl start zero-agent
+sudo systemctl enable pip
+sudo systemctl start pip
 ```
 
 ### 8. Check status
 
 ```bash
-sudo systemctl status zero-agent
-sudo journalctl -u zero-agent -f  # View logs
+sudo systemctl status pip
+sudo journalctl -u pip -f  # View logs
 ```
 
 ---
@@ -195,7 +195,7 @@ sudo systemctl start caddy
 
 ### Docker
 ```bash
-cd /opt/zero-agent
+cd /opt/pip
 git pull
 docker compose down
 docker compose build --no-cache
@@ -204,13 +204,13 @@ docker compose up -d
 
 ### Manual
 ```bash
-cd /opt/zero-agent
+cd /opt/pip
 git pull
 pnpm install
 pnpm --filter @pip/core run build
 pnpm --filter @pip/agent-core run build
 pnpm --filter @pip/server run build
-sudo systemctl restart zero-agent
+sudo systemctl restart pip
 ```
 
 ---
@@ -221,18 +221,18 @@ sudo systemctl restart zero-agent
 
 ```bash
 # Docker
-docker compose exec zero-agent cp /app/data/pip.db /app/data/backup-$(date +%Y%m%d).db
-docker cp zero-agent:/app/data/backup-*.db ./backups/
+docker compose exec pip-app cp /app/data/pip.db /app/data/backup-$(date +%Y%m%d).db
+docker cp pip-app:/app/data/backup-*.db ./backups/
 
 # Manual
-cp /opt/zero-agent/data/pip.db ~/backups/zero-agent-$(date +%Y%m%d).db
+cp /opt/pip/data/pip.db ~/backups/pip-$(date +%Y%m%d).db
 ```
 
 ### Automated Backups (cron)
 
 ```bash
 # Add to crontab: crontab -e
-0 2 * * * cp /opt/zero-agent/data/pip.db /opt/zero-agent/backups/zero-agent-$(date +\%Y\%m\%d).db
+0 2 * * * cp /opt/pip/data/pip.db /opt/pip/backups/pip-$(date +\%Y\%m\%d).db
 ```
 
 ---
@@ -256,10 +256,10 @@ curl http://localhost:3000/health/live
 
 ```bash
 # Docker
-docker compose logs -f zero-agent
+docker compose logs -f pip-app
 
 # systemd
-sudo journalctl -u zero-agent -f
+sudo journalctl -u pip -f
 
 # Caddy (if using)
 sudo journalctl -u caddy -f
@@ -273,9 +273,9 @@ sudo journalctl -u caddy -f
 
 1. Check logs:
    ```bash
-   docker compose logs zero-agent
+   docker compose logs pip-app
    # or
-   sudo journalctl -u zero-agent -n 50
+   sudo journalctl -u pip -n 50
    ```
 
 2. Verify environment variables:
@@ -298,13 +298,13 @@ sudo journalctl -u caddy -f
 
 1. Check file permissions:
    ```bash
-   ls -la /opt/zero-agent/data/
+   ls -la /opt/pip/data/
    ```
 
 2. Reset database (warning: deletes all data):
    ```bash
-   rm /opt/zero-agent/data/pip.db
-   sudo systemctl restart zero-agent
+   rm /opt/pip/data/pip.db
+   sudo systemctl restart pip
    ```
 
 ---

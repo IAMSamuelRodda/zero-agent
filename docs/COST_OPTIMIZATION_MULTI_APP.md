@@ -25,14 +25,14 @@ AWS Account
 │   └── Total: $1.20/month for ALL dev apps ✅
 │
 ├── Parameter Store (Free - App-Specific Config)
-│   ├── /zero-agent/dev/xero_client_id
-│   ├── /zero-agent/dev/database_name
+│   ├── /pip/dev/xero_client_id
+│   ├── /pip/dev/database_name
 │   ├── /todo-app/dev/notion_workspace_id
 │   └── Total: $0/month (10k free parameters) ✅
 │
 └── Production Apps (Only when revenue starts)
-    ├── zero-agent/prod/anthropic-key     ($0.40/month)
-    ├── zero-agent/prod/xero-secret       ($0.40/month)
+    ├── pip/prod/anthropic-key     ($0.40/month)
+    ├── pip/prod/xero-secret       ($0.40/month)
     └── Total: $0.80/month per PROFITABLE app
 ```
 
@@ -73,8 +73,8 @@ resource "aws_ssm_parameter" "app_xero_client_secret" {
 const anthropicKey = await getSharedSecret('shared/dev/anthropic-key');
 
 // App-specific config (free Parameter Store)
-const xeroClientId = await getParameter('/zero-agent/dev/xero_client_id');
-const xeroSecret = await getParameter('/zero-agent/dev/xero_client_secret');
+const xeroClientId = await getParameter('/pip/dev/xero_client_id');
+const xeroSecret = await getParameter('/pip/dev/xero_client_secret');
 ```
 
 ### Cost Breakdown
@@ -148,7 +148,7 @@ Development AWS Account (Personal)
 └── Total: $1.20/month ✅
 
 Production AWS Accounts (Per Profitable App)
-├── zero-agent-prod (Account 1)
+├── pip-prod (Account 1)
 │   └── Full infrastructure: ~$5-20/month
 ├── todo-app-prod (Account 2)
 │   └── Full infrastructure: ~$5-20/month
@@ -205,7 +205,7 @@ repos/
 │   │   └── dynamodb.tf        # Shared DynamoDB table
 │   └── Cost: $1.20/month total
 │
-├── zero-agent/                # App 1
+├── pip/                # App 1
 │   └── functions/             # Lambda code only
 │
 ├── todo-app/                  # App 2
@@ -261,7 +261,7 @@ Does the secret need automatic rotation?
 
 ---
 
-## Action Items for Your Zero Agent
+## Action Items for Your Pip
 
 1. ✅ Keep `shared/dev/anthropic-key` in Secrets Manager ($0.40)
 2. ✅ Keep `shared/dev/xero-client-secret` in Secrets Manager ($0.40)
@@ -281,7 +281,7 @@ AWS Organization (Root)
 ├── Dev OU
 │   └── Shared Dev Account ($2/month for all apps)
 ├── Prod OU
-│   ├── zero-agent-prod ($10/month)
+│   ├── pip-prod ($10/month)
 │   ├── todo-app-prod ($8/month)
 │   └── ... (only profitable apps)
 └── Consolidated Billing (track per-app costs)

@@ -1,6 +1,6 @@
 # PWA App
 
-Progressive Web App for Zero Agent.
+Progressive Web App for Pip.
 
 ## Overview
 

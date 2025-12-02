@@ -41,10 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Repository renamed**: `pip` → `pip-by-arc-forge` (GitHub + local)
 
 ### Changed
-- **Naming cleanup (debt_003)**: `zero-agent` → `pip` naming convention
-  - Docker volume: `zero-agent-data` → `pip-data`
-  - Database: `zero-agent.db` → `pip.db`
-  - Removed unused `zero-agent-network`
+- **Naming cleanup (debt_003)**: `pip` → `pip` naming convention
+  - Docker volume: `pip-data` → `pip-data`
+  - Database: `pip.db` → `pip.db`
+  - Removed unused `pip-network`
 - **Git workflow simplified**: Moved to Simple tier (main only, direct commits)
   - Removed dev branch (merged to main)
   - Removed enforce-main-pr-source.yml workflow (not needed for Simple tier)
@@ -66,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **"no such column: content" error**: SQL queries used `content` but schema has `observation`
 - **"NOT NULL constraint: updated_at" error**: Added `updated_at` to entity and observation INSERT statements
 - **"no such column: is_user_edit" error**: Added migration for `is_user_edit` column in observations
-- **Database path not using pip.db**: Dockerfiles had hardcoded `zero-agent.db`, now uses `pip.db`
+- **Database path not using pip.db**: Dockerfiles had hardcoded `pip.db`, now uses `pip.db`
 - **Deploy script not loading secrets**: Added `.env` sourcing to `deploy/deploy.sh`
 - **Backup script using old naming**: Updated to `pip` naming with 14-day retention
 - **Login/signup icons inconsistent**: Changed from rounded square to circular design matching favicon
@@ -120,11 +120,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **issue_fixed_004**: Full Xero tools audit - all 10 tools reviewed, added fallback filters for reliability
 
 ### Changed
-- **Full rebrand**: Renamed from "Zero Agent" to "Pip"
-- All packages renamed: `@zero-agent/*` → `@pip/*`
-- Repository renamed: `zero-agent` → `pip`
-- VPS deployment: `/opt/zero-agent` → `/opt/pip`
-- Docker container: `zero-agent` → `pip-app`, `pip-mcp`
+- **Full rebrand**: Renamed from "Pip" to "Pip"
+- All packages renamed: `@pip/*` → `@pip/*`
+- Repository renamed: `pip` → `pip`
+- VPS deployment: `/opt/pip` → `/opt/pip`
+- Docker container: `pip` → `pip-app`, `pip-mcp`
 
 ### Documented
 - MCP Authentication Flow in ARCHITECTURE.md
@@ -193,7 +193,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Open source pivot**: MIT license
 
 ### Changed
-- Project renamed: "Xero Agent" → "Zero Agent" (brand collision with Xero)
+- Project renamed: "Xero Agent" → "Pip" (brand collision with Xero)
 
 ---
 
