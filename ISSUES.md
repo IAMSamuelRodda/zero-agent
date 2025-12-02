@@ -4,7 +4,7 @@
 > **Lifecycle**: Living (add when issues arise, remove when resolved)
 > **Resolved Issues**: Move to `CHANGELOG.md` under the appropriate version's "Fixed" section
 
-**Last Updated**: 2025-12-02 (Layout refactor + design philosophies)
+**Last Updated**: 2025-12-02 (Sidebar UX + Rich Projects feedback)
 
 ---
 
@@ -175,6 +175,107 @@
   - `ChatPage.tsx` - Simplified header, centered empty state, conditional footer
 - **Documentation**: Updated `docs/UI-UX-DESIGN-PHILOSOPHY.md` with Layout Patterns section
 - **Reference**: Claude.ai desktop layout, ChatGPT sidebar pattern
+
+#### issue_026: Sidebar UX Improvements (Collapsed State)
+- **Status**: 🔴 Open
+- **Priority**: P2 (Medium - UX polish)
+- **Component**: `packages/pwa-app` (ChatSidebar.tsx)
+- **Created**: 2025-12-02
+- **Description**: Several UX issues with collapsed sidebar state
+- **Problems Identified**:
+  1. **Chat list stacking**: Chats will stack up fast - need collapsible section toggle
+  2. **Collapsed icons**: Currently shows multiple chat icons when collapsed - should be single icon that expands sidebar
+  3. **Docs icon position**: Should be near top of sidebar (after New chat), not at bottom
+- **Target Pattern** (Claude.ai collapsed sidebar):
+  - Toggle icon (expand/collapse)
+  - New chat button (always visible)
+  - Single chat icon (expands sidebar to show list)
+  - Docs/files icon near top
+  - Profile at bottom
+- **Acceptance Criteria**:
+  - [ ] Add collapsible "Chats" section with toggle
+  - [ ] Collapsed state: single chat icon instead of multiple
+  - [ ] Move docs icon to top section (below New chat)
+  - [ ] Keep profile at bottom
+- **Complexity**: 2.0/5 (Low-Medium)
+
+#### issue_027: Rich Projects Feature (Claude.ai Pattern)
+- **Status**: ⚠️ Flagged (needs spike)
+- **Priority**: P1 (High - differentiator)
+- **Component**: `packages/pwa-app`, `packages/server`, `packages/core`
+- **Created**: 2025-12-02
+- **Description**: Implement full Claude.ai Projects pattern with dedicated workspaces
+- **Current State**:
+  - Basic project CRUD
+  - Project switcher in sidebar
+  - Sessions filtered by projectId
+- **Target Pattern** (Claude.ai):
+  - Projects list view (search, sort, cards)
+  - Project detail view with:
+    - Project-specific chat list
+    - Context files (upload/manage)
+    - Memory (project-scoped)
+    - Instructions (system prompt override)
+    - New chat button within project
+  - Project folder icon in sidebar (like Claude.ai)
+- **Acceptance Criteria**:
+  - [ ] Projects list page with cards
+  - [ ] Project detail page layout
+  - [ ] Project-specific file uploads
+  - [ ] Project-specific memory isolation
+  - [ ] Project-specific instructions/prompts
+  - [ ] Sidebar: folder icon → projects list
+- **Complexity**: 4.0/5 (High - significant architecture)
+- **Spike Required**: Research Claude.ai Projects implementation patterns
+- **Reference**: Claude.ai Projects UI (screenshots provided)
+
+#### issue_028: Connectors Menu (Multi-Integration Pattern)
+- **Status**: ⚠️ Flagged (needs spike)
+- **Priority**: P2 (Medium - future feature)
+- **Component**: `packages/pwa-app`, `packages/server`, `packages/mcp-remote-server`
+- **Created**: 2025-12-02
+- **Description**: Move from "Xero-only" to multi-connector architecture
+- **Current State**:
+  - Xero is hardcoded as primary/only connector
+  - Connection status in header
+- **Target Pattern** (Claude.ai):
+  - Connectors menu in chat input area (+ icon dropdown)
+  - Toggle individual connectors on/off per chat
+  - Manage connectors page (add/remove/configure)
+  - Per-connector safety settings
+  - Per-project default connectors
+- **Potential Connectors**:
+  - Xero (accounting - existing)
+  - Google Drive (files, sheets)
+  - Gmail (email context)
+  - Google Calendar (scheduling context)
+  - Notion (notes/docs)
+- **Acceptance Criteria**:
+  - [ ] Design connector abstraction layer
+  - [ ] Connectors menu UI (chat input area)
+  - [ ] Manage connectors page
+  - [ ] Per-connector enable/disable
+  - [ ] Per-connector safety levels
+- **Complexity**: 4.5/5 (High - OAuth + integration work)
+- **Spike Required**: Research Google OAuth, connector abstraction patterns
+- **Reference**: Claude.ai connectors menu (screenshot provided)
+
+#### issue_029: MCP Auth Flow - Database Reference Issue
+- **Status**: 🔴 Open
+- **Priority**: P2 (Medium - potential bug)
+- **Component**: `packages/mcp-remote-server`
+- **Created**: 2025-12-02
+- **Description**: MCP auth flow may be referencing old/stale database. User with Protonmail login wasn't recognized.
+- **Investigation**:
+  - [ ] Check OAuth token storage in pip.db vs old zero-agent.db
+  - [ ] Verify database migration was complete
+  - [ ] Check if MCP server is using correct database path
+  - [ ] Test fresh login flow
+- **Potential Causes**:
+  - Database path mismatch after naming migration
+  - User record created in old database
+  - OAuth tokens not migrated
+- **Notes**: User reported Protonmail login not recognized during MCP connector auth
 
 #### issue_023: Edge Cases - Empty Chat + Memory Retrieval
 - **Status**: 🔴 Open
