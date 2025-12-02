@@ -11,6 +11,7 @@ import { api } from '../api/client';
 import type { PersonalityInfo } from '../api/client';
 import { ChatSidebar } from '../components/ChatSidebar';
 import { ChatInputArea } from '../components/ChatInputArea';
+import { QuickActionCategories } from '../components/QuickActionCategories';
 
 interface AuthStatus {
   connected: boolean;
@@ -273,18 +274,19 @@ export function ChatPage() {
                 {personalityInfo?.role || 'Your bookkeeper'}
               </p>
 
-              {/* Centered input - Claude.ai pattern with suggestions inside */}
+              {/* Centered input - Claude.ai pattern */}
               <div className="max-w-4xl mx-auto w-full px-4">
                 <ChatInputArea
                   value={input}
                   onChange={setInput}
                   onSubmit={handleSubmitMessage}
-                  placeholder="Ask about your finances..."
+                  placeholder="How can I help you today?"
                   isLoading={isLoading}
-                  variant="centered"
                   autoFocus
-                  suggestions={['Unpaid invoices', 'Can I hire?', 'Goal progress']}
                 />
+
+                {/* Quick action categories - outside input, auto-submit on click */}
+                <QuickActionCategories onSelectPrompt={(prompt) => handleSubmitMessage(prompt)} />
               </div>
             </div>
           </div>
@@ -370,7 +372,7 @@ export function ChatPage() {
         </div>
       )}
 
-        {/* Input footer - Claude.ai pattern (only shown after first message) */}
+        {/* Input footer (only shown after first message) */}
         {messages.length > 0 && (
           <footer className="bg-arc-bg-secondary border-t border-arc-border">
             <div className="max-w-4xl mx-auto px-4 py-3">
@@ -380,7 +382,6 @@ export function ChatPage() {
                 onSubmit={handleSubmitMessage}
                 placeholder="Ask about your finances..."
                 isLoading={isLoading}
-                variant="footer"
               />
             </div>
           </footer>
