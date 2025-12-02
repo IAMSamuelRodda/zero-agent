@@ -38,6 +38,8 @@ interface ChatInputAreaProps {
   showAttachments?: boolean;
   showToolsMenu?: boolean;
   showModelSelector?: boolean;
+  // Quick suggestions shown as chips inside input footer
+  suggestions?: string[];
 }
 
 // ============================================================================
@@ -51,11 +53,17 @@ const PlusIcon = () => (
   </svg>
 );
 
-const MenuIcon = () => (
+const SlidersIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="4" y1="6" x2="20" y2="6" />
-    <line x1="4" y1="12" x2="20" y2="12" />
-    <line x1="4" y1="18" x2="20" y2="18" />
+    <line x1="4" y1="21" x2="4" y2="14" />
+    <line x1="4" y1="10" x2="4" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="12" />
+    <line x1="12" y1="8" x2="12" y2="3" />
+    <line x1="20" y1="21" x2="20" y2="16" />
+    <line x1="20" y1="12" x2="20" y2="3" />
+    <line x1="1" y1="14" x2="7" y2="14" />
+    <line x1="9" y1="8" x2="15" y2="8" />
+    <line x1="17" y1="16" x2="23" y2="16" />
   </svg>
 );
 
@@ -211,33 +219,25 @@ function ToolsMenu({
       {/* Backdrop */}
       <div className="fixed inset-0 z-10" onClick={onClose} />
       {/* Menu */}
-      <div className="absolute bottom-full left-8 mb-2 w-64 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl z-20">
-        <div className="p-1">
+      <div className="absolute bottom-full left-8 mb-2 w-52 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl z-20">
+        <div className="py-1">
           {/* Style selector */}
           <div className="relative">
             <button
               onClick={() => setShowStyleSubmenu(!showStyleSubmenu)}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary rounded-md transition-colors"
+              className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                </svg>
-                Use style
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-arc-text-secondary text-xs">
-                  {styles.find(s => s.id === currentStyle)?.name || 'Normal'}
-                </span>
+              <span>Use style</span>
+              <div className="flex items-center gap-1.5 text-arc-text-secondary">
+                <span className="text-xs">{styles.find(s => s.id === currentStyle)?.name || 'Normal'}</span>
                 <ChevronIcon direction="right" />
               </div>
             </button>
 
-            {/* Style submenu */}
+            {/* Style submenu - single line items with tooltips */}
             {showStyleSubmenu && (
-              <div className="absolute left-full top-0 ml-1 w-48 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl">
-                <div className="p-1">
+              <div className="absolute left-full top-0 ml-1 w-36 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl">
+                <div className="py-1">
                   {styles.map((style) => (
                     <button
                       key={style.id}
@@ -246,15 +246,11 @@ function ToolsMenu({
                         setShowStyleSubmenu(false);
                         onClose();
                       }}
-                      className="w-full flex items-center justify-between px-3 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary rounded-md transition-colors"
+                      title={style.description}
+                      className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
                     >
-                      <div>
-                        <div className="font-medium">{style.name}</div>
-                        <div className="text-xs text-arc-text-secondary">{style.description}</div>
-                      </div>
-                      {currentStyle === style.id && (
-                        <CheckIcon />
-                      )}
+                      <span>{style.name}</span>
+                      {currentStyle === style.id && <CheckIcon />}
                     </button>
                   ))}
                 </div>
@@ -262,56 +258,48 @@ function ToolsMenu({
             )}
           </div>
 
+          {/* Divider */}
           <div className="border-t border-arc-border my-1" />
 
           {/* Memory toggle */}
           {onToggleMemory && (
             <button
               onClick={() => { onToggleMemory(); onClose(); }}
-              className="w-full flex items-center justify-between px-3 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary rounded-md transition-colors"
+              title="Toggle memory for personalized responses"
+              className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
             >
-              <div className="flex items-center gap-3">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2a10 10 0 1 0 10 10H12V2z" />
-                  <path d="M12 2a10 10 0 0 1 10 10" />
-                </svg>
-                Memory
-              </div>
-              <div className={`w-8 h-5 rounded-full transition-colors ${memoryEnabled ? 'bg-arc-accent' : 'bg-arc-bg-tertiary border border-arc-border'}`}>
-                <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform mt-0.5 ${memoryEnabled ? 'translate-x-3.5' : 'translate-x-0.5'}`} />
+              <span>Memory</span>
+              <div className={`w-8 h-4 rounded-full transition-colors ${memoryEnabled ? 'bg-arc-accent' : 'bg-arc-bg-tertiary border border-arc-border'}`}>
+                <div className={`w-3 h-3 bg-white rounded-full shadow transition-transform mt-0.5 ${memoryEnabled ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </div>
             </button>
           )}
 
+          {/* Divider */}
           <div className="border-t border-arc-border my-1" />
 
-          {/* Connectors section */}
-          <div className="px-3 py-1.5">
-            <span className="text-xs text-arc-text-tertiary uppercase tracking-wide">Connectors</span>
-          </div>
-          <div className="flex items-center justify-between px-3 py-2 text-sm">
-            <div className="flex items-center gap-3 text-arc-text-primary">
-              <svg className="w-4 h-4 text-[#13B5EA]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
-              </svg>
-              Xero
+          {/* Xero connector - single line */}
+          <div
+            className="flex items-center justify-between px-3 py-1.5 text-sm"
+            title="Xero accounting integration"
+          >
+            <div className="flex items-center gap-2 text-arc-text-primary">
+              <span className="w-2 h-2 rounded-full bg-[#13B5EA]" />
+              <span>Xero</span>
             </div>
             <span className={`text-xs ${xeroConnected ? 'text-arc-accent' : 'text-arc-text-dim'}`}>
-              {xeroConnected ? 'Connected' : 'Not connected'}
+              {xeroConnected ? 'Connected' : 'Disconnected'}
             </span>
           </div>
 
+          {/* Divider */}
           <div className="border-t border-arc-border my-1" />
 
           {/* Settings link */}
           <a
             href="/settings"
-            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-arc-text-secondary hover:bg-arc-bg-tertiary rounded-md transition-colors"
+            className="w-full flex items-center px-3 py-1.5 text-sm text-arc-text-secondary hover:bg-arc-bg-tertiary transition-colors"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
             Settings
           </a>
         </div>
@@ -350,6 +338,7 @@ export function ChatInputArea({
   showAttachments = true,
   showToolsMenu = true,
   showModelSelector = false,
+  suggestions = [],
 }: ChatInputAreaProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -476,7 +465,7 @@ export function ChatInputArea({
                   className="p-2 text-arc-text-secondary hover:text-arc-text-primary hover:bg-arc-bg-secondary rounded-lg transition-colors"
                   title="Tools and settings"
                 >
-                  <MenuIcon />
+                  <SlidersIcon />
                 </button>
                 <ToolsMenu
                   isOpen={toolsMenuOpen}
@@ -526,6 +515,22 @@ export function ChatInputArea({
             </button>
           </div>
         </form>
+
+        {/* Suggestions footer - inside container */}
+        {suggestions.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-3 pb-2 pt-1 border-t border-arc-border-subtle">
+            {suggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => onChange(suggestion)}
+                className="px-2.5 py-1 text-xs text-arc-text-secondary bg-arc-bg-secondary border border-arc-border rounded-full hover:border-arc-accent hover:text-arc-accent transition-colors"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

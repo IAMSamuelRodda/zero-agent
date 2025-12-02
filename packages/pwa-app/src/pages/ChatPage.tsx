@@ -273,8 +273,8 @@ export function ChatPage() {
                 {personalityInfo?.role || 'Your bookkeeper'}
               </p>
 
-              {/* Centered input - Claude.ai pattern */}
-              <div className="mb-6 max-w-lg mx-auto">
+              {/* Centered input - Claude.ai pattern with suggestions inside */}
+              <div className="max-w-lg mx-auto">
                 <ChatInputArea
                   value={input}
                   onChange={setInput}
@@ -283,24 +283,8 @@ export function ChatPage() {
                   isLoading={isLoading}
                   variant="centered"
                   autoFocus
+                  suggestions={['Unpaid invoices', 'Can I hire?', 'Goal progress']}
                 />
-              </div>
-
-              {/* Suggestions */}
-              <div className="flex flex-wrap justify-center gap-2">
-                {[
-                  'Unpaid invoices',
-                  'Can I hire?',
-                  'Goal progress',
-                ].map((suggestion) => (
-                  <button
-                    key={suggestion}
-                    onClick={() => setInput(suggestion)}
-                    className="px-3 py-1.5 bg-arc-bg-tertiary border border-arc-border rounded-lg text-xs text-arc-text-secondary hover:border-arc-accent hover:text-arc-accent transition-colors"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
               </div>
             </div>
           </div>
