@@ -64,7 +64,7 @@ export class OllamaProvider implements LLMProvider {
 
   private endpoint: string = "http://localhost:11434";
   private isConnected: boolean = false;
-  private defaultModel = "llama3:8b";
+  private defaultModel = process.env.OLLAMA_MODEL || "llama3:8b";
   private usageStats: UsageMetrics = {
     inputTokens: 0,
     outputTokens: 0,
@@ -98,6 +98,14 @@ export class OllamaProvider implements LLMProvider {
         throw new Error(
           "No models available. Pull a model first: ollama pull llama3"
         );
+      }
+
+      // Auto-select model if default not available
+      const availableModels = data.models.map(m => m.name);
+      if (!availableModels.includes(this.defaultModel)) {
+        // Use first available model as fallback
+        this.defaultModel = availableModels[0];
+        console.log(`ℹ Ollama using available model: ${this.defaultModel}`);
       }
 
       this.isConnected = true;
