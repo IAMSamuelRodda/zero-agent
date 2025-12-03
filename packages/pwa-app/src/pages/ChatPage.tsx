@@ -323,8 +323,8 @@ export function ChatPage() {
                     className="flex justify-start"
                   >
                     {message.role === 'user' ? (
-                      /* User message - left-aligned with avatar */
-                      <div className="flex items-start gap-3 max-w-[85%]">
+                      /* User message - left-aligned with avatar and subtle background */
+                      <div className="flex items-start gap-3 max-w-[85%] bg-arc-bg-tertiary rounded-xl px-3 py-2.5">
                         <UserAvatar />
                         <p className="whitespace-pre-wrap text-sm leading-relaxed text-arc-text-primary pt-0.5">
                           {message.content}
@@ -387,17 +387,18 @@ export function ChatPage() {
           </div>
         )}
 
-        {/* Scroll to bottom button - Claude pattern: subtle, blends in */}
-        {showScrollButton && messages.length > 0 && (
-          <button
-            onClick={scrollToBottom}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 p-1.5 bg-arc-bg-secondary/80 backdrop-blur-sm rounded-full text-arc-text-secondary hover:text-arc-text-primary hover:bg-arc-bg-tertiary transition-all z-20"
-            title="Scroll to bottom"
-          >
-            <ArrowDownIcon />
-          </button>
-        )}
       </main>
+
+      {/* Scroll to bottom button - fixed at viewport bottom, grey color */}
+      {showScrollButton && messages.length > 0 && (
+        <button
+          onClick={scrollToBottom}
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 p-2 bg-arc-bg-tertiary/90 backdrop-blur-sm rounded-full text-arc-text-dim hover:text-arc-text-secondary hover:bg-arc-bg-secondary transition-all z-30 border border-arc-border-subtle"
+          title="Scroll to bottom"
+        >
+          <ArrowDownIcon />
+        </button>
+      )}
 
       {/* Error Banner */}
       {error && (

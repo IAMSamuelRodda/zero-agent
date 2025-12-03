@@ -164,11 +164,12 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
 
   return (
     <>
-      {/* Sidebar */}
+      {/* Sidebar - collapsed mode: entire sidebar is clickable to expand, with hover effect */}
       <aside
         className={`group/sidebar fixed left-0 top-0 h-full bg-arc-bg-secondary border-r border-arc-border z-40 transition-all duration-200 flex flex-col ${
-          isOpen ? 'w-64' : 'w-12'
+          isOpen ? 'w-64' : 'w-12 hover:bg-arc-bg-tertiary cursor-pointer'
         }`}
+        onClick={!isOpen ? onToggle : undefined}
       >
         {/* Header - ChatGPT pattern: Logo becomes toggle on hover (collapsed), split (expanded) */}
         <div className="flex items-center p-2 h-12">
@@ -422,8 +423,8 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
           <div className="flex-1" />
         )}
 
-        {/* Profile Dropdown (bottom) */}
-        <div className="p-2 border-t border-arc-border">
+        {/* Profile Dropdown (bottom) - separator only when expanded */}
+        <div className={`p-2 ${isOpen ? 'border-t border-arc-border' : ''}`}>
           <ProfileDropdown collapsed={!isOpen} />
         </div>
       </aside>

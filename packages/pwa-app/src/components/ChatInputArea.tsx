@@ -493,7 +493,7 @@ export function ChatInputArea({
             placeholder={placeholder}
             disabled={disabled || isLoading}
             rows={1}
-            className="w-full bg-transparent focus:outline-none text-sm text-arc-text-primary placeholder-arc-text-dim resize-none"
+            className="w-full bg-transparent focus:outline-none text-base text-arc-text-primary placeholder-arc-text-dim resize-none"
           />
         </div>
 
