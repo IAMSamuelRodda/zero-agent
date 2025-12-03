@@ -21,10 +21,10 @@ const CollapseIcon = () => (
   </svg>
 );
 
-// Sidebar toggle icon (hamburger menu)
-const SidebarToggleIcon = () => (
+// Sidebar expand icon (double arrow >>)
+const ExpandIcon = () => (
   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
   </svg>
 );
 
@@ -201,7 +201,7 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
               </span>
               {/* Toggle - shown on sidebar hover */}
               <span className="hidden group-hover/sidebar:block">
-                <SidebarToggleIcon />
+                <ExpandIcon />
               </span>
             </button>
           )}
