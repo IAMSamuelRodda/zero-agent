@@ -42,3 +42,28 @@ body {
   animation: pulse-model-loading 1.5s ease-in-out infinite;
   border-radius: 0.5rem;
 }
+
+/* Custom scrollbar - seamless dark theme integration */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(126, 184, 142, 0.2); /* arc-accent very subtle */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(126, 184, 142, 0.35);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(126, 184, 142, 0.2) transparent;
+}

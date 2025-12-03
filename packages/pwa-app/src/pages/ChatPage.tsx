@@ -21,6 +21,13 @@ const ArrowDownIcon = () => (
   </svg>
 );
 
+// User avatar - visual only, matches sidebar profile display
+const UserAvatar = () => (
+  <div className="w-6 h-6 rounded-full bg-arc-accent/20 flex items-center justify-center flex-shrink-0">
+    <span className="text-xs font-medium text-arc-accent">SA</span>
+  </div>
+);
+
 interface Document {
   docName: string;
   docType: string;
@@ -313,18 +320,19 @@ export function ChatPage() {
                 {messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className="flex justify-start"
                   >
                     {message.role === 'user' ? (
-                      /* User message - pill style */
-                      <div className="max-w-[85%] bg-arc-accent/90 text-arc-bg-primary rounded-2xl px-4 py-2.5">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      /* User message - left-aligned with avatar */
+                      <div className="flex items-start gap-3 max-w-[85%]">
+                        <UserAvatar />
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-arc-text-primary pt-0.5">
                           {message.content}
                         </p>
                       </div>
                     ) : (
-                      /* Assistant message - plain markdown, no background */
-                      <div className="w-full">
+                      /* Assistant message - plain markdown, narrower than input */
+                      <div className="max-w-xl">
                         <div className="prose prose-sm prose-invert max-w-none text-arc-text-primary">
                           <ReactMarkdown
                             components={{
@@ -406,10 +414,10 @@ export function ChatPage() {
         </div>
       )}
 
-        {/* Input footer (only shown after first message) */}
+        {/* Input footer (only shown after first message) - seamless with content */}
         {messages.length > 0 && (
           <footer className="bg-arc-bg-primary">
-            <div className="max-w-2xl mx-auto px-4 py-3">
+            <div className="max-w-2xl mx-auto px-4 pb-3">
               <ChatInputArea
                 value={input}
                 onChange={setInput}
