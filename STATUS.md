@@ -3,8 +3,8 @@
 > **Purpose**: Current state snapshot (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-12-02
-**Current Phase**: Milestone 2 Implementation (Epic 2.1-2.3 in progress)
+**Last Updated**: 2025-12-03
+**Current Phase**: Milestone 2 Implementation (Epic 2.1-2.3 complete)
 **Version**: 0.4.0-dev
 
 ---
@@ -21,6 +21,8 @@
 | **PWA Frontend** | 🟢 | Live at app.pip.arcforge.au |
 | **Landing Page** | 🟢 | Live at pip.arcforge.au |
 | **Xero Integration** | 🟢 | 10 READ-ONLY tools verified |
+| **Gmail Integration** | 🟢 | 4 read-only tools (Testing mode: 100 users) |
+| **Ollama Local** | 🟢 | 4 models via Tailscale (deepseek-r1:32b, qwq:32b, deepseek-r1:14b, deepseek-coder:33b) |
 | **Git Workflow** | 🟢 | Simple tier (main only, direct commits) |
 | **Milestone 2** | 🔵 | Epic 2.1-2.3 complete, Epic 2.4-2.6 remaining |
 | **Projects Feature** | ✅ | Complete (schema, API, switcher, settings page) |
@@ -33,7 +35,28 @@
 
 **Objective**: Implement Milestone 2 - User Experience & Personality (v0.4.0)
 
-### Just Completed (2025-12-02)
+### Just Completed (2025-12-03)
+
+1. **Gmail Integration** ✅ COMPLETE
+   - OAuth 2.0 flow with gmail.readonly scope (Testing mode: 100 users, 7-day token expiry)
+   - 4 MCP tools: `search_gmail`, `get_email_content`, `download_attachment`, `list_email_attachments`
+   - Attachments fetched on-demand (not stored on VPS) - streamed to Claude for analysis
+   - Connected: `samuelrodda@gmail.com`
+
+2. **Ollama Local Models** ✅ COMPLETE
+   - 4 models available via Tailscale (100.64.0.2:11434):
+     - `deepseek-r1:32b` (19GB) - reasoning model
+     - `qwq:32b` (19GB) - reasoning model
+     - `deepseek-r1:14b` (9GB) - smaller reasoning model
+     - `deepseek-coder:33b` (18GB) - code generation
+   - Dynamic model detection in PWA model selector
+
+3. **VPS Infrastructure** ✅ FIXED
+   - Added 4GB swap (prevents OOM during Docker builds)
+   - Fixed DNS resolution (Tailscale was overriding resolv.conf)
+   - Stopped unused containers (n8n, vaultwarden) to free 1.3GB RAM
+
+### Previously Completed (2025-12-02)
 
 1. **issue_033: Chat Input Area Redesign** ✅ COMPLETE
    - Created `ChatInputArea.tsx` component (~450 lines)
