@@ -576,7 +576,7 @@ export function ChatInputArea({
               type="button"
               onClick={() => handleSubmit()}
               disabled={!canSubmit}
-              className="p-2 bg-arc-accent text-arc-bg-primary rounded-lg hover:bg-arc-accent-dim disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-2 bg-arc-accent text-arc-bg-primary rounded-lg enabled:hover:brightness-110 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               title={isModelLoading ? 'Loading model...' : 'Send'}
             >
               <SendIcon />
