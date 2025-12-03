@@ -26,14 +26,19 @@ echo "📥 Pulling latest code..."
 git pull origin main
 echo ""
 
-# Build all images
+# Fix DNS (Tailscale/systemd-resolved conflict)
+echo "🔧 Fixing DNS resolution..."
+echo "nameserver 1.1.1.1" > /etc/resolv.conf 2>/dev/null || true
+echo ""
+
+# Build all images (use legacy builder to respect daemon.json DNS)
 echo "🔨 Building Docker images..."
 
 echo "  → Building pip-app..."
-docker build -t pip-app:latest . --quiet
+DOCKER_BUILDKIT=0 docker build -t pip-app:latest . --quiet
 
 echo "  → Building pip-mcp..."
-docker build -t pip-mcp:latest -f packages/mcp-remote-server/Dockerfile . --quiet
+DOCKER_BUILDKIT=0 docker build -t pip-mcp:latest -f packages/mcp-remote-server/Dockerfile . --quiet
 
 echo ""
 
