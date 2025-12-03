@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  font-family: 'Space Grotesk', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -35,7 +35,7 @@ body {
   display: flex;
   min-width: 320px;
   min-height: 100vh;
-  font-family: 'Space Grotesk', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
 #root {

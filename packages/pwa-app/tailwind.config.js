@@ -24,7 +24,7 @@ export default {
         },
       },
       fontFamily: {
-        'sans': ['Space Grotesk', 'system-ui', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
+        'sans': ['Plus Jakarta Sans', 'system-ui', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
         'mono': ['JetBrains Mono', 'Inconsolata', 'monospace'],
       },
     },
