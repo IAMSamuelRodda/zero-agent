@@ -37,7 +37,14 @@
 
 ### Just Completed (2025-12-03)
 
-1. **Gmail Integration** ✅ COMPLETE
+1. **Font Loading Fix** ✅ COMPLETE
+   - Root cause: All page layouts (`LoginPage`, `SignupPage`, `SettingsPage`, `MainLayout`) had `font-mono` class
+   - This applied JetBrains Mono to all text, so Plus Jakarta Sans was never loaded
+   - Fix: Changed `font-mono` → `font-sans` on root layout divs
+   - Added WOFF2 format (27KB vs 63KB TTF) for better browser support
+   - Commit: `f886156`
+
+2. **Gmail Integration** ✅ COMPLETE
    - OAuth 2.0 flow with gmail.readonly scope (Testing mode: 100 users, 7-day token expiry)
    - 4 MCP tools: `search_gmail`, `get_email_content`, `download_attachment`, `list_email_attachments`
    - Attachments fetched on-demand (not stored on VPS) - streamed to Claude for analysis
