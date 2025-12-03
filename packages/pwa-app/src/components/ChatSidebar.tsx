@@ -36,9 +36,10 @@ const PipLogo = () => (
   </svg>
 );
 
-const PlusIcon = () => (
+// Compose/Edit icon (pencil in square - Claude pattern)
+const ComposeIcon = () => (
   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
   </svg>
 );
 
@@ -205,17 +206,19 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
           )}
         </div>
 
-        {/* New Chat Button */}
+        {/* New Chat Button - Claude pattern: brand icon + text, subtle row hover */}
         <div className="px-2 pb-2">
           <button
             onClick={handleNewChat}
-            className={`w-full flex items-center gap-2 p-2 rounded-lg bg-arc-accent text-arc-bg-primary hover:bg-arc-accent/90 transition-colors ${
+            className={`w-full flex items-center gap-2 p-2 rounded-lg hover:bg-arc-bg-tertiary transition-colors ${
               isOpen ? '' : 'justify-center'
             }`}
             title="New chat"
           >
-            <PlusIcon />
-            {isOpen && <span className="text-sm font-medium">New chat</span>}
+            <span className="text-arc-accent">
+              <ComposeIcon />
+            </span>
+            {isOpen && <span className="text-sm text-arc-accent">New chat</span>}
           </button>
         </div>
 
