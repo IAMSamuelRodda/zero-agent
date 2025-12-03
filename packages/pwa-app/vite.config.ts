@@ -46,6 +46,30 @@ export default defineConfig({
         // Don't intercept auth routes - let server handle OAuth callbacks
         navigateFallbackDenylist: [/^\/auth/, /^\/api/, /^\/health/],
         runtimeCaching: [
+          // Google Fonts stylesheets
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'google-fonts-stylesheets',
+            },
+          },
+          // Google Fonts webfont files
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-webfonts',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          // API cache
           {
             urlPattern: /^https:\/\/.*\.execute-api\..*\.amazonaws\.com\/.*/i,
             handler: 'NetworkFirst',
