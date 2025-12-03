@@ -282,8 +282,8 @@ export function ChatPage() {
           <div className="h-full flex flex-col items-center justify-center px-4" style={{ paddingBottom: '20vh' }}>
             <div className="text-center max-w-xl w-full">
               <svg className="w-16 h-16 mx-auto mb-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="44" fill="#0f1419" stroke="#7eb88e" strokeWidth="6"/>
-                <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="#7eb88e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="50" cy="50" r="44" fill="var(--arc-bg-secondary)" stroke="var(--arc-accent)" strokeWidth="6"/>
+                <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="var(--arc-accent)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               <h2 className="text-xl font-medium text-arc-text-primary mb-1">
                 {personalityInfo?.greeting || 'Hi there'}

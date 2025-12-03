@@ -28,11 +28,11 @@ const SidebarToggleIcon = () => (
   </svg>
 );
 
-// Official Pip Logo (matches favicon.svg)
+// Official Pip Logo (matches favicon.svg) - uses CSS custom properties
 const PipLogo = () => (
   <svg className="h-7 w-7" viewBox="0 0 100 100">
-    <circle cx="50" cy="50" r="44" fill="#0f1419" stroke="#7eb88e" strokeWidth="6"/>
-    <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="#7eb88e" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+    <circle cx="50" cy="50" r="44" fill="var(--arc-bg-secondary)" stroke="var(--arc-accent)" strokeWidth="6"/>
+    <path d="M38 70 V30 h14 a10 10 0 0 1 0 20 H38" fill="none" stroke="var(--arc-accent)" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 

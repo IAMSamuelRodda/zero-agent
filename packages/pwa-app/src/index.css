@@ -15,6 +15,19 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Arc theme CSS custom properties - for SVGs and non-Tailwind usage */
+  --arc-bg-primary: #0a0e14;
+  --arc-bg-secondary: #0f1419;
+  --arc-bg-tertiary: #1a1f29;
+  --arc-border: #2d333d;
+  --arc-border-subtle: #1e2329;
+  --arc-text-primary: #c9d1d9;
+  --arc-text-secondary: #8b949e;
+  --arc-text-tertiary: #6e7681;
+  --arc-text-dim: #484f58;
+  --arc-accent: #7eb88e;
+  --arc-accent-dim: #5a8a6a;
 }
 
 body {
