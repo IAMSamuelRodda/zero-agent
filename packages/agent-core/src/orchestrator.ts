@@ -12,6 +12,7 @@ import {
   type DatabaseProvider,
   type ResponseStyleId,
   buildStylePrompt,
+  isToolCapableModel,
 } from '@pip/core';
 import Database from 'better-sqlite3';
 import { SessionManager } from './session/manager.js';
@@ -192,8 +193,16 @@ export class AgentOrchestrator {
       console.log(`💬 Chat request: model=${model || 'default'}, provider=${provider.name}, override=${modelOverride || 'none'}`);
 
       // 9. Invoke LLM provider to generate response with tools
-      // Note: Ollama doesn't support tools, so only pass them for Anthropic
-      const useTools = !isOllamaModel && anthropicTools.length > 0;
+      // For Ollama, check if the specific model supports native tool calling
+      // Models like qwq, llama3.1, mistral support tools; deepseek-r1 doesn't
+      const ollamaModelName = modelOverride || '';
+      const ollamaSupportsTools = isOllamaModel && isToolCapableModel(ollamaModelName);
+      const useTools = anthropicTools.length > 0 && (!isOllamaModel || ollamaSupportsTools);
+
+      if (isOllamaModel) {
+        console.log(`🔧 Ollama model ${ollamaModelName}: tools ${ollamaSupportsTools ? 'enabled' : 'disabled'}`);
+      }
+
       let llmResponse = await provider.chat(conversationHistory, {
         tools: useTools ? anthropicTools : undefined,
         model: modelOverride || (isOllamaModel ? undefined : model), // Use specific Ollama model or cloud model

@@ -25,7 +25,7 @@ export {
 
 // Providers
 export { AnthropicProvider } from "./providers/anthropic.js";
-export { OllamaProvider } from "./providers/ollama.js";
+export { OllamaProvider, isToolCapableModel } from "./providers/ollama.js";
 
 // Factory
 export {

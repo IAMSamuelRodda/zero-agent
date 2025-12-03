@@ -22,10 +22,34 @@ interface OllamaMessage {
   content: string;
 }
 
+// Ollama tool format (matches OpenAI function calling format)
+interface OllamaToolDefinition {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: "object";
+      properties: Record<string, any>;
+      required?: string[];
+    };
+  };
+}
+
+interface OllamaToolCall {
+  id: string;
+  function: {
+    index?: number;
+    name: string;
+    arguments: Record<string, any>;
+  };
+}
+
 interface OllamaChatRequest {
   model: string;
   messages: OllamaMessage[];
   stream?: boolean;
+  tools?: OllamaToolDefinition[];
   options?: {
     temperature?: number;
     num_predict?: number;  // max_tokens equivalent
@@ -38,7 +62,8 @@ interface OllamaChatResponse {
   created_at: string;
   message: {
     role: string;
-    content: string;
+    content: string | null;
+    tool_calls?: OllamaToolCall[];
   };
   done: boolean;
   total_duration?: number;
@@ -47,6 +72,26 @@ interface OllamaChatResponse {
   prompt_eval_duration?: number;
   eval_count?: number;
   eval_duration?: number;
+}
+
+// Models known to support native function calling in Ollama
+// Based on testing - models with tool_calls in response
+const TOOL_CAPABLE_MODEL_PATTERNS = [
+  'qwq',           // Qwen reasoning model - tested working
+  'llama3.1',      // Llama 3.1 has tool support
+  'llama3.2',      // Llama 3.2 has tool support
+  'llama3:',       // Llama 3 base (most variants)
+  'mistral',       // Mistral models support tools
+  'qwen2.5',       // Qwen 2.5 has tool training
+  'granite3',      // IBM Granite 3
+];
+
+/**
+ * Check if a model name matches any tool-capable pattern
+ */
+export function isToolCapableModel(modelName: string): boolean {
+  const normalized = modelName.toLowerCase();
+  return TOOL_CAPABLE_MODEL_PATTERNS.some(pattern => normalized.includes(pattern));
 }
 
 export class OllamaProvider implements LLMProvider {
@@ -132,7 +177,27 @@ export class OllamaProvider implements LLMProvider {
     }
 
     const modelToUse = options?.model || this.defaultModel;
-    console.log(`🤖 Ollama chat: using model=${modelToUse}, requested=${options?.model || 'none'}, default=${this.defaultModel}`);
+    const supportsTools = isToolCapableModel(modelToUse);
+
+    console.log(`🤖 Ollama chat: model=${modelToUse}, tools=${supportsTools ? 'enabled' : 'disabled'}`);
+
+    // Convert tools to Ollama format if model supports them
+    let ollamaTools: OllamaToolDefinition[] | undefined;
+    if (supportsTools && options?.tools && options.tools.length > 0) {
+      ollamaTools = options.tools.map(tool => ({
+        type: "function" as const,
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: {
+            type: "object" as const,
+            properties: tool.input_schema.properties,
+            required: tool.input_schema.required,
+          },
+        },
+      }));
+      console.log(`🔧 Passing ${ollamaTools.length} tools to Ollama`);
+    }
 
     const requestBody: OllamaChatRequest = {
       model: modelToUse,
@@ -141,6 +206,7 @@ export class OllamaProvider implements LLMProvider {
         content: msg.content,
       })),
       stream: false,
+      tools: ollamaTools,
       options: {
         temperature: options?.temperature,
         num_predict: options?.maxTokens,
@@ -172,9 +238,22 @@ export class OllamaProvider implements LLMProvider {
       this.usageStats.outputTokens += outputTokens;
       this.usageStats.totalTokens += inputTokens + outputTokens;
 
+      // Check for tool calls in response
+      let toolUse: ChatResponse['toolUse'] | undefined;
+      if (data.message.tool_calls && data.message.tool_calls.length > 0) {
+        const toolCall = data.message.tool_calls[0]; // Handle first tool call
+        console.log(`🔧 Ollama tool call: ${toolCall.function.name}`, toolCall.function.arguments);
+        toolUse = {
+          type: "tool_use",
+          id: toolCall.id || `ollama-tool-${Date.now()}`,
+          name: toolCall.function.name,
+          input: toolCall.function.arguments,
+        };
+      }
+
       return {
         id: `ollama-${Date.now()}`,
-        content: data.message.content,
+        content: data.message.content || '',
         model: data.model,
         usage: {
           inputTokens,
@@ -182,7 +261,8 @@ export class OllamaProvider implements LLMProvider {
           totalTokens: inputTokens + outputTokens,
           costUsd: 0,  // Local models are free!
         },
-        finishReason: data.done ? "stop" : undefined,
+        finishReason: toolUse ? "tool_use" : (data.done ? "stop" : undefined),
+        toolUse,
       };
     } catch (error: any) {
       throw new LLMProviderError(
