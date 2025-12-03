@@ -22,6 +22,9 @@ export function createModelsRoutes(): Router {
    */
   router.post('/ollama/warmup', async (req, res) => {
     try {
+      // Get requested model from body, fallback to env default
+      const requestedModel = req.body?.model as string | undefined;
+
       // Check if Ollama is available
       const tagsResponse = await fetch(`${OLLAMA_ENDPOINT}/api/tags`, {
         signal: AbortSignal.timeout(3000), // 3 second timeout
@@ -44,10 +47,15 @@ export function createModelsRoutes(): Router {
         });
       }
 
-      // Find the target model or use first available
-      const targetModel = availableModels.includes(OLLAMA_MODEL)
-        ? OLLAMA_MODEL
-        : availableModels[0];
+      // Priority: requested model > env default > first available
+      let targetModel: string;
+      if (requestedModel && availableModels.includes(requestedModel)) {
+        targetModel = requestedModel;
+      } else if (availableModels.includes(OLLAMA_MODEL)) {
+        targetModel = OLLAMA_MODEL;
+      } else {
+        targetModel = availableModels[0];
+      }
 
       // Send a minimal generate request to load the model
       // Using /api/generate with keep_alive is the official way to warm models

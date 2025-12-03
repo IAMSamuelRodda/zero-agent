@@ -403,9 +403,11 @@ export function ChatInputArea({
     setSelectedModel(modelId);
 
     // Pre-warm Ollama when local model selected (fire-and-forget)
-    // This loads the model into memory while user types their message
+    // This loads the specific model into memory while user types their message
     if (modelId.startsWith('ollama:')) {
-      api.warmupOllama();
+      // Extract model name (e.g., "ollama:deepseek-r1:14b" -> "deepseek-r1:14b")
+      const modelName = modelId.replace('ollama:', '');
+      api.warmupOllama(modelName);
     }
   }, [setSelectedModel]);
 

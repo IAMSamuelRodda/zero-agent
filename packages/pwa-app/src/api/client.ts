@@ -350,13 +350,15 @@ export const api = {
   /**
    * Pre-warm Ollama model (fire-and-forget)
    * Call when user selects Ollama to reduce first-message latency
+   * @param model - The specific model to warm up (e.g., "deepseek-r1:14b")
    */
-  warmupOllama(): void {
+  warmupOllama(model?: string): void {
     // Fire and forget - don't await or handle errors
     // This is a background optimization
     fetch(`${API_BASE}/api/models/ollama/warmup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model }),
     }).catch(() => {
       // Silently ignore - warmup is optional
     });
