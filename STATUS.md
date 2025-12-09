@@ -38,7 +38,16 @@
 
 ### Just Completed (2025-12-09)
 
-1. **list_accounts MCP Tool** ✅ COMPLETE
+1. **Vision & Future Direction Planning** ✅ COMPLETE
+   - Updated VISION.md with target persona: "Multi-Hat Business Owner" (Arc Forge avatar)
+   - Defined core value proposition: "What can I actually spend?" question
+   - Documented "Available Balance" concept (bank balance minus tax/business reserves)
+   - Added design principles for future expense separation feature
+   - Created `issue_037`: Intelligent Business vs Personal Expense Separation
+   - Created feature blueprint: `specs/BLUEPRINT-feature-expense-separation-20251209.yaml`
+   - Key insight: Users don't want to become accountants, they want simple answers
+
+2. **list_accounts MCP Tool** ✅ COMPLETE
    - Added new tool to view Xero chart of accounts (53 default accounts)
    - Groups accounts by type (Bank, Assets, Liabilities, Expenses, Revenue, etc.)
    - Optional filtering by account type parameter
@@ -46,7 +55,7 @@
    - Deployed to production at mcp.pip.arcforge.au
    - Commit: `a27ffde`
 
-2. **pip-mcp Package Rename** ✅ COMPLETE
+3. **pip-mcp Package Rename** ✅ COMPLETE
    - Renamed `mcp-remote-server` → `pip-mcp` for consistency
    - Updated Dockerfiles, deploy scripts, and documentation
    - Fixed all path references across deployment infrastructure
@@ -325,11 +334,21 @@
 
 ## Next Steps
 
+### Immediate (Milestone 2)
+
 1. **Fix issue_023** - P1: Empty chat delete + memory retrieval edge cases
 2. **Verify issue_021** - P2: Test Response Styles in actual chat
 3. **issue_034: Skills System** - P1: Report templates & agent capabilities
 4. **Deploy & Test** - Visual testing of new ChatInputArea component
 5. **Onboard beta users** - Share with trusted users for feedback
+
+### Future Vision (Milestone 3+)
+
+6. **issue_037: Intelligent Expense Separation** - Vision-stage planning complete
+   - Target: Users operating from mixed personal/business accounts
+   - Core question: "What can I actually spend?"
+   - Requires spikes before implementation (see blueprint)
+   - See: `VISION.md` "Future Direction" section
 
 ---
 
@@ -365,6 +384,15 @@
    - Adelaide/Pippin profiles preserved for future use
    - Decision: "Personality" too assumptive for business tool
    - May become premium feature layered on top of Styles
+
+### Future (Milestone 3+)
+
+7. **Intelligent Expense Separation** → issue_037 (VISION STAGE)
+   - Target: Sole traders operating from mixed personal/business accounts
+   - Core capability: "What can I actually spend?" answer
+   - Features: Transaction categorization, tax reserving, available balance
+   - Spikes required before implementation
+   - Blueprint: `specs/BLUEPRINT-feature-expense-separation-20251209.yaml`
 
 ---
 

@@ -1,0 +1,361 @@
+blueprint_type: feature
+created: 2025-12-09
+feature_name: "Intelligent Business vs Personal Expense Separation"
+parent_epic: "Epic 3.1: Transaction Intelligence"
+tracking_method: document
+target_milestone: "Milestone 3+"
+status: "vision" # not ready for implementation - needs spike first
+
+# =============================================================================
+# OVERVIEW
+# =============================================================================
+#
+# This blueprint captures the VISION for intelligent expense categorization.
+# It is NOT ready for immediate implementation - requires spikes and design work.
+#
+# See: VISION.md "Future Direction: Intelligent Expense Separation" section
+# Avatar: Arc Forge Business Planning (earthworks contractor, mixed accounts)
+# =============================================================================
+
+overview:
+  problem_statement: |
+    Small business owners operating from personal accounts face a daily question:
+    "What can I actually spend?" Their bank balance lies to them because it includes
+    money owed to ATO, upcoming business expenses, and mixes business with personal.
+
+  target_user: |
+    Sole traders and small business owners who:
+    - Run business from personal bank account (no separate business account)
+    - Mix business transactions with personal spending
+    - Need to understand "How much is actually mine to spend?"
+    - Want simple answers, not accounting jargon
+    - Value time over perfect categorization
+
+  success_metrics:
+    - "Users can ask 'What can I spend?' and get accurate answer"
+    - "90%+ transactions auto-categorized within 3 months of use"
+    - "Zero manual categorization required for routine transactions"
+    - "GST liability tracked accurately vs quarterly BAS"
+
+  core_question: "What can I actually spend today?"
+
+# =============================================================================
+# DESIGN PRINCIPLES
+# =============================================================================
+
+design_principles:
+  - principle: "Start permissive, tighten with learning"
+    rationale: "Don't block users from spending their money. Provide information, not friction."
+    implication: "Never require categorization before showing balances"
+
+  - principle: "Memory over manual"
+    rationale: "Every correction teaches Pip. Goal is zero manual categorization within months."
+    implication: "Build robust feedback loop, store decisions in memory system"
+
+  - principle: "Plain English always"
+    rationale: "Users don't want to become accountants"
+    implication: "'You made $2,500 today but $400 is GST' not 'Revenue recognition with BAS liability accrual'"
+
+  - principle: "Progressive disclosure"
+    rationale: "Simple answer first, details for those who want them"
+    implication: "Single number on dashboard, breakdown on tap"
+
+  - principle: "No judgment"
+    rationale: "Don't lecture about 'proper' bookkeeping practices"
+    implication: "'You spent $800 on personal this week' not 'You overspent your budget'"
+
+# =============================================================================
+# KEY CONCEPTS
+# =============================================================================
+
+concepts:
+  available_balance:
+    description: "The intelligent 'what can I spend?' calculation"
+    formula: |
+      Bank Balance
+      - GST Liability (calculated from business income)
+      - Income Tax Reserve (estimated from earnings pattern)
+      - Upcoming Business Expenses (known commitments)
+      - Business Buffer (configurable safety margin)
+      + Pending Income (invoices due, expected payments)
+      - Disputed/Uncertain (flagged transactions)
+      = Available Personal Balance
+      × Safety Factor (configurable)
+      = Safe to Spend Today
+
+  confidence_tiers:
+    high:
+      threshold: ">85%"
+      action: "Auto-categorize silently"
+      examples: ["Woolworths = personal groceries", "BP fuel on work day = business"]
+    medium:
+      threshold: "60-85%"
+      action: "Suggest with one-tap confirm"
+      examples: ["Bunnings $89 - likely business? [Yes/No]"]
+    low:
+      threshold: "<60%"
+      action: "Ask the user"
+      examples: ["Restaurant $150 - business meeting or personal dinner?"]
+
+  context_dependent_merchants:
+    description: "Same merchant can be business or personal depending on context"
+    examples:
+      - merchant: "Bunnings"
+        business_context: "Tradies, earthworks, construction"
+        personal_context: "Homeowner buying garden supplies"
+      - merchant: "Officeworks"
+        business_context: "Office supplies, equipment"
+        personal_context: "School supplies for kids"
+      - merchant: "Fuel station"
+        business_context: "Work day, during business hours, near work sites"
+        personal_context: "Weekend, near home, family car"
+
+# =============================================================================
+# SPIKES REQUIRED (before implementation)
+# =============================================================================
+
+spikes_required:
+  spike_3_1_0:
+    name: "Transaction Categorization ML/Heuristics Approach"
+    time_box_days: 5
+    questions:
+      - "LLM-based categorization vs rule-based heuristics vs hybrid?"
+      - "How to handle context-dependent merchants (Bunnings for tradies vs homeowners)?"
+      - "What training data is available? Can we use Xero categorization history?"
+      - "Privacy implications of transaction analysis?"
+    deliverables:
+      - "Approach recommendation document"
+      - "Categorization accuracy benchmarks"
+      - "POC with sample transactions"
+
+  spike_3_1_1:
+    name: "Bank Feed Integration Architecture"
+    time_box_days: 3
+    questions:
+      - "Xero bank feeds vs direct bank API (Open Banking) vs both?"
+      - "Real-time vs batch categorization?"
+      - "How to handle transaction updates/reversals?"
+    deliverables:
+      - "Integration architecture decision"
+      - "Data flow diagrams"
+      - "API requirements list"
+
+  spike_3_1_2:
+    name: "Tax Calculation Accuracy"
+    time_box_days: 3
+    questions:
+      - "How to calculate GST liability accurately from mixed transactions?"
+      - "Income tax estimation methodology for sole traders?"
+      - "How to handle different business structures (sole trader vs company vs trust)?"
+      - "BAS period alignment and reporting?"
+    deliverables:
+      - "Tax calculation methodology"
+      - "Edge cases and limitations documented"
+      - "Accountant validation requirements"
+
+# =============================================================================
+# FEATURE BREAKDOWN (High-Level)
+# =============================================================================
+#
+# Note: These are not implementation-ready tasks. Each needs a spike or
+# detailed design before work begins.
+#
+
+features:
+  feature_3_1_1:
+    name: "Transaction Categorization Engine"
+    description: "Core engine for classifying transactions as business or personal"
+    complexity:
+      composite: 4.2
+      dimensions:
+        technical_complexity: 4  # ML/heuristics, context understanding
+        scope_size: 4           # Multiple components
+        dependencies: 3         # Bank feeds, memory, Xero
+        uncertainty: 5          # Needs spike first
+        risk: 3                 # Tax accuracy critical
+        testing: 4              # Hard to test all edge cases
+    needs_spike: true
+    spike_reference: "spike_3_1_0"
+    status: "flagged_for_spike"
+
+  feature_3_1_2:
+    name: "Learning & Feedback System"
+    description: "System to learn from user corrections and improve over time"
+    complexity:
+      composite: 3.8
+      dimensions:
+        technical_complexity: 4  # ML feedback loop
+        scope_size: 3
+        dependencies: 3         # Memory system, categorization engine
+        uncertainty: 4
+        risk: 2
+        testing: 4
+    depends_on: ["feature_3_1_1"]
+    status: "blocked_by_dependency"
+
+  feature_3_1_3:
+    name: "Available Balance Calculator"
+    description: "Real-time calculation of 'safe to spend' amount"
+    complexity:
+      composite: 3.5
+      dimensions:
+        technical_complexity: 3
+        scope_size: 3
+        dependencies: 4         # Tax calc, categorization, bank data
+        uncertainty: 4          # Tax accuracy unknown
+        risk: 4                 # Wrong advice = user problems
+        testing: 3
+    needs_spike: true
+    spike_reference: "spike_3_1_2"
+    status: "flagged_for_spike"
+
+  feature_3_1_4:
+    name: "Dashboard & UX"
+    description: "Simple 'what can I spend?' display with progressive detail"
+    complexity:
+      composite: 2.5
+      dimensions:
+        technical_complexity: 2
+        scope_size: 3
+        dependencies: 3         # Available balance calculator
+        uncertainty: 2          # UI patterns well understood
+        risk: 2
+        testing: 2
+    depends_on: ["feature_3_1_3"]
+    status: "blocked_by_dependency"
+
+# =============================================================================
+# ACCEPTANCE CRITERIA (Feature-Level)
+# =============================================================================
+
+acceptance_criteria:
+  must_have:
+    - "User can ask 'What can I spend?' and receive accurate number"
+    - "Transactions categorized with confidence scores"
+    - "User can correct categorizations with single tap"
+    - "GST liability calculated and reserved"
+    - "Breakdown available on demand (where the money is)"
+
+  should_have:
+    - "Pattern learning improves accuracy over time"
+    - "Context-aware categorization (work day vs weekend)"
+    - "Income tax estimation"
+    - "Trend analysis ('spending more on personal lately')"
+
+  could_have:
+    - "Proactive alerts ('GST due in 3 weeks')"
+    - "Cash flow predictions"
+    - "Budget recommendations"
+
+  wont_have_initially:
+    - "Separate business account management (future)"
+    - "Multi-currency support"
+    - "Investment tracking"
+    - "Loan/liability management"
+
+# =============================================================================
+# RISKS & MITIGATIONS
+# =============================================================================
+
+risks:
+  - risk: "Tax calculation inaccuracy"
+    severity: "HIGH"
+    probability: "MEDIUM"
+    impact: "Users make financial decisions based on wrong numbers"
+    mitigation: "Clear disclaimers, accountant validation, conservative estimates"
+
+  - risk: "Categorization errors compound"
+    severity: "MEDIUM"
+    probability: "HIGH"
+    impact: "Wrong categories affect available balance"
+    mitigation: "Easy correction UX, periodic 'review' prompts, uncertainty flagging"
+
+  - risk: "Privacy concerns with transaction analysis"
+    severity: "MEDIUM"
+    probability: "MEDIUM"
+    impact: "Users uncomfortable with AI analyzing spending"
+    mitigation: "Clear data handling policy, on-device option, opt-in granularity"
+
+  - risk: "Different business structures (company, trust)"
+    severity: "LOW"
+    probability: "HIGH"
+    impact: "Feature doesn't work for all users"
+    mitigation: "Start with sole traders (target market), expand later"
+
+# =============================================================================
+# IMPLEMENTATION PHASES
+# =============================================================================
+
+implementation_phases:
+  phase_1:
+    name: "Transaction Analysis"
+    milestone: "Milestone 3"
+    scope:
+      - "Bank feed categorization with confidence scoring"
+      - "Pattern detection for recurring transactions"
+      - "Basic business vs personal heuristics"
+    prerequisites:
+      - "spike_3_1_0 complete"
+      - "spike_3_1_1 complete"
+
+  phase_2:
+    name: "Learning System"
+    milestone: "Milestone 4"
+    scope:
+      - "User feedback loop (confirm/correct)"
+      - "Memory of categorization decisions"
+      - "Per-user pattern learning"
+    prerequisites:
+      - "phase_1 complete"
+      - "Memory system enhancements (Epic 2.1+)"
+
+  phase_3:
+    name: "Available Balance"
+    milestone: "Milestone 5"
+    scope:
+      - "Real-time 'safe to spend' calculation"
+      - "Tax reserving with BAS alignment"
+      - "Dashboard widget for quick glance"
+    prerequisites:
+      - "phase_2 complete"
+      - "spike_3_1_2 complete"
+
+  phase_4:
+    name: "Proactive Intelligence"
+    milestone: "Future"
+    scope:
+      - "Spending alerts and trends"
+      - "Tax deadline reminders"
+      - "Cash flow predictions"
+    prerequisites:
+      - "phase_3 complete"
+      - "User feedback from earlier phases"
+
+# =============================================================================
+# REFERENCES
+# =============================================================================
+
+references:
+  - "VISION.md: Future Direction: Intelligent Expense Separation"
+  - "Claude.ai conversation 2025-12-09: Business vs personal expense discussion"
+  - "Avatar: Arc Forge Business Planning (repos/arcforge-business-planning)"
+  - "Related: Skills System (issue_034) - could provide expense analysis skills"
+
+# =============================================================================
+# NOTES
+# =============================================================================
+
+notes: |
+  This is a VISION blueprint, not an implementation blueprint.
+
+  DO NOT start implementation until:
+  1. Milestone 2 is complete (current focus)
+  2. Spikes are completed and assessed
+  3. Feature blueprint is refined based on spike learnings
+
+  This feature represents a significant expansion of Pip's capabilities
+  from "query assistant" to "intelligent financial advisor". It requires
+  careful design to avoid giving users incorrect financial guidance.
+
+  The target user explicitly does NOT want to maintain separate accounts
+  or become an accountant. Pip must meet them where they are.

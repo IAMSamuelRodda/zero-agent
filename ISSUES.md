@@ -117,6 +117,51 @@
 - **Complexity**: 2.5/5 (Medium)
 - **Reference**: Claude Code terminal "Tinkering..." UX with expandable details
 
+#### issue_037: Intelligent Business vs Personal Expense Separation
+- **Status**: ⚠️ Vision (needs spikes before implementation)
+- **Priority**: P2 (Future - Milestone 3+)
+- **Component**: `packages/agent-core`, `packages/pip-mcp`, `packages/pwa-app`
+- **Created**: 2025-12-09
+- **Blueprint**: `specs/BLUEPRINT-feature-expense-separation-20251209.yaml`
+- **Description**: Core differentiating feature - AI-powered categorization of transactions as business or personal for users operating from mixed accounts.
+- **Target User**:
+  - Sole traders running business from personal bank account
+  - Needs to know "What can I actually spend personally?"
+  - Doesn't want to maintain separate accounts or become an accountant
+  - Values simple answers over perfect categorization
+- **Core Concept**: "Available Balance"
+  ```
+  Bank Balance - GST Liability - Tax Reserve - Business Expenses = Available Personal
+  ```
+- **Key Capabilities** (Planned):
+  1. **Pattern Learning**: Recognize recurring business vs personal expenses
+  2. **Confidence Tiers**: Auto-categorize (high), suggest (medium), ask (low)
+  3. **Tax Reserving**: Calculate GST/income tax reserves automatically
+  4. **Plain English**: "You made $2,500 but $400 is GST" not accounting jargon
+- **Design Principles**:
+  - Start permissive, tighten with learning
+  - Memory over manual (goal: zero manual categorization)
+  - Progressive disclosure (simple answer first, details on demand)
+  - No judgment (information, not budgeting lectures)
+- **Spikes Required** (before implementation):
+  - [ ] `spike_3_1_0`: Transaction Categorization ML/Heuristics Approach (5 days)
+  - [ ] `spike_3_1_1`: Bank Feed Integration Architecture (3 days)
+  - [ ] `spike_3_1_2`: Tax Calculation Accuracy (3 days)
+- **Implementation Phases**:
+  - Phase 1 (M3): Transaction analysis + categorization
+  - Phase 2 (M4): Learning system + feedback loop
+  - Phase 3 (M5): Available balance calculator
+  - Phase 4 (Future): Proactive intelligence
+- **Risks**:
+  - Tax calculation inaccuracy (users make decisions on wrong numbers)
+  - Categorization errors compound over time
+  - Privacy concerns with transaction analysis
+- **Related**:
+  - `VISION.md`: "Future Direction: Intelligent Expense Separation"
+  - Avatar: Arc Forge Business Planning (repos/arcforge-business-planning)
+  - `issue_034`: Skills System (could provide expense analysis skills)
+- **Notes**: DO NOT implement until Milestone 2 complete and spikes assessed. This is vision-level planning.
+
 #### issue_035: Ollama Reasoning Model Context Length Configuration
 - **Status**: 🔴 Open
 - **Priority**: P2 (Medium - performance optimization)
