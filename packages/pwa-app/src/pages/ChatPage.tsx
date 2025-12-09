@@ -8,7 +8,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
-import { api } from '../api/client';
 import { MainLayout } from '../components/MainLayout';
 import { ChatInputArea } from '../components/ChatInputArea';
 import { QuickActionCategories } from '../components/QuickActionCategories';
@@ -42,23 +41,11 @@ const UserAvatar = () => (
   </div>
 );
 
-interface Document {
-  docName: string;
-  docType: string;
-  chunkCount: number;
-  createdAt: number;
-}
-
 export function ChatPage() {
-  const [showDocPanel, setShowDocPanel] = useState(false);
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get user info from auth store
   const user = useAuthStore((state) => state.user);
@@ -133,49 +120,6 @@ export function ChatPage() {
     };
   }, [isLoading]);
 
-  // Load documents
-  const loadDocuments = useCallback(async () => {
-    try {
-      const result = await api.listDocuments();
-      setDocuments(result.documents);
-    } catch (err) {
-      console.error('Failed to load documents:', err);
-    }
-  }, []);
-
-  // Handle file upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    setUploadError(null);
-
-    try {
-      await api.uploadDocument(file);
-      await loadDocuments();
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Upload failed');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  // Handle document delete
-  const handleDeleteDocument = async (docName: string) => {
-    if (!confirm(`Delete "${docName}"?`)) return;
-
-    try {
-      await api.deleteDocument(docName);
-      await loadDocuments();
-    } catch (err) {
-      setUploadError(err instanceof Error ? err.message : 'Delete failed');
-    }
-  };
-
   // Handle OAuth callback errors
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -206,12 +150,6 @@ export function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
-
-  // Load documents on mount
-  useEffect(() => {
-    loadDocuments();
-  }, [loadDocuments]);
-
   // Handler for ChatInputArea component (receives message directly)
   const handleSubmitMessage = async (message: string, _attachments?: File[]) => {
     if (!message.trim() || isLoading) return;
@@ -221,11 +159,7 @@ export function ChatPage() {
   };
 
   return (
-    <MainLayout
-      showDocsToggle
-      showDocs={showDocPanel}
-      onToggleDocs={() => setShowDocPanel(!showDocPanel)}
-    >
+    <MainLayout>
       {/* Header - seamless background */}
       <ChatHeader
           sessionId={sessionId}
@@ -237,61 +171,6 @@ export function ChatPage() {
           onAddToProject={handleAddToProject}
           onDelete={handleDelete}
         />
-
-      {/* Document Panel */}
-      {showDocPanel && (
-        <div className="bg-arc-bg-tertiary border-b border-arc-border px-4 py-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-arc-text-primary">Business Context</h3>
-              <label className={`text-sm px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
-                isUploading
-                  ? 'bg-arc-bg-secondary text-arc-text-dim cursor-not-allowed'
-                  : 'bg-arc-accent text-arc-bg-primary hover:bg-arc-accent-dim'
-              }`}>
-                {isUploading ? 'Uploading...' : '+ Upload'}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  onChange={handleFileUpload}
-                  accept=".pdf,.txt,.md,.docx"
-                  disabled={isUploading}
-                  className="hidden"
-                />
-              </label>
-            </div>
-            <p className="text-xs text-arc-text-tertiary mb-3">
-              Upload business plans, KPIs, or strategy docs for personalized advice.
-            </p>
-            {uploadError && (
-              <p className="text-xs text-red-400 mb-2">{uploadError}</p>
-            )}
-            {documents.length === 0 ? (
-              <p className="text-sm text-arc-text-dim italic">No documents uploaded yet.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {documents.map((doc) => (
-                  <div
-                    key={doc.docName}
-                    className="bg-arc-bg-secondary rounded-lg px-3 py-2 text-sm flex items-center gap-2 border border-arc-border-subtle"
-                  >
-                    <span className="text-arc-accent text-xs">file</span>
-                    <span className="text-arc-text-primary">{doc.docName}</span>
-                    <span className="text-arc-text-dim text-xs">({doc.docType})</span>
-                    <button
-                      onClick={() => handleDeleteDocument(doc.docName)}
-                      className="text-arc-text-dim hover:text-red-400 ml-1 transition-colors"
-                      title="Delete"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Messages / Empty State - flex-1 and relative for overlay positioning */}
       <main className="flex-1 overflow-hidden relative flex flex-col">

@@ -25,6 +25,7 @@ interface ChatResponse {
 // Chat history types
 interface ChatSummary {
   sessionId: string;
+  projectId?: string | null;
   title: string;
   previewText: string | null;
   messageCount: number;
@@ -348,6 +349,25 @@ export const api = {
   },
 
   /**
+   * Move a chat to a project or remove from project
+   * @param projectId - Project ID to move to, or null to remove from project
+   */
+  async moveToProject(sessionId: string, projectId: string | null): Promise<{ success: boolean; session: { sessionId: string; projectId: string | null } }> {
+    const response = await fetch(`${API_BASE}/api/sessions/${sessionId}/project`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ projectId }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to move chat to project');
+    }
+    return response.json();
+  },
+
+  /**
    * Pre-warm Ollama model and wait for completion
    * Call when user selects Ollama to reduce first-message latency
    * @param model - The specific model to warm up (e.g., "deepseek-r1:14b")
@@ -482,9 +502,10 @@ interface Project {
   id: string;
   name: string;
   description?: string;
-  color?: string;
   xeroTenantId?: string;
   isDefault: boolean;
+  instructions?: string;
+  chatCount?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -492,7 +513,6 @@ interface Project {
 interface CreateProjectInput {
   name: string;
   description?: string;
-  color?: string;
   xeroTenantId?: string;
   isDefault?: boolean;
 }
@@ -500,9 +520,9 @@ interface CreateProjectInput {
 interface UpdateProjectInput {
   name?: string;
   description?: string;
-  color?: string;
   xeroTenantId?: string;
   isDefault?: boolean;
+  instructions?: string;
 }
 
 // Gmail integration types
@@ -768,19 +788,6 @@ export const projectApi = {
     });
     if (!response.ok) {
       throw new Error('Failed to list projects');
-    }
-    return response.json();
-  },
-
-  /**
-   * Get available project colors
-   */
-  async getColors(): Promise<{ colors: string[] }> {
-    const response = await fetch(`${API_BASE}/api/projects/colors`, {
-      headers: getAuthHeaders(),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to get colors');
     }
     return response.json();
   },

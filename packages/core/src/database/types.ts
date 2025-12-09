@@ -27,6 +27,12 @@ export interface Session {
   title?: string; // Auto-generated from first message
   previewText?: string; // Last message preview for sidebar
   isBookmarked?: boolean; // User can bookmark important chats
+  // Project info (joined from projects table for UI)
+  project?: {
+    id: string;
+    name: string;
+    color?: string;
+  };
 }
 
 /**
@@ -176,9 +182,11 @@ export interface Project {
   description?: string;
   color?: string; // For UI badge (hex color)
   xeroTenantId?: string; // Optional: dedicated Xero org for this project
-  isDefault?: boolean; // One project can be marked as default
+  isDefault?: boolean; // Legacy - no longer used
+  instructions?: string; // System prompt for chats in this project
   createdAt: number;
   updatedAt: number;
+  chatCount?: number; // Computed: number of chats in project (for UI)
 }
 
 /**

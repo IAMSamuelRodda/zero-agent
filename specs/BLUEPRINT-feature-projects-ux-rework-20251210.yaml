@@ -1,0 +1,407 @@
+# Projects UX Rework - Claude.ai Pattern
+# Generated: 2025-12-10
+# Purpose: Align Pip's Projects feature with Claude.ai's proven UX pattern
+
+type: feature
+name: projects-ux-rework
+status: draft
+complexity: 3.5  # Medium-High - significant frontend rework, some backend changes
+
+# ============================================================================
+# Executive Summary
+# ============================================================================
+
+summary: |
+  Rework Pip's Projects feature to match Claude.ai's UX pattern where:
+  - Chats are independent by default (no project)
+  - Projects are optional organizational containers
+  - Users explicitly move chats into/out of projects
+  - Project view provides scoped chat creation and configuration
+
+  Current Problem: Pip treats projects as filters that hide non-project chats.
+  Solution: Projects are containers with their own view, chats remain globally visible.
+
+# ============================================================================
+# Current State vs Target State
+# ============================================================================
+
+current_state:
+  problems:
+    - "Projects filter global chat list - non-project chats disappear"
+    - "No way to move chats between projects"
+    - "Project has minimal config (name, description, color only)"
+    - "Projects section buried in Settings"
+    - "'Default project' concept is confusing"
+    - "New chat creation doesn't respect project context properly"
+
+  data_model:
+    sessions_table:
+      - "project_id: TEXT (nullable FK to projects)"
+    projects_table:
+      - "id, user_id, name, description, color, is_default, created_at, updated_at"
+
+target_state:
+  goals:
+    - "Chats and Projects are separate navigation items"
+    - "All chats visible in Chats view (general + project)"
+    - "Project detail view with chat list + configuration sidebar"
+    - "Move chat to/from/between projects"
+    - "Project-scoped new chat (from project view only)"
+    - "Project configuration: Instructions, Files, Memory"
+
+  data_model_additions:
+    projects_table:
+      add_columns:
+        - "instructions: TEXT (system prompt for project chats)"
+        # Files handled by existing business_context table with project_id
+        # Memory handled by existing memory tables with project_id
+
+# ============================================================================
+# UX Pattern (from Claude.ai)
+# ============================================================================
+
+ux_pattern:
+  navigation_hierarchy:
+    level_1_sidebar:
+      description: "Persistent left sidebar"
+      elements:
+        - "+ New Chat: ALWAYS creates general chat (no project)"
+        - "Chats: Shows all chats (filterable)"
+        - "Projects: Shows project grid"
+        - "Recents: Recent chats across all contexts"
+
+    level_2_projects_grid:
+      description: "Projects overview page"
+      route: "/projects"
+      elements:
+        - "Grid of project cards"
+        - "Each card: name, description, chat count, last updated"
+        - "+ New Project button"
+        - "Search/filter projects"
+
+    level_3_project_detail:
+      description: "Inside a specific project"
+      route: "/projects/:projectId"
+      elements:
+        - "← All projects (back link)"
+        - "Project header: name, description, menu (edit/delete)"
+        - "Chat input: Creates chat IN this project"
+        - "Chat list: Only chats in this project"
+        - "Sidebar (right): Memory, Instructions, Files"
+
+    level_4_chat:
+      description: "Individual chat conversation"
+      route: "/chat/:sessionId"
+      elements:
+        - "Breadcrumb: Project Name / Chat Name (if in project)"
+        - "Chat messages"
+        - "Chat input"
+
+  chat_creation_rules:
+    sidebar_new_chat:
+      location: "Left sidebar, always visible"
+      creates: "General chat (project_id = NULL)"
+      note: "Never changes based on current view"
+
+    project_view_input:
+      location: "Project detail view, chat input area"
+      creates: "Chat with project_id = current project"
+      note: "Only way to create project-scoped chat"
+
+  chat_movement:
+    actions:
+      - name: "Move to Project"
+        from: "General or another project"
+        to: "Selected project"
+        ui: "Chat menu (three dots) → Move to Project → [project list]"
+
+      - name: "Remove from Project"
+        from: "Any project"
+        to: "General (project_id = NULL)"
+        ui: "Chat menu → Remove from Project"
+
+    implementation: "UPDATE sessions SET project_id = ? WHERE session_id = ?"
+
+# ============================================================================
+# Implementation Plan
+# ============================================================================
+
+implementation:
+  phase_1_data_model:
+    title: "Database & API Updates"
+    tasks:
+      - task: "Add instructions column to projects table"
+        file: "packages/core/src/database/providers/sqlite.ts"
+        sql: "ALTER TABLE projects ADD COLUMN instructions TEXT"
+
+      - task: "Add moveChat API endpoint"
+        file: "packages/server/src/routes/sessions.ts"
+        endpoint: "PATCH /api/sessions/:id/project"
+        body: "{ projectId: string | null }"
+
+      - task: "Update getProjects to include chat counts"
+        file: "packages/server/src/routes/projects.ts"
+        note: "JOIN with sessions to count chats per project"
+
+      - task: "Remove is_default column from projects"
+        note: "No longer needed - no default project concept"
+
+  phase_2_navigation:
+    title: "Navigation Structure"
+    tasks:
+      - task: "Add Projects to main sidebar navigation"
+        file: "packages/pwa-app/src/components/Sidebar.tsx"
+        change: "Add Projects link between Chats and Settings"
+
+      - task: "Create ProjectsPage (grid view)"
+        file: "packages/pwa-app/src/pages/ProjectsPage.tsx"
+        note: "Repurpose existing, change to card grid layout"
+
+      - task: "Create ProjectDetailPage"
+        file: "packages/pwa-app/src/pages/ProjectDetailPage.tsx"
+        note: "New page with chat list + sidebar"
+
+      - task: "Update routing"
+        file: "packages/pwa-app/src/App.tsx"
+        routes:
+          - "/projects → ProjectsPage"
+          - "/projects/:projectId → ProjectDetailPage"
+
+  phase_3_chats_view:
+    title: "Chats Page Updates"
+    tasks:
+      - task: "Show all chats (remove project filtering)"
+        file: "packages/pwa-app/src/pages/ChatsPage.tsx"
+        change: "Remove project scope filtering, show all chats"
+
+      - task: "Add project indicator to chat list items"
+        change: "Show small project badge/tag on chats that belong to a project"
+
+      - task: "Add filter dropdown"
+        options:
+          - "All Chats"
+          - "General (no project)"
+          - "By Project: [project name]"
+
+  phase_4_chat_actions:
+    title: "Chat Movement"
+    tasks:
+      - task: "Add chat menu with project actions"
+        file: "packages/pwa-app/src/pages/ChatsPage.tsx"
+        actions:
+          - "Move to Project → [project picker]"
+          - "Remove from Project (if in project)"
+
+      - task: "Create ProjectPicker modal/dropdown"
+        file: "packages/pwa-app/src/components/ProjectPicker.tsx"
+        note: "Reusable component for selecting a project"
+
+      - task: "Implement moveChat in chatStore"
+        file: "packages/pwa-app/src/store/chatStore.ts"
+        method: "moveToProject(sessionId, projectId)"
+
+  phase_5_project_detail:
+    title: "Project Detail View"
+    tasks:
+      - task: "Create ProjectDetailPage layout"
+        structure:
+          header: "Project name, description, back link, menu"
+          main: "Chat input + chat list (project-scoped)"
+          sidebar: "Instructions, Files, Memory (collapsible on mobile)"
+
+      - task: "Project-scoped new chat"
+        change: "Chat input in project view passes projectId to createChat"
+
+      - task: "Instructions editor"
+        component: "Textarea for project system prompt"
+        save: "PATCH /api/projects/:id { instructions }"
+
+      - task: "Files section"
+        note: "Reuse existing Docs/business context with project filter"
+
+      - task: "Memory section"
+        note: "Show memory entities scoped to this project"
+
+  phase_6_cleanup:
+    title: "Remove Old Patterns"
+    tasks:
+      - task: "Remove Projects section from SettingsPage"
+        file: "packages/pwa-app/src/pages/SettingsPage.tsx"
+
+      - task: "Remove is_default project logic"
+        files:
+          - "packages/pwa-app/src/pages/ProjectsPage.tsx"
+          - "packages/server/src/routes/projects.ts"
+
+      - task: "Update ChatPage breadcrumb"
+        change: "Show 'Project Name / Chat Title' when chat is in project"
+
+# ============================================================================
+# UI Components
+# ============================================================================
+
+components:
+  ProjectCard:
+    description: "Card in projects grid"
+    props:
+      - "name: string"
+      - "description: string"
+      - "color: string"
+      - "chatCount: number"
+      - "lastUpdated: Date"
+    actions:
+      - "Click → navigate to project detail"
+      - "Menu → Edit, Delete"
+
+  ProjectDetailSidebar:
+    description: "Right sidebar in project detail view"
+    sections:
+      - name: "Memory"
+        content: "Project-specific memory summary"
+        action: "View/edit memory"
+      - name: "Instructions"
+        content: "System prompt textarea"
+        action: "Auto-save on blur"
+      - name: "Files"
+        content: "List of uploaded docs"
+        action: "Upload, delete files"
+
+  ProjectPicker:
+    description: "Modal/dropdown for selecting project"
+    usage: "Move chat to project action"
+    props:
+      - "onSelect: (projectId: string | null) => void"
+      - "currentProjectId?: string"
+    options:
+      - "General (no project)"
+      - "[List of user's projects]"
+
+  ChatListItem:
+    description: "Updated chat list item"
+    additions:
+      - "Project badge (if chat belongs to project)"
+      - "Menu with Move to Project action"
+
+# ============================================================================
+# API Changes
+# ============================================================================
+
+api_changes:
+  new_endpoints:
+    - method: "PATCH"
+      path: "/api/sessions/:id/project"
+      body: "{ projectId: string | null }"
+      description: "Move chat to project or remove from project"
+
+    - method: "PATCH"
+      path: "/api/projects/:id"
+      body: "{ name?, description?, color?, instructions? }"
+      description: "Update project (add instructions field)"
+
+  modified_endpoints:
+    - method: "GET"
+      path: "/api/projects"
+      changes: "Include chatCount per project"
+
+    - method: "GET"
+      path: "/api/sessions"
+      changes: "Include project info (id, name, color) in response"
+
+    - method: "POST"
+      path: "/api/sessions"
+      changes: "Accept optional projectId parameter"
+
+# ============================================================================
+# Migration
+# ============================================================================
+
+migration:
+  database:
+    - step: "Add instructions column to projects"
+      sql: "ALTER TABLE projects ADD COLUMN instructions TEXT"
+
+    - step: "Remove is_default column (optional, can leave)"
+      note: "Or just ignore it in code"
+
+  data:
+    - step: "No data migration needed"
+      note: "Existing project_id on sessions remains valid"
+
+# ============================================================================
+# Success Criteria
+# ============================================================================
+
+success_criteria:
+  functional:
+    - "New chat from sidebar creates general chat"
+    - "New chat from project view creates project chat"
+    - "All chats visible in Chats view"
+    - "Can move chat to project via menu"
+    - "Can remove chat from project"
+    - "Project detail shows only project's chats"
+    - "Project instructions saved and applied to chats"
+
+  ux:
+    - "Navigation matches Claude.ai pattern"
+    - "No confusion about where chats go"
+    - "Project configuration accessible in project view"
+    - "Mobile-friendly (sidebar collapses)"
+
+# ============================================================================
+# Risks & Mitigations
+# ============================================================================
+
+risks:
+  - risk: "Breaking existing project associations"
+    impact: "Low"
+    mitigation: "project_id FK remains unchanged, just changing UI"
+
+  - risk: "Scope creep with Files/Memory features"
+    impact: "Medium"
+    mitigation: "Phase 5 can be simplified - just show existing data, don't build full editors"
+
+  - risk: "Mobile layout complexity"
+    impact: "Medium"
+    mitigation: "Sidebar as bottom sheet or collapsible panel on mobile"
+
+# ============================================================================
+# Estimated Effort
+# ============================================================================
+
+effort:
+  phase_1_data_model: "2-3 hours"
+  phase_2_navigation: "2-3 hours"
+  phase_3_chats_view: "2-3 hours"
+  phase_4_chat_actions: "3-4 hours"
+  phase_5_project_detail: "4-6 hours"
+  phase_6_cleanup: "1-2 hours"
+  total: "14-21 hours"
+
+# ============================================================================
+# Dependencies
+# ============================================================================
+
+dependencies:
+  existing:
+    - "projects table"
+    - "sessions.project_id FK"
+    - "business_context table (for files)"
+    - "memory tables with project_id"
+
+  new:
+    - "None - all infrastructure exists"
+
+# ============================================================================
+# References
+# ============================================================================
+
+references:
+  - name: "Claude.ai Projects UX"
+    url: "https://claude.ai/projects"
+    note: "Visual reference for target UX"
+
+  - name: "Current Pip Projects"
+    path: "packages/pwa-app/src/pages/ProjectsPage.tsx"
+
+  - name: "Sessions API"
+    path: "packages/server/src/routes/sessions.ts"

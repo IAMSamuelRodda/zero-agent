@@ -54,9 +54,9 @@ interface ChatState {
 
   // Actions
   sendMessage: (content: string) => Promise<void>;
-  loadChatList: () => Promise<void>;
+  loadChatList: (projectId?: string | null) => Promise<void>;
   loadChat: (sessionId: string) => Promise<void>;
-  newChat: () => void;
+  newChat: (projectId?: string) => void;
   deleteChat: (sessionId: string) => Promise<void>;
   renameChat: (sessionId: string, title: string) => Promise<void>;
   bookmarkChat: (sessionId: string) => Promise<void>;
@@ -130,12 +130,11 @@ export const useChatStore = create<ChatState>()(
     }
   },
 
-  loadChatList: async () => {
+  loadChatList: async (projectId?: string | null) => {
     set({ isLoadingList: true });
     try {
-      // Filter by current project
-      const currentProjectId = useProjectStore.getState().currentProjectId;
-      const result = await api.listChats(50, currentProjectId);
+      // If projectId provided, use it; otherwise load all chats (no filter)
+      const result = await api.listChats(50, projectId);
       set({ chatList: result.sessions, isLoadingList: false });
     } catch (error) {
       console.error('Failed to load chat list:', error);
@@ -167,7 +166,12 @@ export const useChatStore = create<ChatState>()(
     }
   },
 
-  newChat: () => {
+  newChat: (projectId?: string) => {
+    // Store the project ID for new chat if provided
+    // The sendMessage will pick it up from projectStore
+    if (projectId) {
+      useProjectStore.getState().setCurrentProject(projectId);
+    }
     set({
       messages: [],
       sessionId: null,

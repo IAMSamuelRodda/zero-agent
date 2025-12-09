@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { ChatPage } from './pages/ChatPage';
 import { ChatsPage } from './pages/ChatsPage';
 import { ProjectsPage } from './pages/ProjectsPage';
+import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -53,6 +54,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ProjectsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectId"
+        element={
+          <ProtectedRoute>
+            <ProjectDetailPage />
           </ProtectedRoute>
         }
       />

@@ -8,38 +8,36 @@
 import { Router } from 'express';
 import type { DatabaseProvider, Project } from '@pip/core';
 
-// Predefined project colors (hex values for UI badges)
-const PROJECT_COLORS = [
-  '#3B82F6', // blue
-  '#10B981', // green
-  '#F59E0B', // amber
-  '#EF4444', // red
-  '#8B5CF6', // violet
-  '#EC4899', // pink
-  '#06B6D4', // cyan
-  '#F97316', // orange
-];
-
 export function createProjectRoutes(db: DatabaseProvider): Router {
   const router = Router();
 
   /**
    * GET /api/projects
-   * List all projects for a user
+   * List all projects for a user (with chat counts)
    */
   router.get('/', async (req, res, next) => {
     try {
       const userId = req.userId!;
       const projects = await db.listProjects(userId);
 
+      // Get chat counts for each project
+      const sessions = await db.listSessions({ userId });
+      const chatCounts = new Map<string, number>();
+      for (const session of sessions) {
+        if (session.projectId) {
+          chatCounts.set(session.projectId, (chatCounts.get(session.projectId) || 0) + 1);
+        }
+      }
+
       res.json({
         projects: projects.map(p => ({
           id: p.id,
           name: p.name,
           description: p.description,
-          color: p.color,
+          instructions: p.instructions,
           xeroTenantId: p.xeroTenantId,
           isDefault: p.isDefault,
+          chatCount: chatCounts.get(p.id) || 0,
           createdAt: p.createdAt,
           updatedAt: p.updatedAt,
         })),
@@ -50,30 +48,16 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
   });
 
   /**
-   * GET /api/projects/colors
-   * Get available project colors for the UI
-   */
-  router.get('/colors', (_req, res) => {
-    res.json({ colors: PROJECT_COLORS });
-  });
-
-  /**
    * POST /api/projects
    * Create a new project
    */
   router.post('/', async (req, res, next) => {
     try {
       const userId = req.userId!;
-      const { name, description, color, xeroTenantId, isDefault } = req.body;
+      const { name, description, xeroTenantId, isDefault } = req.body;
 
       if (typeof name !== 'string' || !name.trim()) {
         res.status(400).json({ error: 'Project name is required' });
-        return;
-      }
-
-      // Validate color if provided
-      if (color && !PROJECT_COLORS.includes(color) && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
-        res.status(400).json({ error: 'Invalid color format. Use hex color code.' });
         return;
       }
 
@@ -81,7 +65,6 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
         userId,
         name: name.trim().substring(0, 100),
         description: description?.trim()?.substring(0, 500),
-        color: color || PROJECT_COLORS[0],
         xeroTenantId: xeroTenantId?.trim(),
         isDefault: isDefault === true,
       });
@@ -90,7 +73,6 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
         id: project.id,
         name: project.name,
         description: project.description,
-        color: project.color,
         xeroTenantId: project.xeroTenantId,
         isDefault: project.isDefault,
         createdAt: project.createdAt,
@@ -103,7 +85,7 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
 
   /**
    * GET /api/projects/:id
-   * Get a specific project
+   * Get a specific project (with chat count)
    */
   router.get('/:id', async (req, res, next) => {
     try {
@@ -116,13 +98,18 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
         return;
       }
 
+      // Get chat count for this project
+      const sessions = await db.listSessions({ userId, projectId });
+      const chatCount = sessions.length;
+
       res.json({
         id: project.id,
         name: project.name,
         description: project.description,
-        color: project.color,
+        instructions: project.instructions,
         xeroTenantId: project.xeroTenantId,
         isDefault: project.isDefault,
+        chatCount,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
       });
@@ -139,7 +126,7 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
     try {
       const userId = req.userId!;
       const { id: projectId } = req.params;
-      const { name, description, color, xeroTenantId, isDefault } = req.body;
+      const { name, description, instructions, xeroTenantId, isDefault } = req.body;
 
       // Validate name if provided
       if (name !== undefined && (typeof name !== 'string' || !name.trim())) {
@@ -147,16 +134,10 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
         return;
       }
 
-      // Validate color if provided
-      if (color && !PROJECT_COLORS.includes(color) && !/^#[0-9A-Fa-f]{6}$/.test(color)) {
-        res.status(400).json({ error: 'Invalid color format. Use hex color code.' });
-        return;
-      }
-
       const updates: Partial<Project> = {};
       if (name !== undefined) updates.name = name.trim().substring(0, 100);
       if (description !== undefined) updates.description = description?.trim()?.substring(0, 500);
-      if (color !== undefined) updates.color = color;
+      if (instructions !== undefined) updates.instructions = instructions?.trim()?.substring(0, 5000);
       if (xeroTenantId !== undefined) updates.xeroTenantId = xeroTenantId?.trim();
       if (isDefault !== undefined) updates.isDefault = isDefault === true;
 
@@ -166,7 +147,7 @@ export function createProjectRoutes(db: DatabaseProvider): Router {
         id: updated.id,
         name: updated.name,
         description: updated.description,
-        color: updated.color,
+        instructions: updated.instructions,
         xeroTenantId: updated.xeroTenantId,
         isDefault: updated.isDefault,
         createdAt: updated.createdAt,

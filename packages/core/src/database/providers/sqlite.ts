@@ -356,6 +356,7 @@ export class SQLiteProvider implements DatabaseProvider {
         color TEXT,
         xero_tenant_id TEXT,
         is_default INTEGER DEFAULT 0,
+        instructions TEXT,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL
       );
@@ -375,6 +376,13 @@ export class SQLiteProvider implements DatabaseProvider {
       this.db.exec(`CREATE INDEX idx_sessions_project ON sessions(user_id, project_id)`);
     } catch {
       // Index already exists, ignore
+    }
+
+    // Migration: Add instructions column to projects if it doesn't exist
+    try {
+      this.db.exec(`ALTER TABLE projects ADD COLUMN instructions TEXT`);
+    } catch {
+      // Column already exists, ignore
     }
 
     // Operation snapshots table (if not exists)
@@ -1726,8 +1734,8 @@ export class SQLiteProvider implements DatabaseProvider {
       }
 
       const stmt = this.db.prepare(`
-        INSERT INTO projects (id, user_id, name, description, color, xero_tenant_id, is_default, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO projects (id, user_id, name, description, color, xero_tenant_id, is_default, instructions, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
@@ -1738,6 +1746,7 @@ export class SQLiteProvider implements DatabaseProvider {
         fullProject.color || null,
         fullProject.xeroTenantId || null,
         fullProject.isDefault ? 1 : 0,
+        fullProject.instructions || null,
         fullProject.createdAt,
         fullProject.updatedAt
       );
@@ -1772,6 +1781,7 @@ export class SQLiteProvider implements DatabaseProvider {
         color: row.color || undefined,
         xeroTenantId: row.xero_tenant_id || undefined,
         isDefault: row.is_default === 1,
+        instructions: row.instructions || undefined,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       };
@@ -1802,6 +1812,7 @@ export class SQLiteProvider implements DatabaseProvider {
         color: row.color || undefined,
         xeroTenantId: row.xero_tenant_id || undefined,
         isDefault: row.is_default === 1,
+        instructions: row.instructions || undefined,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
       }));
@@ -1840,7 +1851,7 @@ export class SQLiteProvider implements DatabaseProvider {
 
       const stmt = this.db.prepare(`
         UPDATE projects
-        SET name = ?, description = ?, color = ?, xero_tenant_id = ?, is_default = ?, updated_at = ?
+        SET name = ?, description = ?, color = ?, xero_tenant_id = ?, is_default = ?, instructions = ?, updated_at = ?
         WHERE user_id = ? AND id = ?
       `);
 
@@ -1850,6 +1861,7 @@ export class SQLiteProvider implements DatabaseProvider {
         updated.color || null,
         updated.xeroTenantId || null,
         updated.isDefault ? 1 : 0,
+        updated.instructions || null,
         updated.updatedAt,
         userId,
         projectId

@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useChatStore } from '../store/chatStore';
-import { useCurrentProject } from '../store/projectStore';
+import { useProjectStore } from '../store/projectStore';
 import { ProfileDropdown } from './ProfileDropdown';
 import { ChatActionsMenu } from './ChatActionsMenu';
 
@@ -43,11 +43,6 @@ const PlusIcon = () => (
   </svg>
 );
 
-const DocsIcon = () => (
-  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-  </svg>
-);
 
 const ChatsIcon = () => (
   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -82,16 +77,13 @@ const ClockIcon = () => (
 interface ChatSidebarProps {
   isOpen: boolean;
   onToggle: () => void;
-  docsCount?: number;
-  showDocs?: boolean;
-  onToggleDocs?: () => void;
 }
 
 // ============================================================================
 // Component
 // ============================================================================
 
-export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggleDocs }: ChatSidebarProps) {
+export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -107,14 +99,15 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
     bookmarkChat,
   } = useChatStore();
 
-  const currentProject = useCurrentProject();
+  const { projects, loadProjects } = useProjectStore();
 
   const [recentsHidden, setRecentsHidden] = useState(false);
 
-  // Load chat list on mount
+  // Load chat list and projects on mount
   useEffect(() => {
     loadChatList();
-  }, [loadChatList]);
+    loadProjects();
+  }, [loadChatList, loadProjects]);
 
   // Get recent chats (last 30)
   const recentChats = useMemo(() => {
@@ -223,31 +216,6 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
           </button>
         </div>
 
-        {/* Docs Button (below New Chat) */}
-        {onToggleDocs && (
-          <div className="px-2 pb-2">
-            <button
-              onClick={onToggleDocs}
-              className={`w-full flex items-center gap-2 p-2 rounded-lg transition-colors ${
-                showDocs
-                  ? 'bg-arc-accent/20 text-arc-accent'
-                  : 'text-arc-text-secondary hover:bg-arc-bg-tertiary'
-              } ${isOpen ? '' : 'justify-center'}`}
-              title="Business documents"
-            >
-              <DocsIcon />
-              {isOpen && (
-                <>
-                  <span className="text-sm flex-1 text-left">Docs</span>
-                  {docsCount > 0 && (
-                    <span className="text-xs text-arc-text-dim">{docsCount}</span>
-                  )}
-                </>
-              )}
-            </button>
-          </div>
-        )}
-
         {/* Navigation */}
         <div className="px-2 pb-2 space-y-1">
           {/* Chats */}
@@ -285,12 +253,8 @@ export function ChatSidebar({ isOpen, onToggle, docsCount = 0, showDocs, onToggl
             {isOpen && (
               <>
                 <span className="text-sm flex-1 text-left">Projects</span>
-                {currentProject && (
-                  <span
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: currentProject.color || '#3B82F6' }}
-                    title={currentProject.name}
-                  />
+                {projects.length > 0 && (
+                  <span className="text-xs text-arc-text-dim">{projects.length}</span>
                 )}
               </>
             )}

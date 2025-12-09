@@ -215,5 +215,46 @@ export function createSessionRoutes(db: DatabaseProvider): Router {
     }
   });
 
+  /**
+   * PATCH /api/sessions/:id/project
+   * Move a chat to a project or remove from project
+   */
+  router.patch('/:id/project', async (req, res, next) => {
+    try {
+      const userId = req.userId!;
+      const { id: sessionId } = req.params;
+      const { projectId } = req.body; // null to remove from project
+
+      // Verify session exists and belongs to user
+      const session = await db.getSession(userId, sessionId);
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      // If projectId provided, verify it belongs to user
+      if (projectId) {
+        const project = await db.getProject(userId, projectId);
+        if (!project) {
+          return res.status(404).json({ error: 'Project not found' });
+        }
+      }
+
+      // Update the session's project
+      const updated = await db.updateSession(userId, sessionId, {
+        projectId: projectId || undefined,
+      });
+
+      res.json({
+        success: true,
+        session: {
+          sessionId: updated.sessionId,
+          projectId: updated.projectId,
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
 }
