@@ -93,24 +93,25 @@ export function ProjectDetailPage() {
     loadProjects();
   }, [loadProjects]);
 
-  // Load project chats
-  const loadProjectChats = useCallback(async () => {
+  // Load all chats (sidebar and project detail share the same store)
+  const loadAllChats = useCallback(async () => {
     if (!projectId) return;
 
     setIsLoadingChats(true);
     try {
-      // Use chatList filtered by projectId
-      await loadChatList(projectId);
+      // Load ALL chats - don't filter the global store
+      // Project filtering happens locally in the useEffect below
+      await loadChatList();
     } catch (err) {
-      console.error('Failed to load project chats:', err);
+      console.error('Failed to load chats:', err);
     } finally {
       setIsLoadingChats(false);
     }
   }, [projectId, loadChatList]);
 
   useEffect(() => {
-    loadProjectChats();
-  }, [loadProjectChats]);
+    loadAllChats();
+  }, [loadAllChats]);
 
   // Filter chats for this project
   useEffect(() => {
