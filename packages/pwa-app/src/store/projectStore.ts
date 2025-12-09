@@ -40,13 +40,14 @@ export const useProjectStore = create<ProjectState>()(
           const result = await projectApi.listProjects();
           const projects = result.projects;
 
-          // If no current project is set, use the default or first project
+          // CRITICAL FIX (issue_042): Only update currentProjectId if it's invalid (deleted project)
+          // Don't auto-set on initial load - let the UI (ProjectDetailPage) control it
           const currentId = get().currentProjectId;
           let newCurrentId = currentId;
 
-          if (!currentId || !projects.find((p) => p.id === currentId)) {
-            const defaultProject = projects.find((p) => p.isDefault);
-            newCurrentId = defaultProject?.id || projects[0]?.id || null;
+          // Only clear currentProjectId if the current project was deleted
+          if (currentId && !projects.find((p) => p.id === currentId)) {
+            newCurrentId = null; // Clear invalid project, but don't auto-select another
           }
 
           set({
@@ -69,10 +70,8 @@ export const useProjectStore = create<ProjectState>()(
             projects: [...state.projects, project],
           }));
 
-          // If this is the first project, set it as current
-          if (get().projects.length === 1) {
-            set({ currentProjectId: project.id });
-          }
+          // REMOVED (issue_042): Don't auto-set currentProjectId
+          // Let the UI (ProjectDetailPage navigation) control it explicitly
 
           return project;
         } catch (error) {

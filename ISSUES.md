@@ -127,8 +127,8 @@
   - Gmail OAuth implementation in `index.ts` (pattern to follow)
 
 #### issue_042: CRITICAL - Chats Created in Wrong Project (Cross-Project Leakage)
-- **Status**: 🔴 Open
-- **Priority**: P0 (Critical - data isolation bug)
+- **Status**: 🟢 Resolved
+- **Priority**: - (Fixed)
 - **Component**: `packages/pwa-app/src/pages/ProjectDetailPage.tsx`, `packages/pwa-app/src/store/projectStore.ts`
 - **Created**: 2025-12-10
 - **Description**: Chats created in one project appear in other projects. Root cause is stale `currentProjectId` state and missing state synchronization.
@@ -166,11 +166,16 @@
   2. **Short-term**: Pass `projectId` explicitly through chat creation flow, don't rely on global state
   3. **Long-term**: Refactor to remove global `currentProjectId` dependency; use explicit projectId parameter everywhere
 
+- **Resolution** (2025-12-10):
+  - **Fix 1**: Added useEffect to ProjectDetailPage to sync URL projectId with global currentProjectId
+  - **Fix 2**: Modified loadProjects() to only clear currentProjectId if project was deleted (don't auto-select)
+  - **Fix 3**: Removed auto-set logic from createProject()
+  - Files: ProjectDetailPage.tsx, projectStore.ts
 - **Acceptance Criteria**:
-  - [ ] Chat created in Project A only appears in Project A
-  - [ ] Switching projects immediately updates currentProjectId
-  - [ ] Page refresh maintains correct project context
-  - [ ] No cross-project memory pollution
+  - [x] Chat created in Project A only appears in Project A
+  - [x] Switching projects immediately updates currentProjectId
+  - [x] Page refresh maintains correct project context
+  - [x] No cross-project memory pollution
 - **Complexity**: 2.5/5 (Medium - requires careful state management refactoring)
 - **Related**: issue_041 (Add to Project action)
 

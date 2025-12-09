@@ -72,7 +72,7 @@ export function ProjectDetailPage() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
 
-  const { projects, loadProjects, updateProject, deleteProject } = useProjectStore();
+  const { projects, loadProjects, updateProject, deleteProject, setCurrentProject } = useProjectStore();
   const { newChat, loadChatList, chatList } = useChatStore();
 
   const [projectChats, setProjectChats] = useState<ProjectChat[]>([]);
@@ -87,6 +87,14 @@ export function ProjectDetailPage() {
 
   // Find current project
   const project = projects.find(p => p.id === projectId);
+
+  // CRITICAL FIX (issue_042): Sync URL projectId with global currentProjectId
+  // This ensures chats created in this project view get the correct projectId
+  useEffect(() => {
+    if (projectId) {
+      setCurrentProject(projectId);
+    }
+  }, [projectId, setCurrentProject]);
 
   // Load project and chats on mount
   useEffect(() => {
