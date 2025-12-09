@@ -31,6 +31,28 @@
 
 ## Open Issues
 
+### issue_050: Tools Dropdown Z-Index Issue (P3 - Low Priority)
+**Status:** 🔴 Open
+**Priority:** P3 (Low - Known issue in Claude.ai too)
+**Component:** ChatInputArea - Tools dropdown
+**Created:** 2025-12-10
+
+**Description:**
+Tools dropdown appears underneath sticky header when opening upward (near bottom of viewport), making top portion unusable. Z-index adjustment from 20 to 50 didn't resolve.
+
+**Impact:**
+Minor UX annoyance - users need to scroll up slightly before opening tools menu.
+
+**Workaround:**
+Scroll up before opening tools dropdown.
+
+**Notes:**
+- Same issue exists in Claude.ai's interface
+- Likely requires DOM restructuring or React portal implementation
+- Not worth fixing immediately given low impact
+
+---
+
 ### Priority Decisions
 
 #### issue_008: Memory Architecture Decision
