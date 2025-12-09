@@ -3,7 +3,7 @@
 > **Purpose**: Current state snapshot (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-12-10
+**Last Updated**: 2025-12-10 (documentation sync completed)
 **Current Phase**: Milestone 2 Implementation (Epic 2.1-2.3 complete)
 **Version**: 0.4.0-dev
 
@@ -27,7 +27,7 @@
 | **Ollama Local** | 🟢 | 5 models via Tailscale (+ deepseek-r1:1.5b fast reasoning) |
 | **Git Workflow** | 🟢 | Simple tier (main only, direct commits) |
 | **Milestone 2** | 🔵 | Epic 2.1-2.3 complete, Epic 2.4-2.6 remaining |
-| **Projects Feature** | ✅ | Complete (schema, API, switcher, settings page) |
+| **Projects Feature** | 🔵 | Partial (schema, API complete; UX rework in progress - see issues 041-049) |
 
 **Legend**: 🟢 Good | 🟡 Attention | 🔴 Critical | 🔵 In Progress
 

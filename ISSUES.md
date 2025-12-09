@@ -4,7 +4,7 @@
 > **Lifecycle**: Living (add when issues arise, remove when resolved)
 > **Resolved Issues**: Move to `CHANGELOG.md` under the appropriate version's "Fixed" section
 
-**Last Updated**: 2025-12-10 (Added issue_040: MCP Streamable HTTP transport)
+**Last Updated**: 2025-12-10 (Comprehensive Projects audit: issue_042-049 - isolation bugs, missing features)
 
 ---
 
@@ -125,6 +125,274 @@
 - **Reference**:
   - `specs/GOOGLE-SHEETS-INTEGRATION-PLAN.md` (detailed design)
   - Gmail OAuth implementation in `index.ts` (pattern to follow)
+
+#### issue_042: CRITICAL - Chats Created in Wrong Project (Cross-Project Leakage)
+- **Status**: 🔴 Open
+- **Priority**: P0 (Critical - data isolation bug)
+- **Component**: `packages/pwa-app/src/pages/ProjectDetailPage.tsx`, `packages/pwa-app/src/store/projectStore.ts`
+- **Created**: 2025-12-10
+- **Description**: Chats created in one project appear in other projects. Root cause is stale `currentProjectId` state and missing state synchronization.
+- **Symptom**: User creates chat in "Embark Earthworks" project, but chat also appears in "Horizon Pro Dental" project page.
+- **Root Causes Identified**:
+
+  **Bug 1: ProjectDetailPage doesn't set currentProjectId on entry**
+  - When user navigates to `/projects/:projectId`, the page loads but never calls `setCurrentProject(projectId)`
+  - The `currentProjectId` in store remains stale from previous navigation
+  - File: `ProjectDetailPage.tsx` - missing useEffect to sync current project
+
+  **Bug 2: currentProjectId is persisted but not updated consistently**
+  - `currentProjectId` is persisted in localStorage (`partialize` in projectStore)
+  - This causes stale project context to survive page refreshes
+  - If user visits Project A, closes browser, then visits Project B, `currentProjectId` might still be A
+
+  **Bug 3: Race condition in chat creation flow**
+  - `handleNewProjectChat` calls `newChat(projectId)` which sets `currentProjectId`
+  - But navigation to `/` happens immediately after
+  - ChatPage picks up pending message and sends via `sendMessage()`
+  - `sendMessage()` reads `currentProjectId` which might have been changed by other operations
+
+  **Bug 4: loadProjects() auto-sets currentProjectId**
+  - When projects are loaded, if no current project set, it auto-selects default/first project
+  - This can override the intended project context unexpectedly
+  - Lines 44-55 in `projectStore.ts`
+
+- **Impact**:
+  - Data isolation violation - chats appear in wrong projects
+  - Memory context pollution - project-specific memories might leak across projects
+  - User confusion about which project a chat belongs to
+
+- **Fix Strategy**:
+  1. **Immediate**: Add `useEffect` to ProjectDetailPage to set `currentProjectId` on entry
+  2. **Short-term**: Pass `projectId` explicitly through chat creation flow, don't rely on global state
+  3. **Long-term**: Refactor to remove global `currentProjectId` dependency; use explicit projectId parameter everywhere
+
+- **Acceptance Criteria**:
+  - [ ] Chat created in Project A only appears in Project A
+  - [ ] Switching projects immediately updates currentProjectId
+  - [ ] Page refresh maintains correct project context
+  - [ ] No cross-project memory pollution
+- **Complexity**: 2.5/5 (Medium - requires careful state management refactoring)
+- **Related**: issue_041 (Add to Project action)
+
+#### issue_043: Memory System Not Fully Project-Isolated
+- **Status**: 🟡 Partial
+- **Priority**: P1 (High - data isolation)
+- **Component**: `packages/agent-core/src/orchestrator.ts`, `packages/agent-core/src/tools/memory-tools.ts`
+- **Created**: 2025-12-10
+- **Description**: Memory system has project isolation in database queries but requires explicit projectId passing which isn't happening consistently.
+- **Current State**:
+  - Database queries correctly filter by `project_id` (see `getMemoryContext` and memory tools)
+  - BUT: `processMessage` passes `request.projectId` but this might be undefined/wrong
+  - Memory tools accept `projectId` as optional parameter - LLM must decide to pass it
+- **Issues**:
+  - Chat route receives `projectId` from request body, passed to orchestrator ✓
+  - Orchestrator passes `projectId` to `getMemoryContext` ✓
+  - BUT: Memory tools (`read_memory`, `search_memory`) rely on LLM to pass projectId
+  - If LLM doesn't pass projectId, queries default to `project_id IS NULL` (global scope)
+- **Risk**: Memory from Project A could leak to Project B if projectId not consistently passed
+- **Fix Strategy**: Auto-inject projectId into tool execution context, don't rely on LLM parameter
+- **Complexity**: 2.0/5 (Low-Medium)
+
+#### issue_044: Remove Global currentProjectId Dependency
+- **Status**: 🔴 Open
+- **Priority**: P2 (Medium - architectural improvement)
+- **Component**: `packages/pwa-app/src/store/projectStore.ts`, `packages/pwa-app/src/store/chatStore.ts`
+- **Created**: 2025-12-10
+- **Description**: Global `currentProjectId` state causes subtle bugs and race conditions. Should be refactored to explicit parameter passing.
+- **Current Problems**:
+  - Multiple places set `currentProjectId` (newChat, loadProjects, setCurrentProject)
+  - Timing of these operations can cause unexpected state
+  - Persisted state survives page refreshes inappropriately
+  - `sendMessage` reads global state instead of receiving explicit parameter
+- **Proposed Architecture**:
+  - Remove `currentProjectId` from persisted state (or scope persistence to UI preference only)
+  - `sendMessage(content, options: { sessionId?, projectId?, model? })`
+  - Project context derived from URL (`/projects/:projectId`) not global store
+  - Chat component receives projectId as prop, not from global state
+- **Benefits**: Eliminates race conditions, clearer data flow, easier to debug
+- **Complexity**: 3.0/5 (Medium-High - significant refactoring)
+
+#### issue_045: Missing Project Breadcrumb Navigation in Chat Page
+- **Status**: 🔴 Open
+- **Priority**: P1 (High - core navigation UX)
+- **Component**: `packages/pwa-app/src/pages/ChatPage.tsx`, `packages/pwa-app/src/components/ChatHeader.tsx`
+- **Created**: 2025-12-10
+- **Description**: When viewing a chat that belongs to a project, there's no breadcrumb showing "Project Name / Chat Name" and no way to navigate back to the project.
+- **Blueprint Reference**: `specs/BLUEPRINT-feature-projects-ux-rework-20251210.yaml` lines 96-98
+  ```yaml
+  level_4_chat:
+    elements:
+      - "Breadcrumb: Project Name / Chat Name (if in project)"
+  ```
+- **Current State**:
+  - ChatHeader only shows chat title
+  - No project context visible in chat view
+  - No navigation back to parent project
+  - `loadChat` doesn't store `projectId` in chatStore state
+  - ChatPage doesn't have access to current chat's projectId
+- **Implementation**:
+  - [ ] Add `currentProjectId` to chatStore state
+  - [ ] Update `loadChat` to store `session.projectId`
+  - [ ] Update ChatHeader to accept optional `projectId` and `projectName`
+  - [ ] Add breadcrumb: "← Project Name" clickable link when in project
+  - [ ] Breadcrumb navigates to `/projects/:projectId`
+- **Mockup**:
+  ```
+  [← Embark Earthworks] / Research Embarkearthwor...  ⋮
+  ```
+- **Complexity**: 1.5/5 (Low - straightforward UI addition)
+
+#### issue_046: Missing Project Detail Right Sidebar
+- **Status**: 🔴 Open
+- **Priority**: P1 (High - core Projects UX feature)
+- **Component**: `packages/pwa-app/src/pages/ProjectDetailPage.tsx`
+- **Created**: 2025-12-10
+- **Description**: ProjectDetailPage is missing the right sidebar with Instructions, Files, and Memory sections per Claude.ai pattern.
+- **Blueprint Reference**: `specs/BLUEPRINT-feature-projects-ux-rework-20251210.yaml` lines 256-267
+  ```yaml
+  ProjectDetailSidebar:
+    sections:
+      - name: "Memory"
+        content: "Project-specific memory summary"
+      - name: "Instructions"
+        content: "System prompt textarea"
+      - name: "Files"
+        content: "List of uploaded docs"
+  ```
+- **Current State**:
+  - Instructions exist but in a collapsible header panel (gear icon toggle)
+  - No Files section at all
+  - No Memory section at all
+  - No right sidebar layout
+- **Implementation**:
+  - [ ] Create `ProjectDetailSidebar` component
+  - [ ] Add right sidebar to ProjectDetailPage layout (responsive)
+  - [ ] **Instructions Section**:
+    - Move from header panel to sidebar
+    - Auto-save on blur
+    - Show character count
+  - [ ] **Files Section**:
+    - List uploaded documents for this project
+    - Upload button (reuse existing Docs upload)
+    - Delete file action
+    - Filter `business_context` by `project_id`
+  - [ ] **Memory Section**:
+    - Show memory entities scoped to this project
+    - Display count and recent learnings
+    - Link to full memory view
+  - [ ] Mobile: Sidebar as collapsible panel or bottom sheet
+- **Dependencies**:
+  - Need `project_id` column in `business_context` table (may not exist)
+  - Memory tables already have `project_id` support
+- **Complexity**: 3.5/5 (Medium-High - new component, file upload integration)
+
+#### issue_047: Project Instructions Not Integrated with AI
+- **Status**: 🔴 Open
+- **Priority**: P1 (High - core functionality)
+- **Component**: `packages/agent-core/src/orchestrator.ts`, `packages/server/src/routes/chat.ts`
+- **Created**: 2025-12-10
+- **Description**: Project instructions are saved to database but NOT used in AI system prompt. Instructions field is purely cosmetic currently.
+- **Current State**:
+  - Instructions saved to `projects.instructions` column ✓
+  - Instructions displayed in UI for editing ✓
+  - BUT: `buildSystemPrompt` in orchestrator doesn't receive or use project instructions
+  - Chat API passes `projectId` but not `instructions`
+  - Orchestrator doesn't fetch project to get instructions
+- **Flow Gap**:
+  ```
+  Current:  ChatPage → API → Orchestrator → buildSystemPrompt (no project instructions)
+  Required: ChatPage → API → Orchestrator → fetch project → buildSystemPrompt (WITH instructions)
+  ```
+- **Implementation**:
+  - [ ] Orchestrator: Add method to get project by ID
+  - [ ] `processMessage`: If `projectId` provided, fetch project and get instructions
+  - [ ] `buildSystemPrompt`: Accept `projectInstructions` parameter
+  - [ ] Inject project instructions into system prompt:
+    ```
+    ## Project Context
+    You are working within the "{projectName}" project.
+    Project Instructions: {instructions}
+    ```
+  - [ ] Consider: Should project instructions override or supplement global instructions?
+- **Acceptance Criteria**:
+  - [ ] Instructions in project settings affect AI responses
+  - [ ] AI mentions project context when relevant
+  - [ ] Instructions are project-specific (don't leak to other projects)
+- **Complexity**: 2.0/5 (Low-Medium - straightforward integration)
+
+#### issue_048: Missing Project-Scoped File Upload
+- **Status**: 🔴 Open
+- **Priority**: P2 (Medium - enhances Projects feature)
+- **Component**: `packages/pwa-app`, `packages/server`, `packages/core`
+- **Created**: 2025-12-10
+- **Description**: Files (business documents) cannot be uploaded to specific projects. All docs are global.
+- **Current State**:
+  - `business_context` table exists but may not have `project_id` column
+  - Docs upload feature exists in ChatInputArea (global)
+  - No project-scoped upload UI
+- **Implementation**:
+  - [ ] Add `project_id` column to `business_context` table (if missing)
+  - [ ] Update upload API to accept optional `projectId`
+  - [ ] Create project Files section in ProjectDetailSidebar
+  - [ ] Filter business context by project in AI context retrieval
+  - [ ] Show project files separately from global files
+- **Complexity**: 2.5/5 (Medium)
+
+#### issue_049: Missing Project-Scoped Memory Display
+- **Status**: 🔴 Open
+- **Priority**: P2 (Medium - enhances Projects feature)
+- **Component**: `packages/pwa-app/src/pages/ProjectDetailPage.tsx`
+- **Created**: 2025-12-10
+- **Description**: No UI to view/manage project-specific memory (what Pip has learned about this project).
+- **Current State**:
+  - Memory tables have `project_id` column ✓
+  - `getMemoryContext` filters by `project_id` ✓
+  - Memory tools support `projectId` parameter ✓
+  - BUT: No UI to view project memory
+  - Settings page has global Memory section (not project-scoped)
+- **Implementation**:
+  - [ ] Create `ProjectMemoryPanel` component
+  - [ ] Fetch memory entities filtered by `project_id`
+  - [ ] Display in ProjectDetailSidebar Memory section
+  - [ ] Show entity count, recent observations
+  - [ ] Optional: Allow deleting project-specific memories
+- **Complexity**: 2.0/5 (Low-Medium - data exists, need UI)
+
+#### issue_041: Implement "Add to Project" Chat Action
+- **Status**: 🔴 Open
+- **Priority**: P1 (High - core Projects UX feature)
+- **Component**: `packages/pwa-app`, `packages/server`
+- **Created**: 2025-12-10
+- **Description**: Implement the "Add to project" action in chat context menus to move existing chats into projects.
+- **Current State**:
+  - "Add to project" button exists in `ChatActionsMenu` component
+  - Handler is a TODO no-op: `handleAddToProject = (_chatSessionId: string) => { /* TODO */ }`
+  - Backend endpoint exists: `PATCH /api/sessions/:id/project`
+- **Behavior**:
+  - Chat can be in ONE place only (exclusive assignment):
+    - **General** (no project) - `projectId: null`
+    - **Specific project** - `projectId: <uuid>`
+  - Moving to a project removes it from "General"
+  - Moving to "General" (or "Remove from project") removes project association
+- **Implementation**:
+  - [ ] Create `ProjectPicker` component (dropdown/modal to select target project)
+  - [ ] Wire "Add to project" action to show ProjectPicker
+  - [ ] Call `api.moveToProject(sessionId, projectId)` on selection
+  - [ ] Add "Remove from project" option (sets `projectId: null`)
+  - [ ] Refresh chat list after move
+  - [ ] Show project badge on chat items in sidebar
+- **UI Locations**:
+  - Sidebar chat context menu (3-dot menu)
+  - ChatHeader actions menu
+  - ChatsPage chat row actions
+- **Acceptance Criteria**:
+  - [ ] Can move chat from General → Project
+  - [ ] Can move chat from Project → different Project
+  - [ ] Can move chat from Project → General (remove from project)
+  - [ ] Chat list refreshes after move
+  - [ ] Project badge updates in sidebar
+- **Complexity**: 2.0/5 (Low-Medium - backend exists, need UI picker)
+- **Related**: Projects UX Rework (commit 7a67b27)
 
 #### issue_040: Add Streamable HTTP Transport to MCP Server
 - **Status**: 🔴 Open
