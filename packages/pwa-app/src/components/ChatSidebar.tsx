@@ -219,7 +219,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
         <div className="px-2 pb-2">
           <button
             onClick={handleNewChat}
-            className={`w-full flex items-center gap-2 p-2 rounded-lg hover:bg-arc-bg-tertiary transition-colors ${
+            className={`w-full flex items-center gap-2 p-2 rounded-lg hover:bg-arc-bg-secondary transition-colors ${
               isOpen ? '' : 'justify-center'
             }`}
             title="New chat"
@@ -239,7 +239,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
             className={`w-full flex items-center gap-2 p-2 rounded-lg transition-colors ${
               isChatsPage
                 ? 'bg-arc-accent/20 text-arc-accent'
-                : 'text-arc-text-primary hover:bg-arc-bg-tertiary'
+                : 'text-arc-text-primary hover:bg-arc-bg-secondary'
             } ${isOpen ? '' : 'justify-center'}`}
             title="Browse all chats"
           >
@@ -262,7 +262,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
             className={`w-full flex items-center gap-2 p-2 rounded-lg transition-colors ${
               isProjectsPage
                 ? 'bg-arc-accent/20 text-arc-accent'
-                : 'text-arc-text-primary hover:bg-arc-bg-tertiary'
+                : 'text-arc-text-primary hover:bg-arc-bg-secondary'
             } ${isOpen ? '' : 'justify-center'}`}
             title="Browse projects"
           >
@@ -305,7 +305,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                       className={`w-full text-left px-2 py-1.5 rounded transition-colors ${
                         chat.sessionId === sessionId
                           ? 'bg-arc-accent/20 text-arc-accent'
-                          : 'hover:bg-arc-bg-tertiary text-arc-text-primary'
+                          : 'hover:bg-arc-bg-secondary text-arc-text-primary'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -367,7 +367,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                           className={`w-full text-left px-2 py-1.5 rounded transition-colors ${
                             chat.sessionId === sessionId
                               ? 'bg-arc-accent/20 text-arc-accent'
-                              : 'hover:bg-arc-bg-tertiary text-arc-text-primary'
+                              : 'hover:bg-arc-bg-secondary text-arc-text-primary'
                           }`}
                         >
                           <div className="flex items-center justify-between gap-2">
