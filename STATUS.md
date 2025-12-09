@@ -3,7 +3,7 @@
 > **Purpose**: Current state snapshot (2-week rolling window)
 > **Lifecycle**: Living (update daily/weekly during active development)
 
-**Last Updated**: 2025-12-10 (documentation sync completed)
+**Last Updated**: 2025-12-10 (manual testing bug fixes + documentation sync)
 **Current Phase**: Milestone 2 Implementation (Epic 2.1-2.3 complete)
 **Version**: 0.4.0-dev
 
@@ -39,20 +39,41 @@
 
 ### Just Completed (2025-12-10)
 
-1. **Spike: Automation Server Integration** ✅ CREATED
+1. **Manual Testing Bug Fixes (12 issues)** ✅ COMPLETE
+   - **P0 Critical (2 fixes)**:
+     - Project instructions now inject into AI system prompt (issue_041)
+     - Upload File button wired up with file picker dialog (issue_043)
+   - **P1 High Priority (4 fixes)**:
+     - Project picker now has search functionality (issue_046)
+     - Project picker design condensed (removed descriptions) (issue_047)
+     - Sidebar flash on navigation eliminated (issue_044)
+     - Tools dropdown viewport detection + wider design (issue_048)
+   - **P2 Polish (4 fixes)**:
+     - Breadcrumb now clickable with chevron separator (issue_045)
+     - Sidebar icons brightened to green/accent color (issue_049)
+     - Sidebar hover effect corrected (darker, not lighter)
+     - Xero removed from tools dropdown
+   - **Additional Fixes (2)**:
+     - File upload backend TypeScript interface fixed
+     - Right sidebar icons matched to left sidebar (green tint)
+   - **Known Issue Documented**:
+     - Tools dropdown z-index issue (issue_050 - P3 Low Priority)
+   - Commits: `6a35aad` through `b6bba1e` (12 commits)
+
+2. **Spike: Automation Server Integration** ✅ CREATED
    - n8n vs Make.com vs Zapier comparison
    - API design: `/api/automation/upload-to-xero`, `/create-expense`, `/search-transactions`
    - Primary use case: Email receipt → Xero attachment workflow
    - Security: API keys with scopes, rate limiting, audit logging
    - Blueprint: `specs/BLUEPRINT-spike-automation-server-20251209.yaml`
 
-2. **Gmail Attachment Image Viewing** ✅ COMPLETE
+3. **Gmail Attachment Image Viewing** ✅ COMPLETE
    - `download_attachment` now returns `ImageContent` for images (PNG, JPG, GIF, WebP)
    - Claude can see and analyze image attachments directly
    - 1MB size limit with helpful messaging
    - Non-images still return base64 JSON for processing
 
-3. **Projects UX Rework (Phase 6: Cleanup)** ✅ COMPLETE
+4. **Projects UX Rework (Phase 6: Cleanup)** ✅ COMPLETE
    - Removed `is_default` project logic from entire codebase
    - Removed legacy DynamoDB provider code (983 lines)
    - Added breadcrumb to ChatPage showing "Project Name / Chat Title"

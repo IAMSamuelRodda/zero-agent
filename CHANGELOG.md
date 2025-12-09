@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> **Last Updated**: 2025-12-10 (Manual testing bug fixes + resolved issues migration from ISSUES.md)
+
 ### Added
 - **Response Styles (Claude.ai Pattern)** - issue_020 (2025-12-02)
   - Five styles: Normal, Formal, Concise, Explanatory, Learning
@@ -51,13 +53,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated all documentation for Simple tier
 
 ### Fixed
-- **issue_045: Missing Project Breadcrumb Navigation in Chat Page** (2025-12-10)
-  - ChatHeader now displays "Project Name / Chat Title" when chat is in a project
-  - Added projectName prop to ChatHeaderProps interface
-  - ChatPage looks up project name from projectStore based on chat's projectId
-  - Breadcrumb only shown for chats associated with a project
-  - `packages/pwa-app/src/components/ChatHeader.tsx` - Added breadcrumb display logic
-  - `packages/pwa-app/src/pages/ChatPage.tsx` - Added project name lookup
+- **Manual Testing Bug Fixes (12 issues)** (2025-12-10)
+
+  **P0 Critical Fixes:**
+  - **issue_041: Project Instructions Not Injecting into AI System Prompt**
+    - System prompt now includes custom instructions when chatting within a project
+    - Added project data fetch in orchestrator when projectId present
+    - Injected instructions into buildSystemPrompt with "MUST follow" emphasis
+    - `packages/agent-core/src/orchestrator.ts:164-169, 410-413` - Fetch and inject logic
+    - Commit: `6a35aad`
+
+  - **issue_043: Upload File Button Non-Functional**
+    - File picker dialog now opens when clicking "Upload File" button
+    - Implemented file upload to `/api/documents/upload` endpoint
+    - Added progress states (uploading indicator) and error handling
+    - `packages/pwa-app/src/components/ProjectDetailSidebar.tsx:96-143, 231-247` - File upload implementation
+    - Commit: `f17b089`
+
+  **P1 High Priority Fixes:**
+  - **issue_046: Project Picker Missing Search Functionality**
+    - Added search input (appears when >3 projects) with live filtering
+    - Client-side filtering using useMemo for performance
+    - Auto-focus search for quick keyboard access
+    - `packages/pwa-app/src/components/ProjectPicker.tsx:39-44, 69, 72-87, 127-143` - Search implementation
+    - Commit: `0c35fae`
+
+  - **issue_047: Project Picker Design Too Spacious**
+    - Removed project descriptions for cleaner, more scannable list
+    - Reduced vertical padding from py-2.5 to py-2
+    - Simplified to icon + name + checkmark pattern
+    - `packages/pwa-app/src/components/ProjectPicker.tsx:174-188` - Condensed design
+    - Commit: `0c35fae`
+
+  - **issue_044: Sidebar Flashing on Navigation**
+    - Loading state now only shows if chatList is empty (first load)
+    - Uses cached data during background refresh to prevent flash
+    - `packages/pwa-app/src/store/chatStore.ts:134-152` - Conditional loading logic
+    - Commit: `979d280`
+
+  - **issue_048: Tools Dropdown Opens Off-Screen**
+    - Added viewport detection to open upward when near bottom of page
+    - Increased width from w-48 to w-64 for longer tool names
+    - Added scroll support with max-h-[400px]
+    - Removed Xero connector status from tools menu
+    - `packages/pwa-app/src/components/ChatInputArea.tsx:169-190` - Viewport detection
+    - Commit: `70b1272`
+
+  **P2 Polish Fixes:**
+  - **issue_045: Breadcrumb Not Interactive**
+    - Project name in breadcrumb now clickable (links to project detail)
+    - Added chevron separator icon between project and chat title
+    - Proper hover states for link
+    - `packages/pwa-app/src/components/ChatHeader.tsx:13-34, 58-92` - Breadcrumb implementation
+    - `packages/pwa-app/src/pages/ChatPage.tsx:96-100, 186-197` - Pass projectId to header
+    - Commits: `69e6d0e`, `aa5cd41`
+
+  - **issue_049: Sidebar Icons Too Dark**
+    - Changed from text-arc-text-secondary (grey) to text-arc-accent/70 (green tint)
+    - Applied to Chats, Projects, Bookmarked, Recents icons
+    - `packages/pwa-app/src/components/ChatSidebar.tsx:236-280` - Icon color updates
+    - Commit: `52d2208`
+
+  - **Sidebar Hover Effect Wrong Direction**
+    - Changed from bg-arc-bg-tertiary (lighter) to bg-arc-bg-secondary (darker)
+    - Provides proper visual feedback on hover
+    - `packages/pwa-app/src/components/ChatSidebar.tsx` - Hover state correction
+    - Commit: `7853301`
+
+  - **Xero Removed from Tools Dropdown**
+    - Removed Xero connector status section (lines 207-216 deleted)
+    - Cleaner tools menu focused on response styles
+    - Commit: `70b1272`
+
+  **Additional Fixes:**
+  - **File Upload Backend TypeScript Interface**
+    - Added business context methods to DatabaseProvider interface
+    - Removed `(db as any)` type casts throughout documents.ts
+    - Proper typing for createBusinessContext, getBusinessContext, deleteBusinessContext, listBusinessDocuments
+    - `packages/core/src/database/types.ts:491-518` - Interface declarations
+    - `packages/server/src/routes/documents.ts:159-254` - Proper typed calls
+    - Commit: `6b0df2a`
+
+  - **Right Sidebar Icons All Black**
+    - Applied text-arc-accent/70 to Memory, Instructions, Files icons
+    - Matches left sidebar visual language
+    - `packages/pwa-app/src/components/ProjectDetailSidebar.tsx:154-218` - Icon brightening
+    - Commit: `36b1e8f`
+
+  **Known Issue Documented:**
+  - **issue_050: Tools Dropdown Z-Index Issue** (P3 - Low Priority)
+    - Dropdown appears under sticky header when opening upward
+    - Attempted z-index fix (z-20 → z-50) didn't resolve
+    - Same issue exists in Claude.ai - likely requires React portal
+    - Documented in ISSUES.md as low priority known issue
+    - `packages/pwa-app/src/components/ChatInputArea.tsx:185-190` - Z-index attempt
+    - Commits: `4a30788`, `b6bba1e`
 - **issue_032: Memory Context Injection** (2025-12-02)
   - Agent now auto-injects stored memory into system prompt at conversation start
   - Added `read_memory` and `search_memory` tools for explicit user queries
@@ -85,6 +175,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Login button UX**: Added loading state ("Sign In" → "Signing In...") with disabled state
 - **Login page UI**: Centered text, removed amateur emoji
 - **getAllMemories bug**: Fixed method calling wrong function
+
+### Resolved Issues (Migrated from ISSUES.md)
+
+**Key Architectural Decisions & Pivots:**
+
+- **issue_008: Memory Architecture Decision** (2025-11-30)
+  - **Decision**: Chose Option B (native memory) over Option A (mem0)
+  - **Why**: mem0ai has unfixable SQLite bug in Docker/Alpine, requires glibc (Alpine uses musl)
+  - **Trade-off**: Text-based search instead of semantic search for MVP
+  - **Pattern**: Always validate third-party libraries work in target deployment environment
+  - Implementation: `packages/pip-mcp/src/services/memory-native.ts`
+
+- **issue_042: Cross-Project Chat Leakage** (2025-12-10)
+  - **Root Cause**: Global `currentProjectId` state with localStorage persistence caused stale context
+  - **Learning**: Persisted state can create subtle bugs across page refreshes
+  - **Fix**: Added useEffect to sync URL param → global state on page entry
+  - **Pattern**: Avoid global state for context that should derive from URL routing
+  - Files: `ProjectDetailPage.tsx`, `projectStore.ts`
+
+**UX Pattern Implementations (Claude.ai Reference):**
+
+- **issue_025: Header Cleanup + Claude.ai Layout Pattern** (2025-12-02)
+  - Removed redundant project switcher from header (belongs in sidebar)
+  - Cleaner single-focus header following Claude.ai minimalism
+  - Pattern: One primary action per UI region
+
+- **issue_033: Chat Input Area Redesign** (2025-12-02)
+  - Implemented `+` attachment button, `≡` tools menu, model selector
+  - Tools menu with style selector, memory toggle, settings link
+  - Attachment preview area with file cards and dismiss buttons
+  - Pattern: Progressive disclosure - advanced features in dropdown menus
+  - Component: `ChatInputArea.tsx` (~450 lines)
+
+**Data Integrity & Safety:**
+
+- **issue_031: Memory Query Schema Mismatch** (2025-12-03)
+  - SQLite schema used `observation` column but queries used `content`
+  - Added missing `is_user_edit`, `updated_at` columns
+  - **Learning**: Schema migrations must be tested against actual queries
+  - **Pattern**: Always add database migrations when schema evolves
+
+- **issue_004: Safety Guardrails for Write Operations** (2025-11-29)
+  - Implemented tiered permission system (Level 0-3)
+  - Level 0: Read-only (default), Level 1: Create drafts, Level 2: Approve/update, Level 3: Delete/void
+  - All write operations require explicit user permission level
+  - Pattern: Default to most restrictive permissions, require opt-in for privileged operations
+
+**Edge Cases & Bug Fixes:**
+
+- **issue_023: Edge Cases - Empty Chat + Memory Retrieval** (2025-12-02)
+  - Empty chat delete failed (worked after message added)
+  - Memory not retrieved in new chats
+  - Fix: Added proper state handling for empty sessions
+
+- **issue_029: MCP Auth Flow - Missing OAuth Env Vars** (2025-12-03)
+  - Server failed to start when `XERO_CLIENT_ID` missing (lazy-loading MCP broke gracefully)
+  - Fix: Added validation and helpful error messages for missing OAuth credentials
+  - Pattern: Fail fast with actionable error messages during startup
+
+**Technical Debt Cleanup:**
+
+- **debt_003: Legacy "pip" Naming Convention** (2025-12-01)
+  - Migrated: `pip-data` → `pip-data`, `pip.db` → `pip.db`
+  - Updated all Dockerfiles, deploy scripts, backup scripts
+  - Pattern: Complete renames in single session to avoid mixed naming
+
+- **debt_002: Legacy GitHub Issues Cleanup** (2025-11-29)
+  - Removed 47 stale issues from GitHub created during initial planning
+  - Pattern: Clean up speculative work artifacts after pivots
 
 ### Verified
 - **Claude.ai Memory tools**: add_memory + search_memory working (80% relevance)
