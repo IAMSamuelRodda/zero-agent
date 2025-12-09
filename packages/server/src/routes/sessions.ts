@@ -106,7 +106,6 @@ export function createSessionRoutes(db: DatabaseProvider): Router {
             project: project ? {
               id: project.id,
               name: project.name,
-              color: project.color,
             } : null,
             title,
             previewText,
