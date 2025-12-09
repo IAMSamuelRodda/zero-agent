@@ -130,6 +130,18 @@ export function ChatPage() {
     }
   }, []);
 
+  // Handle pending message from ProjectDetailPage navigation
+  useEffect(() => {
+    const pendingMessage = sessionStorage.getItem('pendingMessage');
+    if (pendingMessage) {
+      sessionStorage.removeItem('pendingMessage');
+      // Send the message after a brief delay to ensure store is ready
+      setTimeout(() => {
+        sendMessage(pendingMessage);
+      }, 100);
+    }
+  }, [sendMessage]);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
