@@ -93,9 +93,10 @@ export function ChatPage() {
   const currentChat = chatList.find(c => c.sessionId === sessionId);
   const isCurrentChatBookmarked = currentChat?.isBookmarked ?? false;
 
-  // Get project name for breadcrumb (if chat is in a project)
-  const projectName = currentChat?.projectId
-    ? projects.find(p => p.id === currentChat.projectId)?.name
+  // Get project info for breadcrumb (if chat is in a project)
+  const projectId = currentChat?.projectId;
+  const projectName = projectId
+    ? projects.find(p => p.id === projectId)?.name
     : undefined;
 
   // Chat action handlers for header
@@ -186,6 +187,7 @@ export function ChatPage() {
           sessionId={sessionId}
           title={currentTitle || 'Pip'}
           projectName={projectName}
+          projectId={projectId || undefined}
           isBookmarked={isCurrentChatBookmarked}
           hasMessages={messages.length > 0}
           onBookmark={handleBookmark}
