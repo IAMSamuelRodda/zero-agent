@@ -701,3 +701,118 @@ export async function searchContacts(
     return errorResult(`Failed to search contacts: ${message}`);
   }
 }
+
+/**
+ * List chart of accounts
+ */
+export async function listAccounts(
+  userId: string,
+  args: { accountType?: string }
+): Promise<ToolResult> {
+  const xero = await getXeroClient(userId);
+  if (!xero) {
+    return errorResult(
+      "Xero not connected. Please connect your Xero account first."
+    );
+  }
+
+  try {
+    const { client, tenantId } = xero;
+
+    // Build where clause if accountType specified
+    const whereClause = args.accountType ? `Type=="${args.accountType.toUpperCase()}"` : undefined;
+
+    const response = await client.accountingApi.getAccounts(
+      tenantId,
+      undefined,
+      whereClause
+    );
+
+    let accounts = response.body.accounts || [];
+
+    // Fallback filter in code for safety (where clause can be unreliable)
+    if (args.accountType) {
+      const targetType = args.accountType.toUpperCase();
+      accounts = accounts.filter(acc => String(acc.type || "").toUpperCase() === targetType);
+    }
+
+    if (accounts.length === 0) {
+      return successResult(
+        args.accountType
+          ? `No ${args.accountType.toLowerCase()} accounts found.`
+          : "No accounts found in chart of accounts."
+      );
+    }
+
+    // Group accounts by type for better readability
+    const accountsByType = new Map<string, typeof accounts>();
+    for (const account of accounts) {
+      const type = String(account.type || "OTHER");
+      if (!accountsByType.has(type)) {
+        accountsByType.set(type, []);
+      }
+      accountsByType.get(type)!.push(account);
+    }
+
+    // Sort types in typical financial statement order
+    const typeOrder = [
+      "BANK", "CURRENT", "CURRLIAB", "FIXED", "LIABILITY",
+      "EQUITY", "DEPRECIATN", "DIRECTCOSTS", "EXPENSE",
+      "REVENUE", "SALES", "OTHERINCOME", "OVERHEADS"
+    ];
+    const sortedTypes = Array.from(accountsByType.keys()).sort((a, b) => {
+      const aIndex = typeOrder.indexOf(a);
+      const bIndex = typeOrder.indexOf(b);
+      if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+
+    // Format output
+    let output = `Chart of Accounts (${accounts.length} accounts)\n\n`;
+
+    for (const type of sortedTypes) {
+      const typeAccounts = accountsByType.get(type)!;
+      const typeName = formatAccountType(type);
+
+      output += `${typeName} (${typeAccounts.length}):\n`;
+
+      for (const account of typeAccounts) {
+        const code = account.code ? `[${account.code}] ` : "";
+        const taxType = account.taxType && account.taxType !== "NONE" ? ` (${account.taxType})` : "";
+        const status = String(account.status || "") === "ARCHIVED" ? " [ARCHIVED]" : "";
+        output += `  • ${code}${account.name}${taxType}${status}\n`;
+      }
+      output += "\n";
+    }
+
+    return successResult(output.trim());
+  } catch (error: any) {
+    console.error("Error fetching accounts:", error);
+    const message = error?.response?.body?.Message || error?.message || "Unknown error";
+    return errorResult(`Failed to fetch chart of accounts: ${message}`);
+  }
+}
+
+/**
+ * Helper to format account type names
+ */
+function formatAccountType(type: string): string {
+  const typeMap: Record<string, string> = {
+    "BANK": "Bank Accounts",
+    "CURRENT": "Current Assets",
+    "CURRLIAB": "Current Liabilities",
+    "FIXED": "Fixed Assets",
+    "LIABILITY": "Liabilities",
+    "EQUITY": "Equity",
+    "DEPRECIATN": "Depreciation",
+    "DIRECTCOSTS": "Direct Costs",
+    "EXPENSE": "Expenses",
+    "REVENUE": "Revenue",
+    "SALES": "Sales",
+    "OTHERINCOME": "Other Income",
+    "OVERHEADS": "Overheads",
+  };
+  return typeMap[type] || type;
+}

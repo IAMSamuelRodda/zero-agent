@@ -89,6 +89,7 @@ Use get_tools_in_category to discover tools, then execute_tool to run them.
 - banking: get_bank_accounts, get_bank_transactions
 - contacts: get_contacts, search_contacts
 - organisation: get_organisation
+- accounts: list_accounts
 
 **Gmail Category (Email Integration):**
 - search_gmail: Search emails using Gmail query syntax
@@ -231,6 +232,22 @@ const toolRegistry: ToolDefinition[] = [
     name: "get_organisation",
     description: "Get company details from Xero",
     inputSchema: { type: "object", properties: {} },
+  },
+
+  // ACCOUNTS category
+  {
+    category: "accounts",
+    name: "list_accounts",
+    description: "Get chart of accounts. Optionally filter by account type (BANK, CURRENT, EXPENSE, REVENUE, etc.)",
+    inputSchema: {
+      type: "object",
+      properties: {
+        accountType: {
+          type: "string",
+          description: "Optional: Filter by account type (BANK, CURRENT, CURRLIAB, FIXED, LIABILITY, EQUITY, DEPRECIATN, DIRECTCOSTS, EXPENSE, REVENUE, SALES, OTHERINCOME, OVERHEADS)",
+        },
+      },
+    },
   },
 
   // MEMORY category - Knowledge Graph (imported from memory-tools.ts)
@@ -597,6 +614,9 @@ async function executeXeroTool(
 
       case "search_contacts":
         return await xeroTools.searchContacts(userId, args as { searchTerm: string });
+
+      case "list_accounts":
+        return await xeroTools.listAccounts(userId, args as { accountType?: string });
 
       default:
         return {
