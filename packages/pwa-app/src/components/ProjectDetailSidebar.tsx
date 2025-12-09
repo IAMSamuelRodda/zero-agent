@@ -4,7 +4,10 @@
  * Claude.ai pattern: Project-specific context and configuration
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useAuthStore } from '../store/authStore';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // ============================================================================
 // Icons
@@ -67,6 +70,9 @@ export function ProjectDetailSidebar({
   const [memoryExpanded, setMemoryExpanded] = useState(true);
   const [instructionsExpanded, setInstructionsExpanded] = useState(true);
   const [filesExpanded, setFilesExpanded] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update local state when prop changes
   useEffect(() => {
@@ -83,6 +89,55 @@ export function ProjectDetailSidebar({
         console.error('Failed to save instructions:', error);
       } finally {
         setIsSaving(false);
+      }
+    }
+  };
+
+  // Handle file upload button click
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = useAuthStore.getState().token;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_BASE}/documents/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const result = await response.json();
+      console.log('File uploaded:', result);
+
+      // TODO: Refresh file list
+    } catch (error) {
+      console.error('File upload error:', error);
+      setUploadError('Failed to upload file');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
     }
   };
@@ -160,9 +215,29 @@ export function ProjectDetailSidebar({
               <p>No files uploaded yet.</p>
               <p className="mt-2">Upload project documents to provide context to Pip.</p>
             </div>
-            <button className="mt-3 w-full px-3 py-2 bg-arc-bg-tertiary border border-arc-border rounded-lg text-sm text-arc-text-primary hover:bg-arc-bg-primary transition-colors">
-              Upload File
+
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.txt,.md,.docx"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+
+            {/* Upload button */}
+            <button
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              className="mt-3 w-full px-3 py-2 bg-arc-bg-tertiary border border-arc-border rounded-lg text-sm text-arc-text-primary hover:bg-arc-bg-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isUploading ? 'Uploading...' : 'Upload File'}
             </button>
+
+            {/* Upload error */}
+            {uploadError && (
+              <div className="mt-2 text-xs text-red-400">{uploadError}</div>
+            )}
           </div>
         )}
       </div>
