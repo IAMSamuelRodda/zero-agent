@@ -158,40 +158,58 @@ interface ToolsMenuProps {
   currentStyle: ResponseStyleId;
   styles: ResponseStyleOption[];
   onStyleChange: (style: ResponseStyleId) => void;
-  xeroConnected?: boolean;
+  buttonRef?: React.RefObject<HTMLButtonElement>;
 }
 
-function ToolsMenu({ isOpen, onClose, currentStyle, styles, onStyleChange, xeroConnected = false }: ToolsMenuProps) {
+function ToolsMenu({ isOpen, onClose, currentStyle, styles, onStyleChange, buttonRef }: ToolsMenuProps) {
   const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+
+  // Detect viewport position on open
+  useEffect(() => {
+    if (isOpen && buttonRef?.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const menuHeight = 200; // Approximate menu height
+
+      // Open upward if not enough space below and more space above
+      setOpenUpward(spaceBelow < menuHeight && spaceAbove > spaceBelow);
+    }
+  }, [isOpen, buttonRef]);
 
   if (!isOpen) return null;
 
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute top-full left-0 mt-2 w-48 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl z-20">
+      <div
+        className={`absolute left-0 w-64 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl z-20 max-h-[400px] overflow-y-auto ${
+          openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
+        }`}
+      >
         <div className="py-1">
           {/* Style selector */}
           <div className="relative">
             <button
               onClick={() => setShowStyleSubmenu(!showStyleSubmenu)}
-              className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
+              className="w-full flex items-center justify-between px-4 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
             >
-              <span>Style</span>
-              <div className="flex items-center gap-1 text-arc-text-secondary">
+              <span>Response Style</span>
+              <div className="flex items-center gap-2 text-arc-text-secondary">
                 <span className="text-xs">{styles.find(s => s.id === currentStyle)?.name || 'Normal'}</span>
                 <ChevronIcon direction="right" />
               </div>
             </button>
             {showStyleSubmenu && (
-              <div className="absolute left-full top-0 ml-1 w-32 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl">
+              <div className="absolute left-full top-0 ml-1 w-40 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl max-h-64 overflow-y-auto">
                 <div className="py-1">
                   {styles.map((style) => (
                     <button
                       key={style.id}
                       onClick={() => { onStyleChange(style.id); setShowStyleSubmenu(false); onClose(); }}
                       title={style.description}
-                      className="w-full flex items-center justify-between px-3 py-1.5 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
                     >
                       <span>{style.name}</span>
                       {currentStyle === style.id && <CheckIcon />}
@@ -204,20 +222,7 @@ function ToolsMenu({ isOpen, onClose, currentStyle, styles, onStyleChange, xeroC
 
           <div className="border-t border-arc-border my-1" />
 
-          {/* Xero status */}
-          <div className="flex items-center justify-between px-3 py-1.5 text-sm">
-            <div className="flex items-center gap-2 text-arc-text-primary">
-              <span className="w-2 h-2 rounded-full bg-[#13B5EA]" />
-              <span>Xero</span>
-            </div>
-            <span className={`text-xs ${xeroConnected ? 'text-arc-accent' : 'text-arc-text-dim'}`}>
-              {xeroConnected ? 'Connected' : 'Disconnected'}
-            </span>
-          </div>
-
-          <div className="border-t border-arc-border my-1" />
-
-          <a href="/settings" className="block px-3 py-1.5 text-sm text-arc-text-secondary hover:bg-arc-bg-tertiary transition-colors">
+          <a href="/settings" className="block px-4 py-2 text-sm text-arc-text-secondary hover:bg-arc-bg-tertiary transition-colors">
             Settings
           </a>
         </div>
@@ -338,6 +343,7 @@ export function ChatInputArea({
 }: ChatInputAreaProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const toolsButtonRef = useRef<HTMLButtonElement>(null);
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
@@ -345,7 +351,6 @@ export function ChatInputArea({
   const [memoryEnabled, setMemoryEnabled] = useState(true);
   const [styles, setStyles] = useState<ResponseStyleOption[]>([]);
   const [currentStyle, setCurrentStyle] = useState<ResponseStyleId>('normal');
-  const [xeroConnected, setXeroConnected] = useState(false);
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [ollamaAvailable, setOllamaAvailable] = useState(false);
 
@@ -359,7 +364,6 @@ export function ChatInputArea({
   useEffect(() => {
     api.getStyles().then(({ styles }) => setStyles(styles)).catch(console.error);
     api.getSettings().then(({ settings }) => setCurrentStyle(settings.responseStyle)).catch(console.error);
-    api.getAuthStatus().then((status) => setXeroConnected(status.connected)).catch(console.error);
     api.getOllamaStatus().then((status) => {
       setOllamaAvailable(status.available);
       setOllamaModels(status.models || []);
@@ -514,6 +518,7 @@ export function ChatInputArea({
             {/* Tools menu */}
             <div className="relative">
               <button
+                ref={toolsButtonRef}
                 type="button"
                 onClick={() => setToolsMenuOpen(!toolsMenuOpen)}
                 className="p-2 text-arc-text-secondary hover:text-arc-text-primary rounded-lg hover:bg-arc-bg-secondary transition-colors"
@@ -527,7 +532,7 @@ export function ChatInputArea({
                 currentStyle={currentStyle}
                 styles={styles}
                 onStyleChange={handleStyleChange}
-                xeroConnected={xeroConnected}
+                buttonRef={toolsButtonRef}
               />
             </div>
 
