@@ -83,6 +83,7 @@ export function ProjectDetailPage() {
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [editedDescription, setEditedDescription] = useState('');
+  const [chatInputValue, setChatInputValue] = useState('');
 
   // Find current project
   const project = projects.find(p => p.id === projectId);
@@ -326,9 +327,12 @@ export function ProjectDetailPage() {
           <div className="px-6 py-4 border-b border-arc-border">
             <div className="max-w-2xl mx-auto">
               <ChatInputArea
-                value=""
-                onChange={() => {}}
-                onSubmit={handleNewProjectChat}
+                value={chatInputValue}
+                onChange={setChatInputValue}
+                onSubmit={(message) => {
+                  handleNewProjectChat(message);
+                  setChatInputValue('');
+                }}
                 placeholder={`Ask Pip about ${project.name}...`}
                 isLoading={false}
               />

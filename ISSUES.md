@@ -4,7 +4,7 @@
 > **Lifecycle**: Living (add when issues arise, remove when resolved)
 > **Resolved Issues**: Move to `CHANGELOG.md` under the appropriate version's "Fixed" section
 
-**Last Updated**: 2025-12-04 (Xero API pricing changes researched - see risk_000 and docs/research-notes/XERO-API-PRICING-CHANGES-20251204.md)
+**Last Updated**: 2025-12-10 (Added issue_040: MCP Streamable HTTP transport)
 
 ---
 
@@ -125,6 +125,52 @@
 - **Reference**:
   - `specs/GOOGLE-SHEETS-INTEGRATION-PLAN.md` (detailed design)
   - Gmail OAuth implementation in `index.ts` (pattern to follow)
+
+#### issue_040: Add Streamable HTTP Transport to MCP Server
+- **Status**: 🔴 Open
+- **Priority**: P2 (Medium - infrastructure modernization)
+- **Component**: `packages/pip-mcp`
+- **Created**: 2025-12-10
+- **Description**: Implement the new Streamable HTTP transport alongside existing SSE transport for improved infrastructure compatibility and features.
+- **Background**:
+  - MCP deprecated HTTP+SSE transport, replaced with Streamable HTTP (protocol version 2025-03-26)
+  - SSE uses two endpoints (`/sse` + `/message`), Streamable HTTP uses single endpoint
+  - Streamable HTTP benefits: resumability, better proxy/load balancer support, session management
+- **Current State** (Legacy SSE):
+  - Two separate endpoints: `/sse` (GET, event stream) and `/message` (POST, client requests)
+  - Works with Claude.ai and ChatGPT
+  - Issues with some proxies, load balancers, serverless platforms
+- **Target State** (Dual Transport):
+  - Keep SSE endpoints for backward compatibility (ChatGPT may still use SSE)
+  - Add Streamable HTTP endpoint (`/` or `/mcp`)
+  - Single endpoint handles both GET and POST
+  - Session management via `Mcp-Session-Id` header
+  - Resumability via `Last-Event-ID` header
+- **Benefits of Streamable HTTP**:
+  - Single endpoint - simpler architecture
+  - Bi-directional communication - servers can send notifications
+  - Resumability - reconnect and resume after broken connections
+  - Better infrastructure support - works with standard HTTP tooling, CDNs
+  - Stateless-friendly - can work without persistent connections
+- **Implementation**:
+  - [ ] Upgrade MCP SDK to TypeScript SDK 1.10.0+ (if not already)
+  - [ ] Add Streamable HTTP transport endpoint
+  - [ ] Implement session ID tracking via headers
+  - [ ] Add `Last-Event-ID` support for resumability
+  - [ ] Keep legacy SSE endpoints (`/sse`, `/message`) for backward compatibility
+  - [ ] Test with Claude.ai and ChatGPT
+- **Acceptance Criteria**:
+  - [ ] Streamable HTTP endpoint responds to POST with JSON-RPC
+  - [ ] Session ID tracking works across requests
+  - [ ] Legacy SSE endpoints still work for existing clients
+  - [ ] Claude.ai connects successfully via Streamable HTTP
+  - [ ] ChatGPT connects via SSE (fallback)
+- **Complexity**: 2.5/5 (Medium - SDK support exists, need dual transport)
+- **References**:
+  - [MCP Specification - Transports](https://spec.modelcontextprotocol.io/specification/basic/transports/)
+  - [Why MCP Switched to Streamable HTTP](https://dev.to/punkpeye/sse-vs-streamable-http-why-mcp-switched-transport-protocols-4fcn)
+  - [Cloudflare Agents - Transport](https://developers.cloudflare.com/cloudflare-for-platforms/agents/model-context-protocol/transport/)
+- **Notes**: Keep legacy SSE for redundancy - ChatGPT and some platforms may still require SSE. Streamable HTTP gives us modern infrastructure benefits.
 
 #### issue_038: MCP Server Custom Icon Not Displayed in Claude.ai
 - **Status**: 🔵 Blocked (Claude.ai client-side)
