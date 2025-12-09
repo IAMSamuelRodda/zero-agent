@@ -13,6 +13,7 @@ import { ChatActionsMenu } from './ChatActionsMenu';
 interface ChatHeaderProps {
   sessionId: string | null;
   title: string;
+  projectName?: string; // Project name for breadcrumb
   isBookmarked?: boolean;
   hasMessages: boolean;
   onBookmark: (sessionId: string) => Promise<void>;
@@ -28,6 +29,7 @@ interface ChatHeaderProps {
 export function ChatHeader({
   sessionId,
   title,
+  projectName,
   isBookmarked = false,
   hasMessages,
   onBookmark,
@@ -40,12 +42,15 @@ export function ChatHeader({
     return null;
   }
 
+  // Display title with breadcrumb if in a project
+  const displayTitle = projectName ? `${projectName} / ${title}` : title;
+
   return (
     <header className="sticky top-0 z-20 bg-arc-bg-primary">
       <div className="px-4 py-3">
         <ChatActionsMenu
           sessionId={sessionId}
-          title={title}
+          title={displayTitle}
           isBookmarked={isBookmarked}
           onBookmark={onBookmark}
           onRename={onRename}

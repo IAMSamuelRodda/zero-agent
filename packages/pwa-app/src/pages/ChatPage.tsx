@@ -8,6 +8,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
+import { useProjectStore } from '../store/projectStore';
 import { MainLayout } from '../components/MainLayout';
 import { ChatInputArea } from '../components/ChatInputArea';
 import { QuickActionCategories } from '../components/QuickActionCategories';
@@ -50,6 +51,9 @@ export function ChatPage() {
   // Get user info from auth store
   const user = useAuthStore((state) => state.user);
 
+  // Get projects from project store
+  const { projects } = useProjectStore();
+
   // Get first name from user.name (e.g., "John Smith" -> "John")
   const firstName = useMemo(() => {
     if (!user?.name) return null;
@@ -88,6 +92,11 @@ export function ChatPage() {
   // Get current chat's bookmark status
   const currentChat = chatList.find(c => c.sessionId === sessionId);
   const isCurrentChatBookmarked = currentChat?.isBookmarked ?? false;
+
+  // Get project name for breadcrumb (if chat is in a project)
+  const projectName = currentChat?.projectId
+    ? projects.find(p => p.id === currentChat.projectId)?.name
+    : undefined;
 
   // Chat action handlers for header
   const handleBookmark = async (chatSessionId: string) => {
@@ -176,6 +185,7 @@ export function ChatPage() {
       <ChatHeader
           sessionId={sessionId}
           title={currentTitle || 'Pip'}
+          projectName={projectName}
           isBookmarked={isCurrentChatBookmarked}
           hasMessages={messages.length > 0}
           onBookmark={handleBookmark}
