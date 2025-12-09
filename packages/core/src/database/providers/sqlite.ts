@@ -28,6 +28,8 @@ import type {
   PersonalityId,
   ResponseStyleId,
   Project,
+  ConnectorType,
+  ConnectorPermission,
 } from "../types.js";
 import {
   ConnectionError,
@@ -285,6 +287,19 @@ export class SQLiteProvider implements DatabaseProvider {
     } catch {
       // Column already exists, ignore
     }
+
+    // Connector permissions table (per-connector permission levels)
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS connector_permissions (
+        user_id TEXT NOT NULL,
+        connector TEXT NOT NULL,
+        permission_level INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (user_id, connector)
+      );
+      CREATE INDEX IF NOT EXISTS idx_connector_perms_user ON connector_permissions(user_id);
+    `);
 
     // MCP-Native Memory tables (Option B)
     this.db.exec(`
@@ -1545,6 +1560,140 @@ export class SQLiteProvider implements DatabaseProvider {
     } catch (error) {
       throw new DatabaseError(
         `Failed to upsert user settings for: ${settings.userId}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  // ============================================================================
+  // Connector Permission Operations
+  // ============================================================================
+
+  async getConnectorPermission(
+    userId: string,
+    connector: ConnectorType
+  ): Promise<ConnectorPermission | null> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      const stmt = this.db.prepare(`
+        SELECT * FROM connector_permissions WHERE user_id = ? AND connector = ?
+      `);
+
+      const row = stmt.get(userId, connector) as {
+        user_id: string;
+        connector: string;
+        permission_level: number;
+        created_at: number;
+        updated_at: number;
+      } | undefined;
+
+      if (!row) return null;
+
+      return {
+        userId: row.user_id,
+        connector: row.connector as ConnectorType,
+        permissionLevel: row.permission_level as PermissionLevel,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to get connector permission for user ${userId}, connector ${connector}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  async upsertConnectorPermission(
+    userId: string,
+    connector: ConnectorType,
+    permissionLevel: PermissionLevel
+  ): Promise<ConnectorPermission> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      const existing = await this.getConnectorPermission(userId, connector);
+      const now = Date.now();
+
+      const permission: ConnectorPermission = {
+        userId,
+        connector,
+        permissionLevel,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      };
+
+      const stmt = this.db.prepare(`
+        INSERT OR REPLACE INTO connector_permissions
+        (user_id, connector, permission_level, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+      `);
+
+      stmt.run(
+        permission.userId,
+        permission.connector,
+        permission.permissionLevel,
+        permission.createdAt,
+        permission.updatedAt
+      );
+
+      return permission;
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to upsert connector permission for user ${userId}, connector ${connector}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  async listConnectorPermissions(userId: string): Promise<ConnectorPermission[]> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      const stmt = this.db.prepare(`
+        SELECT * FROM connector_permissions WHERE user_id = ? ORDER BY connector ASC
+      `);
+
+      const rows = stmt.all(userId) as Array<{
+        user_id: string;
+        connector: string;
+        permission_level: number;
+        created_at: number;
+        updated_at: number;
+      }>;
+
+      return rows.map((row) => ({
+        userId: row.user_id,
+        connector: row.connector as ConnectorType,
+        permissionLevel: row.permission_level as PermissionLevel,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      }));
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to list connector permissions for user ${userId}`,
+        this.name,
+        error as Error
+      );
+    }
+  }
+
+  async deleteConnectorPermission(userId: string, connector: ConnectorType): Promise<void> {
+    if (!this.db) throw new DatabaseError("Database not connected", this.name);
+
+    try {
+      const stmt = this.db.prepare(`
+        DELETE FROM connector_permissions WHERE user_id = ? AND connector = ?
+      `);
+
+      stmt.run(userId, connector);
+    } catch (error) {
+      throw new DatabaseError(
+        `Failed to delete connector permission for user ${userId}, connector ${connector}`,
         this.name,
         error as Error
       );

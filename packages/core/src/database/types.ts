@@ -79,6 +79,50 @@ export interface ExtendedMemory {
 export type OAuthProvider = "xero" | "gmail" | "google_drive" | "google_sheets";
 
 /**
+ * Connector types for permission management
+ * Maps to tool categories in MCP server
+ */
+export type ConnectorType = "xero" | "gmail" | "google_sheets";
+
+/**
+ * Connector Permission
+ * Per-connector permission level for granular access control
+ * Allows users to set different permission levels for each integration
+ */
+export interface ConnectorPermission {
+  userId: string;
+  connector: ConnectorType;
+  permissionLevel: PermissionLevel;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Connector permission level names
+ * Each connector can have its own interpretation of levels
+ */
+export const CONNECTOR_PERMISSION_NAMES: Record<ConnectorType, Record<PermissionLevel, string>> = {
+  xero: {
+    0: "Read-Only",
+    1: "Create Drafts",
+    2: "Approve & Update",
+    3: "Delete & Void",
+  },
+  gmail: {
+    0: "Read-Only",
+    1: "Read-Only", // Gmail doesn't have write operations yet
+    2: "Read-Only",
+    3: "Read-Only",
+  },
+  google_sheets: {
+    0: "Read-Only",
+    1: "Write & Create",
+    2: "Delete",
+    3: "Delete", // Level 3 not exposed for Sheets
+  },
+};
+
+/**
  * OAuth Tokens
  * Stores OAuth credentials for API access (Xero, Gmail, etc.)
  */
@@ -428,9 +472,15 @@ export interface DatabaseProvider {
   useInviteCode(code: string, userId: string): Promise<void>;
   listInviteCodes(): Promise<InviteCode[]>;
 
-  // Safety settings operations
+  // Safety settings operations (global)
   getUserSettings(userId: string): Promise<UserSettings | null>;
   upsertUserSettings(settings: Partial<UserSettings> & { userId: string }): Promise<UserSettings>;
+
+  // Connector permission operations (per-connector)
+  getConnectorPermission(userId: string, connector: ConnectorType): Promise<ConnectorPermission | null>;
+  upsertConnectorPermission(userId: string, connector: ConnectorType, permissionLevel: PermissionLevel): Promise<ConnectorPermission>;
+  listConnectorPermissions(userId: string): Promise<ConnectorPermission[]>;
+  deleteConnectorPermission(userId: string, connector: ConnectorType): Promise<void>;
 
   // Project operations
   createProject(project: Omit<Project, "id" | "createdAt" | "updatedAt">): Promise<Project>;

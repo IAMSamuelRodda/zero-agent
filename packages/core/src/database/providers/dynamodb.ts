@@ -868,6 +868,26 @@ export class DynamoDBProvider implements DatabaseProvider {
   }
 
   // ============================================================================
+  // Connector Permission Operations (Not implemented - use SQLite for now)
+  // ============================================================================
+
+  async getConnectorPermission(_userId: string, _connector: any): Promise<any> {
+    throw new Error("Connector permissions not implemented in DynamoDB provider. Use SQLite.");
+  }
+
+  async upsertConnectorPermission(_userId: string, _connector: any, _permissionLevel: any): Promise<any> {
+    throw new Error("Connector permissions not implemented in DynamoDB provider. Use SQLite.");
+  }
+
+  async listConnectorPermissions(_userId: string): Promise<any[]> {
+    throw new Error("Connector permissions not implemented in DynamoDB provider. Use SQLite.");
+  }
+
+  async deleteConnectorPermission(_userId: string, _connector: any): Promise<void> {
+    throw new Error("Connector permissions not implemented in DynamoDB provider. Use SQLite.");
+  }
+
+  // ============================================================================
   // Operation Snapshot Operations (Not implemented - use SQLite for now)
   // ============================================================================
 
