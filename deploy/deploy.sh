@@ -33,7 +33,7 @@ echo "  → Building pip-app..."
 docker build -t pip-app:latest . --quiet
 
 echo "  → Building pip-mcp..."
-docker build -t pip-mcp:latest -f packages/mcp-remote-server/Dockerfile . --quiet
+docker build -t pip-mcp:latest -f packages/pip-mcp/Dockerfile . --quiet
 
 echo ""
 
