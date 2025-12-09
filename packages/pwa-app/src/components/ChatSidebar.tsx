@@ -10,6 +10,7 @@ import { useChatStore } from '../store/chatStore';
 import { useProjectStore } from '../store/projectStore';
 import { ProfileDropdown } from './ProfileDropdown';
 import { ChatActionsMenu } from './ChatActionsMenu';
+import { ProjectPicker } from './ProjectPicker';
 
 // ============================================================================
 // Icons
@@ -97,11 +98,15 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
     deleteChat,
     renameChat,
     bookmarkChat,
+    moveToProject,
   } = useChatStore();
 
   const { projects, loadProjects } = useProjectStore();
 
   const [recentsHidden, setRecentsHidden] = useState(false);
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [selectedChatProjectId, setSelectedChatProjectId] = useState<string | null>(null);
 
   // Load chat list and projects on mount
   useEffect(() => {
@@ -148,8 +153,18 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
     await deleteChat(chatSessionId);
   };
 
-  const handleAddToProject = (_chatSessionId: string) => {
-    // TODO: Implement add to project
+  const handleAddToProject = (chatSessionId: string) => {
+    // Find the chat to get its current project ID
+    const chat = chatList.find(c => c.sessionId === chatSessionId);
+    setSelectedChatId(chatSessionId);
+    setSelectedChatProjectId(chat?.projectId || null);
+    setProjectPickerOpen(true);
+  };
+
+  const handleProjectSelect = async (projectId: string | null) => {
+    if (selectedChatId) {
+      await moveToProject(selectedChatId, projectId);
+    }
   };
 
   const isChatsPage = location.pathname === '/chats';
@@ -395,6 +410,14 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
 
       {/* Spacer to push content */}
       <div className={`flex-shrink-0 transition-all duration-200 ${isOpen ? 'w-64' : 'w-12'}`} />
+
+      {/* Project Picker Modal */}
+      <ProjectPicker
+        isOpen={projectPickerOpen}
+        onClose={() => setProjectPickerOpen(false)}
+        onSelect={handleProjectSelect}
+        currentProjectId={selectedChatProjectId}
+      />
     </>
   );
 }
