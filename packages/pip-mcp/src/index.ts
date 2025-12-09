@@ -1172,9 +1172,6 @@ app.get("/connectors", async (req: Request, res: Response) => {
       align-items: center;
       gap: 0.75rem;
     }
-    .connector-icon {
-      font-size: 1.5rem;
-    }
     .connector-name {
       font-weight: 600;
       color: #e6e6e6;
@@ -1255,9 +1252,8 @@ app.get("/connectors", async (req: Request, res: Response) => {
     <!-- Xero -->
     <div class="connector ${xeroTokens ? 'connected' : ''}">
       <div class="connector-info">
-        <span class="connector-icon">${xeroTokens ? '✅' : '🔗'}</span>
         <div>
-          <div class="connector-name">Xero</div>
+          <div class="connector-name">${xeroTokens ? 'Xero (Connected)' : 'Xero'}</div>
           <div class="connector-status ${xeroTokens ? 'connected' : ''}">
             ${xeroTokens ? xeroTokens.tenantName || 'Connected' : 'Access invoices, bank accounts, reports'}
           </div>
@@ -1278,9 +1274,8 @@ app.get("/connectors", async (req: Request, res: Response) => {
     <!-- Gmail -->
     <div class="connector ${gmailTokens ? 'connected' : ''}">
       <div class="connector-info">
-        <span class="connector-icon">${gmailTokens ? '✅' : '📧'}</span>
         <div>
-          <div class="connector-name">Gmail</div>
+          <div class="connector-name">${gmailTokens ? 'Gmail (Connected)' : 'Gmail'}</div>
           <div class="connector-status ${gmailTokens ? 'connected' : ''}">
             ${gmailTokens ? gmailTokens.providerEmail || 'Connected' : 'Search emails and download invoices'}
           </div>
@@ -1301,15 +1296,23 @@ app.get("/connectors", async (req: Request, res: Response) => {
     <!-- Google Sheets -->
     <div class="connector ${sheetsTokens ? 'connected' : ''}">
       <div class="connector-info">
-        <span class="connector-icon">${sheetsTokens ? '✅' : '📊'}</span>
         <div>
-          <div class="connector-name">Google Sheets</div>
+          <div class="connector-name">${sheetsTokens ? 'Google Sheets (Connected)' : 'Google Sheets'}</div>
           <div class="connector-status ${sheetsTokens ? 'connected' : ''}">
             ${sheetsTokens ? sheetsTokens.providerEmail || 'Connected' : 'Read and write spreadsheet data'}
           </div>
         </div>
       </div>
-      <button class="connector-btn coming-soon" disabled>Coming Soon</button>
+      ${sheetsTokens
+        ? `<form method="POST" action="/connectors/sheets/disconnect" style="margin:0">
+             <input type="hidden" name="flowId" value="${flowId}">
+             <button type="submit" class="connector-btn disconnect">Disconnect</button>
+           </form>`
+        : `<form method="POST" action="/connectors/sheets" style="margin:0">
+             <input type="hidden" name="flowId" value="${flowId}">
+             <button type="submit" class="connector-btn connect">Connect</button>
+           </form>`
+      }
     </div>
 
     <div class="divider"></div>
@@ -1610,7 +1613,143 @@ app.post("/connectors/gmail/disconnect", express.urlencoded({ extended: true }),
 });
 
 /**
- * Complete integrations and return to caller
+ * Start Google Sheets OAuth from Connectors page
+ */
+app.post("/connectors/sheets", express.urlencoded({ extended: true }), (req: Request, res: Response) => {
+  const { flowId } = req.body;
+  const flow = pendingOAuthFlows.get(flowId);
+
+  if (!flow) {
+    res.status(400).send("Invalid flow");
+    return;
+  }
+
+  const baseUrl = process.env.BASE_URL || "https://mcp.pip.arcforge.au";
+
+  // Build Google OAuth URL for Sheets + Drive
+  const googleAuthUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  googleAuthUrl.searchParams.set("client_id", process.env.GOOGLE_CLIENT_ID || "");
+  googleAuthUrl.searchParams.set("redirect_uri", `${baseUrl}/connectors/sheets/callback`);
+  googleAuthUrl.searchParams.set("response_type", "code");
+  googleAuthUrl.searchParams.set("scope", "https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive.readonly openid email profile");
+  googleAuthUrl.searchParams.set("access_type", "offline");
+  googleAuthUrl.searchParams.set("prompt", "consent");
+  googleAuthUrl.searchParams.set("state", flowId);
+
+  console.log("Starting Google Sheets OAuth from Connectors, flowId:", flowId);
+  res.redirect(googleAuthUrl.toString());
+});
+
+/**
+ * Google Sheets OAuth callback (from Connectors flow)
+ */
+app.get("/connectors/sheets/callback", async (req: Request, res: Response) => {
+  const { code, state: flowId, error } = req.query;
+  const baseUrl = process.env.BASE_URL || "https://mcp.pip.arcforge.au";
+
+  console.log("Google Sheets OAuth callback:", { code: code ? "present" : "missing", flowId, error });
+
+  if (error || !code) {
+    res.redirect(`/connectors?flow=${flowId}&error=sheets`);
+    return;
+  }
+
+  const flow = pendingOAuthFlows.get(flowId as string);
+  if (!flow) {
+    res.status(400).send("Invalid or expired flow");
+    return;
+  }
+
+  try {
+    const { getDb } = await import("./services/xero.js");
+    const db = await getDb();
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code as string,
+        redirect_uri: `${baseUrl}/connectors/sheets/callback`,
+        client_id: process.env.GOOGLE_CLIENT_ID || "",
+        client_secret: process.env.GOOGLE_CLIENT_SECRET || "",
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      console.error("Google Sheets token exchange failed:", await tokenResponse.text());
+      res.redirect(`/connectors?flow=${flowId}&error=sheets`);
+      return;
+    }
+
+    const tokens = await tokenResponse.json() as {
+      access_token: string;
+      refresh_token: string;
+      token_type: string;
+      expires_in: number;
+      scope?: string;
+    };
+
+    // Get user info
+    const userInfoResponse = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    });
+
+    const userInfo = await userInfoResponse.json() as {
+      id: string;
+      email: string;
+    };
+
+    // Save tokens
+    await db.saveOAuthTokens({
+      userId: flow.userId,
+      provider: "google_sheets",
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      tokenType: tokens.token_type,
+      expiresAt: Date.now() + tokens.expires_in * 1000,
+      scopes: tokens.scope?.split(" ") || [],
+      providerUserId: userInfo.id,
+      providerEmail: userInfo.email,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    console.log("Google Sheets connected successfully:", userInfo.email);
+    res.redirect(`/connectors?flow=${flowId}&connected=sheets`);
+  } catch (error) {
+    console.error("Google Sheets callback error:", error);
+    res.redirect(`/connectors?flow=${flowId}&error=sheets`);
+  }
+});
+
+/**
+ * Disconnect Google Sheets
+ */
+app.post("/connectors/sheets/disconnect", express.urlencoded({ extended: true }), async (req: Request, res: Response) => {
+  const { flowId } = req.body;
+  const flow = pendingOAuthFlows.get(flowId);
+
+  if (!flow) {
+    res.status(400).send("Invalid flow");
+    return;
+  }
+
+  try {
+    const { getDb } = await import("./services/xero.js");
+    const db = await getDb();
+    await db.deleteOAuthTokens(flow.userId, "google_sheets");
+    console.log("Google Sheets disconnected for user:", flow.userId);
+    res.redirect(`/connectors?flow=${flowId}&disconnected=sheets`);
+  } catch (error) {
+    console.error("Google Sheets disconnect error:", error);
+    res.redirect(`/connectors?flow=${flowId}&error=disconnect`);
+  }
+});
+
+/**
+ * Complete connectors and return to caller
  * - MCP flow: generates auth code and redirects to Claude.ai/ChatGPT
  * - Standalone flow: just redirects back to PWA app
  */
