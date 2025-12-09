@@ -31,6 +31,24 @@ function errorResult(message: string): ToolResult {
 }
 
 /**
+ * Xero connection error with clear instructions
+ */
+const XERO_NOT_CONNECTED_ERROR = `🔗 **Xero Connection Required**
+
+Your Pip account is authenticated, but Xero is not connected.
+
+**To connect Xero:**
+1. Visit https://app.pip.arcforge.au
+2. Click "Connect to Xero"
+3. Authorize access to your Xero organization
+4. Return to Claude.ai - your tools should now work
+
+If you've already connected Xero and see this error, try reconnecting the Pip connector in Claude.ai:
+1. Go to Settings → Connectors
+2. Find "Pip by Arc Forge"
+3. Click ⋮ menu → Reconnect`;
+
+/**
  * Helper to create success response
  */
 function successResult(text: string): ToolResult {
@@ -48,9 +66,7 @@ export async function getInvoices(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -133,9 +149,7 @@ export async function getProfitAndLoss(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -209,9 +223,7 @@ export async function getBalanceSheet(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -275,9 +287,7 @@ export async function getBalanceSheet(
 export async function getBankAccounts(userId: string): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -322,9 +332,7 @@ export async function getBankTransactions(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -373,9 +381,7 @@ export async function getContacts(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -418,9 +424,7 @@ export async function getContacts(
 export async function getOrganisation(userId: string): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -459,9 +463,7 @@ export async function getAgedReceivables(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -560,9 +562,7 @@ export async function getAgedPayables(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -660,9 +660,7 @@ export async function searchContacts(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {
@@ -711,9 +709,7 @@ export async function listAccounts(
 ): Promise<ToolResult> {
   const xero = await getXeroClient(userId);
   if (!xero) {
-    return errorResult(
-      "Xero not connected. Please connect your Xero account first."
-    );
+    return errorResult(XERO_NOT_CONNECTED_ERROR);
   }
 
   try {

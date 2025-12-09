@@ -35,6 +35,77 @@ import { gmailToolDefinitions, executeGmailTool } from "./handlers/gmail-tools.j
 import { getMemoryManager } from "./services/memory.js";
 import * as safetyService from "./services/safety.js";
 
+// ===========================================
+// Authentication Error Messages
+// Clear, actionable instructions for users
+// ===========================================
+
+const AUTH_ERROR_MESSAGES = {
+  sessionExpired: `🔐 **Authentication Required**
+
+Your Pip session has expired or is not connected.
+
+**To fix this in Claude.ai:**
+1. Click your profile icon (bottom-left) → **Settings**
+2. Go to **Connectors** tab
+3. Find "Pip by Arc Forge" and click the **⋮** menu
+4. Select **Reconnect** (or Disconnect then Connect again)
+5. Complete the sign-in flow when prompted
+
+This will refresh your authentication and restore access to all Pip tools.`,
+
+  xeroNotConnected: `🔗 **Xero Connection Required**
+
+Your Pip account is authenticated, but Xero is not connected.
+
+**To connect Xero:**
+1. Visit https://app.pip.arcforge.au
+2. Click "Connect to Xero"
+3. Authorize access to your Xero organization
+4. Return to Claude.ai - your tools should now work
+
+If you've already connected Xero and see this error, try reconnecting the Pip connector in Claude.ai Settings → Connectors.`,
+
+  xeroTokenExpired: `🔄 **Xero Token Expired**
+
+Your Xero access has expired (tokens expire after 60 days of inactivity).
+
+**To refresh your Xero connection:**
+1. Visit https://app.pip.arcforge.au
+2. Click "Reconnect to Xero"
+3. Re-authorize access
+4. Return to Claude.ai
+
+Alternatively, reconnect the Pip connector in Claude.ai to trigger a fresh OAuth flow.`,
+
+  gmailNotConnected: `📧 **Gmail Connection Required**
+
+Gmail integration is not set up for your account.
+
+**To connect Gmail:**
+1. Visit https://app.pip.arcforge.au
+2. Go to Settings → Integrations
+3. Click "Connect Gmail"
+4. Authorize access to your Gmail account
+
+Note: Gmail integration is in testing mode (limited to 100 users).`,
+
+  permissionDenied: (toolName: string, requiredLevel: string) => `🚫 **Permission Required**
+
+The tool "${toolName}" requires ${requiredLevel} permissions.
+
+**To change your permission level:**
+1. Visit https://app.pip.arcforge.au
+2. Go to Settings → Safety & Permissions
+3. Adjust your permission level as needed
+
+Current permission levels:
+- **Read-only**: View invoices, reports, contacts
+- **Create**: Add new invoices, contacts
+- **Update**: Modify existing records
+- **Delete**: Remove records (use with caution)`,
+};
+
 // Types
 interface Session {
   id: string;
@@ -477,55 +548,20 @@ function createMcpServer(userId?: string): Server {
         };
       }
 
-      // Check if user is authenticated for actual Xero tools
+      // Check if this is a memory or Gmail tool (doesn't require Xero auth)
+      const isMemoryTool = tool.category === "memory";
+      const isGmailTool = tool.category === "gmail";
+
+      // Check if user is authenticated
       if (!userId) {
         return {
           content: [
             {
               type: "text",
-              text: `To use Xero tools, please authenticate first. Add your auth token to the SSE connection URL: /sse?token=YOUR_TOKEN`,
+              text: AUTH_ERROR_MESSAGES.sessionExpired,
             },
           ],
-        };
-      }
-
-      // Check if this is a memory or Gmail tool (doesn't require Xero auth)
-      const isMemoryTool = tool.category === "memory";
-      const isGmailTool = tool.category === "gmail";
-
-      // Check if user is authenticated for Xero tools
-      if (!isMemoryTool && !isGmailTool && !userId) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `To use Xero tools, please authenticate first. Add your auth token to the SSE connection URL: /sse?token=YOUR_TOKEN`,
-            },
-          ],
-        };
-      }
-
-      // Memory tools require auth but not Xero connection
-      if (isMemoryTool && !userId) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `To use memory features, please authenticate first.`,
-            },
-          ],
-        };
-      }
-
-      // Gmail tools require auth but not Xero connection
-      if (isGmailTool && !userId) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `To use Gmail features, please authenticate first.`,
-            },
-          ],
+          isError: true,
         };
       }
 
