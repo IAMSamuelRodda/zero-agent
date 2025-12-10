@@ -1,0 +1,729 @@
+blueprint_type: feature
+created: 2025-12-10
+feature_name: "Milestone 2 Completion & Test User Onboarding"
+tracking_method: document
+
+project_overview:
+  brief: "Complete remaining M2 epics (Document Upload, Testing) and enable Philip (Dad) to test Pip with proper rate limiting, model access control, and GPU optimization. Includes P1 Skills System foundation for M3."
+
+  core_objectives:
+    - "Enable test user onboarding with GPU model optimization and rate limiting"
+    - "Complete Epic 2.4 Document Upload with project association"
+    - "Set up E2E testing infrastructure (Epic 2.6)"
+    - "Implement P1 Skills System foundation for report templates"
+    - "Verify all authorization controls (role/tier/flags) in production"
+
+# Feature 1: Test User Onboarding (CRITICAL PATH)
+feature_1_1:
+  name: "Test User Onboarding - Critical Path"
+  parent_epic: "M2 Completion"
+  description: "Enable Philip (Dad) to test Pip safely without impacting GPU resources or API costs"
+  priority: P0
+
+  complexity:
+    composite: 2.3
+    dimensions:
+      technical_complexity: 2
+      scope_size: 2
+      dependencies: 3
+      uncertainty: 2
+      risk: 3
+      testing: 2
+
+  estimated_days: 4
+
+  acceptance_criteria:
+    - "Philip can sign up and access beta tester features"
+    - "Local GPU model (qwen2.5:3b) stays loaded and responds <2s"
+    - "Rate limiting prevents token abuse on all API endpoints"
+    - "Philip cannot access paid API models (Opus/Sonnet/Haiku)"
+    - "Model selector in PWA shows only accessible models"
+
+  dependencies:
+    - "issue_054 core authorization (completed)"
+    - "Ollama GPU availability via Tailscale"
+
+  task_1_1_1:
+    name: "GPU Model Configuration for Test Users"
+    issue_ref: "issue_055"
+    description: "Configure single small model (qwen2.5:3b or 1.5b) that stays loaded in Ollama for fast test user responses"
+
+    complexity:
+      composite: 2.0
+      dimensions:
+        technical_complexity: 2
+        scope_size: 1
+        dependencies: 2
+        uncertainty: 2
+        risk: 3
+        testing: 2
+
+    estimated_days: 1
+
+    implementation_steps:
+      - "Choose test model: qwen2.5:3b (better quality) vs 1.5b (faster/lighter)"
+      - "Set OLLAMA_KEEP_ALIVE=-1 to keep model in VRAM forever"
+      - "Test model loading and response times (<2s target)"
+      - "Monitor GPU VRAM usage with nvidia-smi (<4GB target)"
+      - "Update agent-core model config to register test model"
+      - "Verify concurrent request handling (2-3 simultaneous max)"
+
+    acceptance_criteria:
+      - "Model stays loaded in Ollama (no cold start delays)"
+      - "First response <2s for test users"
+      - "GPU VRAM usage acceptable for concurrent work"
+      - "Model registered in agent-core with beta_tester tier access"
+
+    files_affected:
+      - "packages/agent-core/src/config.ts"
+      - "Ollama service configuration (Tailscale VPS)"
+
+  task_1_1_2:
+    name: "Rate Limiting System Implementation"
+    issue_ref: "issue_052"
+    description: "Implement token-based rate limiting to prevent API cost abuse during beta testing"
+
+    complexity:
+      composite: 3.5
+      dimensions:
+        technical_complexity: 4
+        scope_size: 3
+        dependencies: 3
+        uncertainty: 3
+        risk: 4
+        testing: 4
+
+    estimated_days: 2
+    needs_decomposition: false
+    decomposition_note: "Well-scoped - database schema, middleware, UI feedback"
+
+    implementation_steps:
+      - "Design rate limit database schema (user, model, tokens_used, reset_at)"
+      - "Create SQLite migration for rate_limits table"
+      - "Implement rate limit middleware for agent orchestrator"
+      - "Add pre-call validation in POST /api/chat endpoint"
+      - "Add pre-call validation in MCP server tools"
+      - "Implement token counting for Anthropic API calls"
+      - "Create usage dashboard in PWA Settings"
+      - "Design error responses for rate limit exceeded"
+      - "Test with simulated high-usage scenarios"
+
+    acceptance_criteria:
+      - "Rate limits enforced for all model tiers (free, starter, pro)"
+      - "Token usage tracked per user per model per period"
+      - "Clear error messages when limits reached"
+      - "Usage dashboard shows current usage and limits"
+      - "Superadmin bypasses all rate limits"
+
+    rate_limit_tiers:
+      free:
+        opus: { tokens: 50000, period: "daily" }
+        sonnet: { tokens: 200000, period: "daily" }
+        haiku: { tokens: 500000, period: "daily" }
+      starter:
+        opus: { tokens: 500000, period: "daily" }
+        sonnet: { tokens: 2000000, period: "daily" }
+        haiku: { tokens: 5000000, period: "daily" }
+      pro:
+        opus: { tokens: 2000000, period: "daily" }
+        sonnet: { tokens: 10000000, period: "daily" }
+        haiku: { tokens: 20000000, period: "daily" }
+
+    files_affected:
+      - "packages/core/src/database/providers/sqlite.ts"
+      - "packages/agent-core/src/orchestrator.ts"
+      - "packages/server/src/routes/chat.ts"
+      - "packages/pip-mcp/src/index.ts"
+      - "packages/pwa-app/src/pages/Settings.tsx"
+
+  task_1_1_3:
+    name: "PWA Model Selector Integration"
+    issue_ref: "issue_054 (remaining)"
+    description: "Wire GET /api/chat/models endpoint to PWA to show only accessible models in chat interface"
+
+    complexity:
+      composite: 1.8
+      dimensions:
+        technical_complexity: 2
+        scope_size: 2
+        dependencies: 2
+        uncertainty: 1
+        risk: 2
+        testing: 2
+
+    estimated_days: 0.5
+
+    implementation_steps:
+      - "Update chatStore to fetch /api/chat/models on load"
+      - "Filter ModelSelector dropdown to show only accessible models"
+      - "Add locked icon for inaccessible models (visual only)"
+      - "Test model selector with different tiers (superadmin, beta_tester, free)"
+      - "Verify error handling when selecting unauthorized model"
+
+    acceptance_criteria:
+      - "Model selector shows only accessible models for current user"
+      - "Beta testers see only local GPU models"
+      - "Free tier users see BYOM placeholder"
+      - "Superadmin sees all models"
+      - "Inaccessible models hidden or visually disabled"
+
+    files_affected:
+      - "packages/pwa-app/src/store/chatStore.ts"
+      - "packages/pwa-app/src/components/ModelSelector.tsx"
+
+  task_1_1_4:
+    name: "Philip Account Setup & Documentation"
+    issue_ref: "issue_056"
+    description: "Create Philip's account with beta_tester flag and provide onboarding documentation"
+
+    complexity:
+      composite: 1.0
+      dimensions:
+        technical_complexity: 1
+        scope_size: 1
+        dependencies: 1
+        uncertainty: 1
+        risk: 1
+        testing: 1
+
+    estimated_days: 0.5
+
+    implementation_steps:
+      - "Generate invite code: PHILIP-BETA-2024"
+      - "Wait for Philip to sign up at app.pip.arcforge.au"
+      - "Assign beta_tester feature flag via SQL"
+      - "Set subscription_tier to 'free'"
+      - "Verify model access (should only see qwen2.5:3b)"
+      - "Write onboarding doc (how to use, what to test, how to report issues)"
+      - "Send onboarding email or message"
+
+    acceptance_criteria:
+      - "Invite code generated and shared"
+      - "Philip account created with correct flags"
+      - "Philip can access local GPU model only"
+      - "Onboarding documentation provided"
+      - "First test chat completed successfully"
+
+    sql_commands:
+      create_invite: |
+        INSERT INTO invite_codes (code, created_by, created_at)
+        VALUES ('PHILIP-BETA-2024', '<your-user-id>', unixepoch() * 1000);
+
+      assign_beta_tester: |
+        UPDATE users
+        SET feature_flags = '["beta_tester"]',
+            subscription_tier = 'free'
+        WHERE email = 'philip@...';
+
+# Feature 2: Document Upload Completion (Epic 2.4)
+feature_1_2:
+  name: "Document Upload Completion"
+  parent_epic: "Epic 2.4 - Document Upload"
+  description: "Complete document upload feature with project association and context injection"
+  priority: P1
+
+  complexity:
+    composite: 2.8
+    dimensions:
+      technical_complexity: 3
+      scope_size: 3
+      dependencies: 2
+      uncertainty: 3
+      risk: 3
+      testing: 3
+
+  estimated_days: 3
+
+  acceptance_criteria:
+    - "Documents associated with specific projects"
+    - "File list displayed in ProjectDetailSidebar"
+    - "Users can delete uploaded documents"
+    - "Document content injected into chat context when project is active"
+    - "Supports PDF, TXT, MD, DOCX formats"
+
+  task_1_2_1:
+    name: "Project Association for Documents"
+    description: "Update document upload to associate files with projectId, not just userId"
+
+    complexity:
+      composite: 2.0
+      dimensions:
+        technical_complexity: 2
+        scope_size: 2
+        dependencies: 2
+        uncertainty: 2
+        risk: 2
+        testing: 2
+
+    estimated_days: 1
+
+    implementation_steps:
+      - "Update documents table schema to include projectId column"
+      - "Create migration to add projectId column"
+      - "Update POST /api/documents/upload to accept projectId param"
+      - "Update GET /api/documents to filter by projectId"
+      - "Update file storage to organize by user/project/filename"
+      - "Test uploads with and without projectId"
+
+    acceptance_criteria:
+      - "Documents stored with projectId association"
+      - "API filters documents by projectId"
+      - "File system organized: /data/documents/<userId>/<projectId>/<filename>"
+      - "Backward compatible with existing uploads (projectId = null)"
+
+    files_affected:
+      - "packages/core/src/database/providers/sqlite.ts"
+      - "packages/server/src/routes/documents.ts"
+
+  task_1_2_2:
+    name: "File List Display in Sidebar"
+    description: "Show uploaded documents in ProjectDetailSidebar with file metadata"
+
+    complexity:
+      composite: 2.5
+      dimensions:
+        technical_complexity: 2
+        scope_size: 3
+        dependencies: 2
+        uncertainty: 3
+        risk: 2
+        testing: 3
+
+    estimated_days: 1
+
+    implementation_steps:
+      - "Fetch documents for current project in ProjectDetailSidebar"
+      - "Display file list with name, size, upload date"
+      - "Add file icons based on type (PDF, TXT, MD, DOCX)"
+      - "Add hover state to show file metadata"
+      - "Test with multiple files and different types"
+
+    acceptance_criteria:
+      - "File list shows all documents for current project"
+      - "Each file shows name, size, upload date"
+      - "File icons match document type"
+      - "Empty state when no documents uploaded"
+
+    files_affected:
+      - "packages/pwa-app/src/components/ProjectDetailSidebar.tsx"
+      - "packages/pwa-app/src/store/documentStore.ts"
+
+  task_1_2_3:
+    name: "File Deletion"
+    description: "Add delete button to remove uploaded documents"
+
+    complexity:
+      composite: 1.8
+      dimensions:
+        technical_complexity: 2
+        scope_size: 2
+        dependencies: 1
+        uncertainty: 2
+        risk: 2
+        testing: 2
+
+    estimated_days: 0.5
+
+    implementation_steps:
+      - "Add delete icon to each file in list"
+      - "Implement DELETE /api/documents/:docName endpoint"
+      - "Add confirmation dialog before deletion"
+      - "Remove file from storage and database"
+      - "Update UI to remove file from list"
+
+    acceptance_criteria:
+      - "Delete button appears on hover"
+      - "Confirmation dialog prevents accidental deletion"
+      - "File removed from storage and database"
+      - "UI updates immediately after deletion"
+
+    files_affected:
+      - "packages/pwa-app/src/components/ProjectDetailSidebar.tsx"
+      - "packages/server/src/routes/documents.ts"
+
+  task_1_2_4:
+    name: "Context Injection for Documents"
+    description: "Inject document content into agent context when project is active"
+
+    complexity:
+      composite: 3.2
+      dimensions:
+        technical_complexity: 4
+        scope_size: 3
+        dependencies: 3
+        uncertainty: 3
+        risk: 3
+        testing: 3
+
+    estimated_days: 1.5
+
+    implementation_steps:
+      - "Load document content when project is selected"
+      - "Extract text from PDF, DOCX (use pdf-parse, mammoth)"
+      - "Inject document text into system message"
+      - "Add token limit for document context (max 10k tokens)"
+      - "Truncate or summarize if documents exceed limit"
+      - "Add UI indicator showing documents in context"
+      - "Test with various document types and sizes"
+
+    acceptance_criteria:
+      - "Document content injected into agent context"
+      - "Agent can reference document content in responses"
+      - "Token limit enforced to prevent context overflow"
+      - "UI shows which documents are in context"
+      - "All supported file types (PDF, TXT, MD, DOCX) work"
+
+    files_affected:
+      - "packages/agent-core/src/orchestrator.ts"
+      - "packages/server/src/routes/chat.ts"
+      - "packages/pwa-app/src/components/ChatInputArea.tsx"
+
+    dependencies:
+      - "task_1_2_1 (project association)"
+
+# Feature 3: Skills System Foundation (P1 for M3)
+feature_1_3:
+  name: "Skills System Foundation"
+  parent_epic: "M3 - Intelligent Features"
+  description: "Implement agent skills system for report templates and specialized workflows"
+  priority: P1
+  issue_ref: "issue_034"
+
+  complexity:
+    composite: 3.8
+    dimensions:
+      technical_complexity: 4
+      scope_size: 4
+      dependencies: 3
+      uncertainty: 4
+      risk: 4
+      testing: 4
+
+  estimated_days: 5
+  needs_decomposition: true
+  decomposition_depth: 3
+  decomposition_reason: "High technical complexity (4.0) and uncertainty (4.0) - needs deeper task breakdown"
+
+  acceptance_criteria:
+    - "Skills defined in YAML/JSON schema"
+    - "Skills loadable from file system"
+    - "Skill context injected into agent prompts"
+    - "UI for skill selection and activation"
+    - "At least 3 example skills (Financial Summary, Tax Prep, Overdue Invoices)"
+
+  task_1_3_1:
+    name: "Skill Definition Schema"
+    description: "Design and implement skill definition format"
+
+    complexity:
+      composite: 3.0
+      dimensions:
+        technical_complexity: 3
+        scope_size: 3
+        dependencies: 2
+        uncertainty: 4
+        risk: 3
+        testing: 3
+
+    estimated_days: 2
+    needs_spike: true
+    spike_reason: "Unclear skill schema design - should we use MCP skill format or custom?"
+    spike_suggestion: "BLUEPRINT-spike-skill-schema-20251210.yaml"
+
+    implementation_steps:
+      - "Research skill schema options (MCP skills, custom YAML, Claude Code pattern)"
+      - "Define skill schema (name, description, prompt, tools, examples)"
+      - "Create TypeScript types for skill definitions"
+      - "Implement skill loader from file system"
+      - "Add validation for skill schema"
+
+    acceptance_criteria:
+      - "Skill schema documented and validated"
+      - "Skills loaded from /data/skills/ directory"
+      - "Schema validation catches malformed skills"
+
+    files_affected:
+      - "packages/core/src/skills/types.ts"
+      - "packages/core/src/skills/loader.ts"
+
+  task_1_3_2:
+    name: "Skill Loading System"
+    description: "Implement skill activation and context injection"
+
+    complexity:
+      composite: 3.5
+      dimensions:
+        technical_complexity: 4
+        scope_size: 3
+        dependencies: 3
+        uncertainty: 4
+        risk: 4
+        testing: 3
+
+    estimated_days: 2
+
+    implementation_steps:
+      - "Implement skill registry in agent-core"
+      - "Add skill activation API endpoint"
+      - "Inject skill prompt/context into agent system message"
+      - "Handle skill-specific tool filtering"
+      - "Test skill activation and deactivation"
+
+    acceptance_criteria:
+      - "Skills can be activated for a session or project"
+      - "Skill context injected into agent prompts"
+      - "Agent behavior changes based on active skill"
+      - "Multiple skills can be active simultaneously"
+
+    files_affected:
+      - "packages/agent-core/src/orchestrator.ts"
+      - "packages/server/src/routes/skills.ts"
+
+    dependencies:
+      - "task_1_3_1 (skill schema)"
+
+  task_1_3_3:
+    name: "UI for Skill Activation"
+    description: "Add skill selector to PWA settings or project sidebar"
+
+    complexity:
+      composite: 2.8
+      dimensions:
+        technical_complexity: 3
+        scope_size: 3
+        dependencies: 3
+        uncertainty: 3
+        risk: 3
+        testing: 3
+
+    estimated_days: 1.5
+
+    implementation_steps:
+      - "Add skills section to Settings or ProjectDetailSidebar"
+      - "Display available skills with descriptions"
+      - "Add toggle/checkbox to activate skills"
+      - "Save active skills to user settings or project"
+      - "Test skill activation UI"
+
+    acceptance_criteria:
+      - "Skills listed in UI with descriptions"
+      - "Users can activate/deactivate skills"
+      - "Active skills persisted to database"
+      - "Visual indicator shows which skills are active"
+
+    files_affected:
+      - "packages/pwa-app/src/pages/Settings.tsx"
+      - "packages/pwa-app/src/components/ProjectDetailSidebar.tsx"
+      - "packages/pwa-app/src/store/skillStore.ts"
+
+    dependencies:
+      - "task_1_3_2 (skill loading)"
+
+  task_1_3_4:
+    name: "Example Skills Implementation"
+    description: "Create 3 example skills to validate system"
+
+    complexity:
+      composite: 2.0
+      dimensions:
+        technical_complexity: 2
+        scope_size: 2
+        dependencies: 2
+        uncertainty: 2
+        risk: 2
+        testing: 2
+
+    estimated_days: 1
+
+    skills_to_create:
+      - name: "Financial Summary"
+        description: "Generate monthly P&L summaries"
+        tools: ["get_profit_and_loss", "get_balance_sheet"]
+
+      - name: "Tax Preparation"
+        description: "Prepare tax documents and summaries"
+        tools: ["get_profit_and_loss", "get_bank_transactions", "list_accounts"]
+
+      - name: "Overdue Invoice Follow-up"
+        description: "Track and follow up on overdue invoices"
+        tools: ["get_aged_receivables", "get_contacts", "search_contacts"]
+
+    acceptance_criteria:
+      - "3 skills defined in /data/skills/"
+      - "Skills load successfully"
+      - "Skills change agent behavior as expected"
+      - "Skills documented with examples"
+
+    files_affected:
+      - "data/skills/financial-summary.yaml"
+      - "data/skills/tax-preparation.yaml"
+      - "data/skills/overdue-invoices.yaml"
+
+    dependencies:
+      - "task_1_3_1 (skill schema)"
+      - "task_1_3_2 (skill loading)"
+
+# Feature 4: E2E Testing Setup (Epic 2.6)
+feature_1_4:
+  name: "E2E Testing Infrastructure"
+  parent_epic: "Epic 2.6 - Testing"
+  description: "Set up Playwright E2E testing for critical user paths"
+  priority: P2
+
+  complexity:
+    composite: 2.5
+    dimensions:
+      technical_complexity: 3
+      scope_size: 3
+      dependencies: 2
+      uncertainty: 2
+      risk: 2
+      testing: 3
+
+  estimated_days: 3
+
+  acceptance_criteria:
+    - "Playwright configured for PWA testing"
+    - "CI/CD pipeline runs E2E tests"
+    - "Critical path tests passing (signup, chat, settings)"
+    - "Test reports generated and saved"
+
+  task_1_4_1:
+    name: "Playwright Configuration"
+    description: "Install and configure Playwright for E2E testing"
+
+    complexity:
+      composite: 1.8
+      dimensions:
+        technical_complexity: 2
+        scope_size: 2
+        dependencies: 2
+        uncertainty: 2
+        risk: 1
+        testing: 2
+
+    estimated_days: 0.5
+
+    implementation_steps:
+      - "Install @playwright/test package"
+      - "Create playwright.config.ts"
+      - "Set up test directory structure"
+      - "Configure baseURL for local dev and staging"
+      - "Add test scripts to package.json"
+
+    acceptance_criteria:
+      - "Playwright installed and configured"
+      - "Test directory created"
+      - "pnpm test:e2e runs successfully"
+
+    files_affected:
+      - "package.json"
+      - "playwright.config.ts"
+      - "tests/e2e/"
+
+  task_1_4_2:
+    name: "Critical Path Tests"
+    description: "Write E2E tests for critical user flows"
+
+    complexity:
+      composite: 3.0
+      dimensions:
+        technical_complexity: 3
+        scope_size: 3
+        dependencies: 3
+        uncertainty: 2
+        risk: 3
+        testing: 4
+
+    estimated_days: 2
+
+    tests_to_write:
+      - name: "User signup flow"
+        description: "Test invite code validation and account creation"
+
+      - name: "Chat interaction"
+        description: "Test sending messages and receiving responses"
+
+      - name: "Project creation"
+        description: "Test creating and switching projects"
+
+      - name: "Settings update"
+        description: "Test updating user settings (response style, permissions)"
+
+      - name: "Model selector"
+        description: "Test model selection and tier-based filtering"
+
+    acceptance_criteria:
+      - "5 critical path tests written and passing"
+      - "Tests use page object pattern"
+      - "Tests run in CI/CD pipeline"
+      - "Test reports saved as artifacts"
+
+    files_affected:
+      - "tests/e2e/auth.spec.ts"
+      - "tests/e2e/chat.spec.ts"
+      - "tests/e2e/projects.spec.ts"
+      - "tests/e2e/settings.spec.ts"
+
+  task_1_4_3:
+    name: "CI/CD Integration"
+    description: "Add E2E tests to deployment pipeline"
+
+    complexity:
+      composite: 2.0
+      dimensions:
+        technical_complexity: 2
+        scope_size: 2
+        dependencies: 2
+        uncertainty: 2
+        risk: 2
+        testing: 2
+
+    estimated_days: 0.5
+
+    implementation_steps:
+      - "Add E2E test job to GitHub Actions workflow (if using)"
+      - "Configure test environment with test database"
+      - "Run tests before deployment"
+      - "Save test reports as artifacts"
+      - "Block deployment if critical tests fail"
+
+    acceptance_criteria:
+      - "E2E tests run automatically on push"
+      - "Test failures block deployment"
+      - "Test reports accessible in CI/CD dashboard"
+
+    files_affected:
+      - ".github/workflows/deploy.yml" # or equivalent CI config
+
+# Summary
+summary:
+  total_features: 4
+  total_tasks: 13
+  total_estimated_days: 15
+  critical_path_days: 4
+
+  priority_breakdown:
+    P0: 1  # Test User Onboarding
+    P1: 2  # Document Upload, Skills System
+    P2: 1  # E2E Testing
+
+  risk_areas:
+    - "Skills system requires spike for schema design (task_1_3_1)"
+    - "Rate limiting complexity moderate-high (task_1_1_2)"
+    - "Document context injection may hit token limits (task_1_2_4)"
+
+  dependencies:
+    external:
+      - "Ollama GPU availability via Tailscale"
+      - "Philip's availability for beta testing"
+
+    internal:
+      - "issue_054 authorization system (completed)"
+      - "Projects schema and API (completed)"
+
+  post_completion_actions:
+    - "Archive this blueprint to specs/archive/"
+    - "Update PROGRESS.md with M2 completion status"
+    - "Move resolved issues from ISSUES.md to CHANGELOG.md"
+    - "Generate M3 planning blueprint for next milestone"

@@ -479,10 +479,11 @@ Set up Philip's beta tester account with proper access controls.
 ---
 
 #### issue_034: Skills System - Report Templates & Agent Capabilities
-**Status:** 🔴 Open
+**Status:** ⚠️ Flagged (Spike Required)
 **Priority:** P1 (High - core value prop)
-**Component:** \`packages/agent-core\`
+**Component:** `packages/agent-core`
 **Created:** 2025-12-02
+**Updated:** 2025-12-10
 
 **Description:** Implement agent skills/capabilities system for report templates and specialized workflows
 
@@ -497,7 +498,18 @@ Set up Philip's beta tester account with proper access controls.
 - Prompt injection for skill context
 - UI for skill selection/activation
 
-**Complexity:** 3.5/5 (Medium-High - new subsystem)
+**⚠️ SPIKE REQUIRED: Skill Schema Design**
+- **Uncertainty**: High (4/5) - unclear whether to use MCP skill format or custom schema
+- **Options to explore**:
+  1. MCP-compatible skill format (reuse existing patterns from Claude Code skills)
+  2. Custom YAML schema optimized for Pip's bookkeeping domain
+  3. Hybrid approach with MCP compatibility layer
+- **Spike deliverables**: Schema proposal, example skills, integration approach
+- **Estimated spike duration**: 1 day
+
+**Complexity:** 3.8/5 (High - new subsystem, needs decomposition)
+
+**Blueprint Reference:** `specs/BLUEPRINT-feature-m2-completion-20251210.yaml` (feature_1_3)
 
 ---
 

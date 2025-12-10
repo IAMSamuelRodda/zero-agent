@@ -44,6 +44,37 @@
 | 2.4 Document Upload | 🔵 | Backend wired, needs project association |
 | 2.5 Personality | ⏸️ | Deferred - replaced by Response Styles |
 | 2.6 Testing | 🔵 | Continuous |
+| **Critical Path** | 🔵 | Test User Onboarding (P0) |
+
+---
+
+### Critical Path: Test User Onboarding 🔵
+
+**Status**: In Progress
+**Priority**: P0 (Blocks Philip's testing)
+**Blueprint**: `specs/archive/BLUEPRINT-feature-m2-completion-20251210.yaml` (feature_1_1)
+**Estimated**: 4 days | **Complexity**: 2.3/5
+
+**Objective**: Enable Philip (Dad) to test Pip safely without impacting GPU resources or API costs.
+
+**Tasks**:
+| Task | Issue | Est | Complexity | Status |
+|------|-------|-----|------------|--------|
+| GPU model configuration | issue_055 | 1d | 2.0/5 | 🔴 Not Started |
+| Rate limiting system | issue_052 | 2d | 3.5/5 | 🔴 Not Started |
+| PWA model selector integration | issue_054 | 0.5d | 1.8/5 | 🔴 Not Started |
+| Philip account setup | issue_056 | 0.5d | 1.0/5 | 🔴 Not Started |
+
+**Acceptance Criteria**:
+- [ ] Philip can sign up and access beta tester features
+- [ ] Local GPU model (qwen2.5:3b) stays loaded and responds <2s
+- [ ] Rate limiting prevents token abuse on all API endpoints
+- [ ] Model selector in PWA shows only accessible models
+- [ ] Philip cannot access paid API models (Opus/Sonnet/Haiku)
+
+**Dependencies**:
+- ✅ issue_054 core authorization (completed)
+- Ollama GPU availability via Tailscale
 
 ### Additional Features (Not in Original Blueprint)
 
@@ -110,7 +141,9 @@
 ### Epic 2.4: Document Upload 🔵
 
 **Status**: Partial (backend wired, UI connected)
-**Priority**: Medium
+**Priority**: P1
+**Blueprint**: `specs/archive/BLUEPRINT-feature-m2-completion-20251210.yaml` (feature_1_2)
+**Estimated**: 3 days | **Complexity**: 2.8/5
 
 **Completed**:
 - [x] File upload API (`POST /documents/upload`)
@@ -118,10 +151,12 @@
 - [x] File picker with PDF/TXT/MD/DOCX support
 
 **Remaining**:
-- [ ] Associate uploads with project (not just user)
-- [ ] Display uploaded files list in sidebar
-- [ ] Delete file functionality
-- [ ] Inject file content into chat context
+| Task | Est | Complexity | Status |
+|------|-----|------------|--------|
+| Project association for uploads | 1d | 2.0/5 | 🔴 Not Started |
+| File list display in sidebar | 1d | 2.5/5 | 🔴 Not Started |
+| File deletion | 0.5d | 1.8/5 | 🔴 Not Started |
+| Context injection | 1.5d | 3.2/5 | 🔴 Not Started |
 
 **Files**: `packages/pwa-app/src/components/ProjectDetailSidebar.tsx`
 
@@ -144,7 +179,9 @@
 ### Epic 2.6: Testing 🔵
 
 **Status**: Ongoing
-**Priority**: Medium (continuous)
+**Priority**: P2
+**Blueprint**: `specs/archive/BLUEPRINT-feature-m2-completion-20251210.yaml` (feature_1_4)
+**Estimated**: 3 days | **Complexity**: 2.5/5
 
 **Completed**:
 - [x] Manual testing of Projects UX (12 issues found and fixed)
@@ -152,9 +189,11 @@
 - [x] ChatGPT integration validation
 
 **Remaining**:
-- [ ] Automated E2E tests (Playwright)
-- [ ] Response Styles verification in chat
-- [ ] Memory injection consistency tests
+| Task | Est | Complexity | Status |
+|------|-----|------------|--------|
+| Playwright configuration | 0.5d | 1.8/5 | 🔴 Not Started |
+| Critical path E2E tests | 2d | 3.0/5 | 🔴 Not Started |
+| CI/CD integration | 0.5d | 2.0/5 | 🔴 Not Started |
 
 ---
 
