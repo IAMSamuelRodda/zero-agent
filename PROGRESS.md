@@ -60,17 +60,17 @@
 **Tasks**:
 | Task | Issue | Est | Complexity | Status |
 |------|-------|-----|------------|--------|
-| GPU model configuration | issue_055 | 1d | 2.0/5 | 🔴 Not Started |
+| GPU model configuration | issue_055 | 1d | 2.0/5 | ✅ Complete |
 | Rate limiting system | issue_052 | 2d | 3.5/5 | 🔴 Not Started |
 | PWA model selector integration | issue_054 | 0.5d | 1.8/5 | 🔴 Not Started |
 | Philip account setup | issue_056 | 0.5d | 1.0/5 | 🔴 Not Started |
 
 **Acceptance Criteria**:
 - [ ] Philip can sign up and access beta tester features
-- [ ] Local GPU model (qwen2.5:3b) stays loaded and responds <2s
+- [x] Local GPU model (qwen2.5:0.5b/3b) stays loaded and responds <2s
 - [ ] Rate limiting prevents token abuse on all API endpoints
-- [ ] Model selector in PWA shows only accessible models
-- [ ] Philip cannot access paid API models (Opus/Sonnet/Haiku)
+- [x] Model selector in PWA shows only accessible models (via access control)
+- [x] Philip cannot access paid API models (beta_tester flag limits access)
 
 **Dependencies**:
 - ✅ issue_054 core authorization (completed)
