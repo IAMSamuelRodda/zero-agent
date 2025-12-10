@@ -164,6 +164,8 @@ interface ToolsMenuProps {
 function ToolsMenu({ isOpen, onClose, currentStyle, styles, onStyleChange, buttonRef }: ToolsMenuProps) {
   const [showStyleSubmenu, setShowStyleSubmenu] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const styleButtonRef = useRef<HTMLButtonElement>(null);
 
   // Detect viewport position on open
   useEffect(() => {
@@ -178,47 +180,40 @@ function ToolsMenu({ isOpen, onClose, currentStyle, styles, onStyleChange, butto
     }
   }, [isOpen, buttonRef]);
 
+  // Calculate submenu position when style button is clicked
+  useEffect(() => {
+    if (showStyleSubmenu && styleButtonRef.current) {
+      const rect = styleButtonRef.current.getBoundingClientRect();
+      setMenuPosition({
+        top: rect.top,
+        left: rect.right + 4,
+      });
+    }
+  }, [showStyleSubmenu]);
+
   if (!isOpen) return null;
 
   return (
     <>
-      <div className="fixed inset-0 z-10" onClick={onClose} />
+      <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
-        className={`absolute left-0 w-64 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl z-50 max-h-[400px] overflow-y-auto ${
+        className={`absolute left-0 w-64 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl z-50 ${
           openUpward ? 'bottom-full mb-2' : 'top-full mt-2'
         }`}
       >
         <div className="py-1">
           {/* Style selector */}
-          <div className="relative">
-            <button
-              onClick={() => setShowStyleSubmenu(!showStyleSubmenu)}
-              className="w-full flex items-center justify-between px-4 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
-            >
-              <span>Response Style</span>
-              <div className="flex items-center gap-2 text-arc-text-secondary">
-                <span className="text-xs">{styles.find(s => s.id === currentStyle)?.name || 'Normal'}</span>
-                <ChevronIcon direction="right" />
-              </div>
-            </button>
-            {showStyleSubmenu && (
-              <div className="absolute left-full top-0 ml-1 w-40 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl max-h-64 overflow-y-auto">
-                <div className="py-1">
-                  {styles.map((style) => (
-                    <button
-                      key={style.id}
-                      onClick={() => { onStyleChange(style.id); setShowStyleSubmenu(false); onClose(); }}
-                      title={style.description}
-                      className="w-full flex items-center justify-between px-4 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
-                    >
-                      <span>{style.name}</span>
-                      {currentStyle === style.id && <CheckIcon />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            ref={styleButtonRef}
+            onClick={() => setShowStyleSubmenu(!showStyleSubmenu)}
+            className="w-full flex items-center justify-between px-4 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
+          >
+            <span>Response Style</span>
+            <div className="flex items-center gap-2 text-arc-text-secondary">
+              <span className="text-xs">{styles.find(s => s.id === currentStyle)?.name || 'Normal'}</span>
+              <ChevronIcon direction="right" />
+            </div>
+          </button>
 
           <div className="border-t border-arc-border my-1" />
 
@@ -227,6 +222,28 @@ function ToolsMenu({ isOpen, onClose, currentStyle, styles, onStyleChange, butto
           </a>
         </div>
       </div>
+
+      {/* Style submenu - fixed position to escape parent overflow */}
+      {showStyleSubmenu && (
+        <div
+          className="fixed w-40 bg-arc-bg-secondary border border-arc-border rounded-lg shadow-xl z-50"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+        >
+          <div className="py-1">
+            {styles.map((style) => (
+              <button
+                key={style.id}
+                onClick={() => { onStyleChange(style.id); setShowStyleSubmenu(false); onClose(); }}
+                title={style.description}
+                className="w-full flex items-center justify-between px-4 py-2 text-sm text-arc-text-primary hover:bg-arc-bg-tertiary transition-colors"
+              >
+                <span>{style.name}</span>
+                {currentStyle === style.id && <CheckIcon />}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }
