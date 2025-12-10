@@ -57,31 +57,6 @@ Scroll up before opening tools dropdown.
 
 ### High Priority Issues
 
-#### issue_043: Memory System Not Fully Project-Isolated
-**Status:** 🟡 Partial
-**Priority:** P1 (High - data isolation)
-**Component:** \`packages/agent-core/src/orchestrator.ts\`, \`packages/agent-core/src/tools/memory-tools.ts\`
-**Created:** 2025-12-10
-
-**Description:** Memory system has project isolation in database queries but requires explicit projectId passing which isn't happening consistently.
-
-**Current State:**
-- Database queries correctly filter by \`project_id\` (see \`getMemoryContext\` and memory tools)
-- BUT: \`processMessage\` passes \`request.projectId\` but this might be undefined/wrong
-- Memory tools accept \`projectId\` as optional parameter - LLM must decide to pass it
-
-**Issues:**
-- Chat route receives \`projectId\` from request body, passed to orchestrator ✓
-- Orchestrator passes \`projectId\` to \`getMemoryContext\` ✓
-- BUT: Memory tools (\`read_memory\`, \`search_memory\`) rely on LLM to pass projectId
-- If LLM doesn't pass projectId, queries default to \`project_id IS NULL\` (global scope)
-
-**Risk:** Memory from Project A could leak to Project B if projectId not consistently passed
-
-**Fix Strategy:** Auto-inject projectId into tool execution context, don't rely on LLM parameter
-
-**Complexity:** 2.0/5 (Low-Medium)
-
 ---
 
 ### Medium Priority Issues

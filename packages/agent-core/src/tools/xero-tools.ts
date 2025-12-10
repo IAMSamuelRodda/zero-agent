@@ -6,6 +6,11 @@
 
 import type { XeroClient } from "../xero/client.js";
 
+export interface ToolContext {
+  userId: string;
+  projectId?: string;
+}
+
 export interface Tool {
   name: string;
   description: string;
@@ -14,7 +19,7 @@ export interface Tool {
     properties: Record<string, any>;
     required?: string[];
   };
-  execute: (params: any, userId: string) => Promise<any>;
+  execute: (params: any, context: ToolContext) => Promise<any>;
 }
 
 export function createXeroTools(xeroClient: XeroClient): Tool[] {
@@ -37,7 +42,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
           },
         },
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const invoices = await xeroClient.getInvoices(userId, {
           status: params.status,
         });
@@ -89,7 +94,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
         },
         required: ["invoiceId"],
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const invoice = await xeroClient.getInvoice(userId, params.invoiceId);
 
         return {
@@ -126,7 +131,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
           },
         },
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const contacts = await xeroClient.getContacts(userId);
 
         const limited = contacts.slice(0, params.limit || 10);
@@ -152,7 +157,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
         type: "object",
         properties: {},
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const org = await xeroClient.getOrganisation(userId);
 
         return {
@@ -184,7 +189,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
           },
         },
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const report = await xeroClient.getProfitAndLoss(userId, {
           fromDate: params.fromDate,
           toDate: params.toDate,
@@ -267,7 +272,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
           },
         },
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const report = await xeroClient.getBalanceSheet(
           userId,
           params.date
@@ -341,7 +346,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
           },
         },
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const report = await xeroClient.getAgedReceivables(userId, params.date);
 
         // Parse the report rows to extract useful data
@@ -389,7 +394,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
           },
         },
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const report = await xeroClient.getAgedPayables(userId, params.date);
 
         const rows = report?.Rows || [];
@@ -436,7 +441,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
         },
         required: ["searchTerm"],
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const contacts = await xeroClient.searchContacts(userId, params.searchTerm);
 
         return contacts.slice(0, 10).map((contact: any) => ({
@@ -464,7 +469,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
           },
         },
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const transactions = await xeroClient.getBankTransactions(userId);
 
         return transactions.slice(0, params.limit || 10).map((txn: any) => ({
@@ -487,7 +492,7 @@ export function createXeroTools(xeroClient: XeroClient): Tool[] {
         type: "object",
         properties: {},
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId }) => {
         const accounts = await xeroClient.getBankAccounts(userId);
 
         return accounts.map((account: any) => ({

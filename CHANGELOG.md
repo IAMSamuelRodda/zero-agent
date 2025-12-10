@@ -62,6 +62,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated all documentation for Simple tier
 
 ### Fixed
+- **Memory System Project Isolation (issue_043)** - Auto-inject projectId (2025-12-10)
+  - Tool interface now includes `ToolContext` with `userId` and `projectId`
+  - Orchestrator passes `request.projectId` to all tool executions
+  - Memory tools (`read_memory`, `search_memory`) use context.projectId automatically
+  - LLM no longer needs to explicitly pass projectId parameter
+  - Prevents memory leakage between projects
+  - `packages/agent-core/src/tools/xero-tools.ts` - ToolContext interface
+  - `packages/agent-core/src/tools/memory-tools.ts` - Updated execute signatures
+  - `packages/agent-core/src/orchestrator.ts:229` - Context injection
 - **Manual Testing Bug Fixes (12 issues)** (2025-12-10)
 
   **P0 Critical Fixes:**

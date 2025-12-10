@@ -31,13 +31,13 @@
 
 | Priority | Issue | Summary |
 |----------|-------|---------|
-| P1 | issue_043 | Memory system project isolation (auto-inject projectId) |
 | P1 | issue_034 | Skills System - report templates & agent capabilities |
 | P2 | issue_044 | Remove global currentProjectId dependency |
 | P2 | issue_036 | Collapsible thinking blocks + tool call visibility |
 
 ### Recently Completed
 
+- **Memory Project Isolation (issue_043)** - Auto-inject projectId into tools (Dec 10)
 - **Google Sheets Integration (issue_039)** - Full OAuth + 15 MCP tools (Dec 10)
 - 12 manual testing bug fixes (Dec 10) - see CHANGELOG.md
 - Gmail image attachment viewing

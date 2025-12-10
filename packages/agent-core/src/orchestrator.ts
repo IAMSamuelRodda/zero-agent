@@ -225,7 +225,8 @@ export class AgentOrchestrator {
         // Find and execute the tool (search all tools)
         const tool = allTools.find((t) => t.name === toolName);
         if (tool) {
-          const toolResult = await tool.execute(toolInput, userId);
+          // Pass execution context with userId and projectId for proper scoping
+          const toolResult = await tool.execute(toolInput, { userId, projectId: request.projectId });
 
           // Send tool result back to LLM for final response
           const followUpConversation = [

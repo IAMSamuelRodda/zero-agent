@@ -1,7 +1,8 @@
 /**
  * Memory Tools for Agent
  *
- * Tool definitions that the LLM can call to interact with user memory
+ * Tool definitions that the LLM can call to interact with user memory.
+ * projectId is auto-injected from the execution context - LLM doesn't need to pass it.
  */
 
 import Database from 'better-sqlite3';
@@ -18,17 +19,13 @@ export function createMemoryTools(): Tool[] {
         "Read what you remember about this user from previous conversations. Use this when the user asks 'what do you know about me?', 'what have you remembered?', or wants to see their stored information. Returns entities, observations, and relationships from the knowledge graph.",
       parameters: {
         type: "object",
-        properties: {
-          projectId: {
-            type: "string",
-            description: "Optional project ID to scope the memory query",
-          },
-        },
+        properties: {},
       },
-      execute: async (params, userId) => {
+      execute: async (_params, { userId, projectId }) => {
         const db = new Database(DB_PATH);
         try {
-          const projectId = params.projectId || null;
+          // projectId is auto-injected from context, not LLM params
+          const projId = projectId || null;
           const scopeClause = projectId
             ? 'AND e.project_id = ?'
             : 'AND e.project_id IS NULL';
@@ -92,18 +89,15 @@ export function createMemoryTools(): Tool[] {
             type: "string",
             description: "Search query to find relevant memories",
           },
-          projectId: {
-            type: "string",
-            description: "Optional project ID to scope the search",
-          },
         },
         required: ["query"],
       },
-      execute: async (params, userId) => {
+      execute: async (params, { userId, projectId }) => {
         const db = new Database(DB_PATH);
         try {
-          const { query, projectId } = params;
+          const { query } = params;
           const searchTerm = `%${query.toLowerCase()}%`;
+          // projectId is auto-injected from context
           const projId = projectId || null;
 
           const scopeClause = projId
