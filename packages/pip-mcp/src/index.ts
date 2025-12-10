@@ -869,10 +869,23 @@ function extractAuthToken(req: Request): { userId: string } | null {
 // Claude.ai expects MCP at root path for auto-discovery
 app.all("/", async (req: Request, res: Response) => {
   const method = req.method;
-  console.log(`[Streamable HTTP] ${method} / request`);
-
-  // Extract session ID from header (for existing sessions)
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
+  const authHeader = req.headers.authorization;
+  const contentType = req.headers['content-type'];
+  const accept = req.headers.accept;
+
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`[MCP ROOT] ${method} / request`);
+  console.log(`[MCP ROOT] Headers:`);
+  console.log(`  - Mcp-Session-Id: ${sessionId || '(none)'}`);
+  console.log(`  - Authorization: ${authHeader ? authHeader.substring(0, 30) + '...' : '(none)'}`);
+  console.log(`  - Content-Type: ${contentType || '(none)'}`);
+  console.log(`  - Accept: ${accept || '(none)'}`);
+  if (method === 'POST' && req.body) {
+    console.log(`[MCP ROOT] Body method: ${req.body?.method || '(none)'}`);
+    console.log(`[MCP ROOT] Body (first 200 chars): ${JSON.stringify(req.body).substring(0, 200)}`);
+  }
+  console.log(`${'='.repeat(60)}`);
 
   // For POST requests, we need to handle initialization and regular messages
   if (method === 'POST') {
@@ -881,10 +894,13 @@ app.all("/", async (req: Request, res: Response) => {
     const isInitRequest = body?.method === 'initialize';
 
     if (isInitRequest) {
+      console.log(`[MCP ROOT] Initialize request detected`);
+
       // New session - authenticate user
       const auth = extractAuthToken(req);
       if (!auth) {
-        console.log("[Streamable HTTP] No auth token for init - returning 401");
+        console.log("[MCP ROOT] ❌ No auth token for init - returning 401");
+        console.log(`[MCP ROOT] Auth header was: ${authHeader || '(missing)'}`);
         res.status(401).json({
           error: "unauthorized",
           error_description: "Authentication required. Please connect via OAuth."
@@ -892,7 +908,7 @@ app.all("/", async (req: Request, res: Response) => {
         return;
       }
 
-      console.log(`[Streamable HTTP] New session init for user: ${auth.userId}`);
+      console.log(`[MCP ROOT] ✓ Auth successful for user: ${auth.userId}`);
 
       // Create MCP server for this user (before transport so we can reference it in callback)
       const server = createMcpServer(auth.userId);
@@ -1933,7 +1949,12 @@ const OAUTH_CLIENT_SECRET = process.env.MCP_OAUTH_CLIENT_SECRET || "pip-mcp-secr
 app.get("/.well-known/oauth-authorization-server", (req: Request, res: Response) => {
   const baseUrl = process.env.BASE_URL || "https://mcp.pip.arcforge.au";
 
-  res.json({
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`[OAUTH DISCOVERY] GET /.well-known/oauth-authorization-server`);
+  console.log(`[OAUTH DISCOVERY] Base URL: ${baseUrl}`);
+  console.log(`${'='.repeat(60)}`);
+
+  const metadata = {
     issuer: baseUrl,
     authorization_endpoint: `${baseUrl}/oauth/authorize`,
     token_endpoint: `${baseUrl}/oauth/token`,
@@ -1942,7 +1963,10 @@ app.get("/.well-known/oauth-authorization-server", (req: Request, res: Response)
     code_challenge_methods_supported: ["S256", "plain"],
     token_endpoint_auth_methods_supported: ["none", "client_secret_post", "client_secret_basic"],
     scopes_supported: ["mcp"]
-  });
+  };
+
+  console.log(`[OAUTH DISCOVERY] Returning:`, JSON.stringify(metadata, null, 2));
+  res.json(metadata);
 });
 
 // Store authorization codes temporarily (in production, use Redis or database)
@@ -2381,50 +2405,76 @@ app.post("/oauth/register/submit", express.urlencoded({ extended: true }), async
  * Claude.ai exchanges authorization code for access token
  */
 app.post("/oauth/token", express.urlencoded({ extended: true }), (req: Request, res: Response) => {
-  const { grant_type, code, redirect_uri, client_id, client_secret } = req.body;
+  const { grant_type, code, redirect_uri, client_id, client_secret, code_verifier } = req.body;
 
-  console.log("OAuth token request:", { grant_type, code, client_id, hasSecret: !!client_secret });
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`[OAUTH TOKEN] POST /oauth/token`);
+  console.log(`[OAUTH TOKEN] Request body:`);
+  console.log(`  - grant_type: ${grant_type}`);
+  console.log(`  - code: ${code ? code.substring(0, 20) + '...' : '(none)'}`);
+  console.log(`  - redirect_uri: ${redirect_uri}`);
+  console.log(`  - client_id: ${client_id}`);
+  console.log(`  - client_secret: ${client_secret ? '(provided)' : '(none)'}`);
+  console.log(`  - code_verifier: ${code_verifier ? '(provided - PKCE)' : '(none)'}`);
+  console.log(`[OAUTH TOKEN] Expected client_id: ${OAUTH_CLIENT_ID}`);
+  console.log(`${'='.repeat(60)}`);
 
   // Validate grant_type
   if (grant_type !== "authorization_code") {
+    console.log(`[OAUTH TOKEN] ❌ Invalid grant_type: ${grant_type}`);
     res.status(400).json({ error: "unsupported_grant_type" });
     return;
   }
 
   // Validate client_id (required)
   if (client_id !== OAUTH_CLIENT_ID) {
+    console.log(`[OAUTH TOKEN] ❌ Invalid client_id: ${client_id} (expected: ${OAUTH_CLIENT_ID})`);
     res.status(401).json({ error: "invalid_client", error_description: "Unknown client_id" });
     return;
   }
+  console.log(`[OAUTH TOKEN] ✓ client_id valid`);
 
   // Validate client_secret if provided (supports 'none' auth method for public clients)
   // Claude.ai may use PKCE without client_secret
   if (client_secret && client_secret !== OAUTH_CLIENT_SECRET) {
+    console.log(`[OAUTH TOKEN] ❌ Invalid client_secret`);
     res.status(401).json({ error: "invalid_client", error_description: "Invalid client_secret" });
     return;
   }
+  console.log(`[OAUTH TOKEN] ✓ client_secret valid (or not required)`);
 
   // Validate authorization code
   const authCode = authorizationCodes.get(code);
+  console.log(`[OAUTH TOKEN] Auth codes in memory: ${authorizationCodes.size}`);
   if (!authCode) {
+    console.log(`[OAUTH TOKEN] ❌ Authorization code not found: ${code}`);
+    console.log(`[OAUTH TOKEN] Available codes: ${Array.from(authorizationCodes.keys()).map(k => k.substring(0, 10) + '...').join(', ')}`);
     res.status(400).json({ error: "invalid_grant", error_description: "Authorization code not found" });
     return;
   }
+  console.log(`[OAUTH TOKEN] ✓ Authorization code found for user: ${authCode.userId}`);
 
   if (authCode.expiresAt < Date.now()) {
+    console.log(`[OAUTH TOKEN] ❌ Authorization code expired`);
     authorizationCodes.delete(code);
     res.status(400).json({ error: "invalid_grant", error_description: "Authorization code expired" });
     return;
   }
+  console.log(`[OAUTH TOKEN] ✓ Authorization code not expired`);
 
   // Validate redirect_uri matches
   if (authCode.redirectUri !== redirect_uri) {
+    console.log(`[OAUTH TOKEN] ❌ Redirect URI mismatch`);
+    console.log(`  - Expected: ${authCode.redirectUri}`);
+    console.log(`  - Got: ${redirect_uri}`);
     res.status(400).json({ error: "invalid_grant", error_description: "Redirect URI mismatch" });
     return;
   }
+  console.log(`[OAUTH TOKEN] ✓ Redirect URI matches`);
 
   // Delete the used code
   authorizationCodes.delete(code);
+  console.log(`[OAUTH TOKEN] ✓ Authorization code consumed`);
 
   // Generate access token (JWT)
   const accessToken = jwt.sign(
@@ -2433,14 +2483,19 @@ app.post("/oauth/token", express.urlencoded({ extended: true }), (req: Request, 
     { expiresIn: "7d" } // Long-lived token for MCP
   );
 
-  // Return token response
-  res.json({
+  const tokenResponse = {
     access_token: accessToken,
     token_type: "Bearer",
     expires_in: 7 * 24 * 60 * 60, // 7 days in seconds
-  });
+  };
 
-  console.log("OAuth token issued for user:", authCode.userId);
+  console.log(`[OAUTH TOKEN] ✓ Access token generated`);
+  console.log(`[OAUTH TOKEN] Token (first 50 chars): ${accessToken.substring(0, 50)}...`);
+  console.log(`[OAUTH TOKEN] Response:`, JSON.stringify({ ...tokenResponse, access_token: '(redacted)' }));
+  console.log(`${'='.repeat(60)}\n`);
+
+  // Return token response
+  res.json(tokenResponse);
 });
 
 // Error handler
