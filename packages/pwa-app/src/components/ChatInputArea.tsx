@@ -178,6 +178,10 @@ function ToolsMenu({ isOpen, onClose, currentStyle, styles, onStyleChange, butto
       // Open upward if not enough space below and more space above
       setOpenUpward(spaceBelow < menuHeight && spaceAbove > spaceBelow);
     }
+    // Reset submenu when parent closes
+    if (!isOpen) {
+      setShowStyleSubmenu(false);
+    }
   }, [isOpen, buttonRef]);
 
   // Calculate submenu position when style button is clicked
