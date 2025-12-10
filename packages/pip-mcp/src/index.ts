@@ -918,7 +918,7 @@ app.all("/", async (req: Request, res: Response) => {
         sessionIdGenerator: () => crypto.randomUUID(),
         enableJsonResponse: true, // Use JSON responses instead of SSE for simple requests
         onsessioninitialized: (newSessionId: string) => {
-          console.log(`[Streamable HTTP] Session initialized: ${newSessionId}`);
+          console.log(`[MCP ROOT] Session initialized: ${newSessionId}`);
           streamableTransports.set(newSessionId, {
             transport,
             server,
@@ -938,11 +938,10 @@ app.all("/", async (req: Request, res: Response) => {
         },
       });
 
-      // Start the transport
-      await transport.start();
-
-      // Connect server to transport
+      // Connect server to transport (this starts the transport internally)
+      // DO NOT call transport.start() separately - it will throw "Transport already started"
       await server.connect(transport);
+      console.log(`[MCP ROOT] ✓ Server connected to transport`);
 
       // Handle request
       await transport.handleRequest(req, res, body);
