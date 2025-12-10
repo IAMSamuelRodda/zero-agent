@@ -623,6 +623,40 @@ Complete onboarding documentation and procedures created for Philip's beta teste
 
 ---
 
+#### issue_057: Invite Codes with Pre-defined Flags
+**Status:** 🔴 Open
+**Priority:** P2 (Medium - improves onboarding workflow)
+**Component:** `packages/core/src/database`, `packages/server/src/routes/user-auth.ts`
+**Created:** 2025-12-11
+
+**Description:** Enhance invite code system to automatically apply pre-defined feature flags and subscription tiers when a user signs up with a specific code.
+
+**Current State:**
+- Invite codes only validate access to signup
+- Flags/tiers must be manually assigned via SQL after signup
+
+**Proposed Enhancement:**
+```sql
+-- New columns for invite_codes table
+ALTER TABLE invite_codes ADD COLUMN feature_flags TEXT DEFAULT '[]';
+ALTER TABLE invite_codes ADD COLUMN subscription_tier TEXT DEFAULT 'free';
+ALTER TABLE invite_codes ADD COLUMN role TEXT DEFAULT 'user';
+```
+
+**Example Use Cases:**
+- `BETA-2025` → Applies `["beta_tester"]` flag automatically
+- `EARLY-ACCESS` → Applies `["early_access", "beta_tester"]` flags
+- `STARTER-PROMO` → Sets `subscription_tier = 'starter'`
+
+**Requirements:**
+- Add flag/tier columns to `invite_codes` table
+- Update signup flow to copy flags/tier from invite code to new user
+- Admin UI to create invite codes with specific flags (future)
+
+**Complexity:** 2.0/5 (Low-Medium - schema change + signup logic)
+
+---
+
 #### issue_016: Light/Dark Mode Theme Support
 **Status:** 🔴 Open
 **Priority:** P3 (Low - nice to have)
