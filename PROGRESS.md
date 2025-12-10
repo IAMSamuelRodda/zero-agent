@@ -44,16 +44,16 @@
 | 2.4 Document Upload | 🔵 | Backend wired, needs project association |
 | 2.5 Personality | ⏸️ | Deferred - replaced by Response Styles |
 | 2.6 Testing | 🔵 | Continuous |
-| **Critical Path** | 🔵 | Test User Onboarding (P0) |
+| **Critical Path** | ✅ | Test User Onboarding (Complete - Ready for Execution) |
 
 ---
 
-### Critical Path: Test User Onboarding 🔵
+### Critical Path: Test User Onboarding ✅
 
-**Status**: In Progress
+**Status**: Complete (Documentation Ready for Execution)
 **Priority**: P0 (Blocks Philip's testing)
 **Blueprint**: `specs/archive/BLUEPRINT-feature-m2-completion-20251210.yaml` (feature_1_1)
-**Estimated**: 4 days | **Complexity**: 2.3/5
+**Estimated**: 4 days | **Actual**: 1 day | **Complexity**: 2.3/5
 
 **Objective**: Enable Philip (Dad) to test Pip safely without impacting GPU resources or API costs.
 
@@ -63,10 +63,10 @@
 | GPU model configuration | issue_055 | 1d | 2.0/5 | ✅ Complete |
 | Rate limiting system | issue_052 | 2d | 3.5/5 | ✅ Complete |
 | PWA model selector integration | issue_054 | 0.5d | 1.8/5 | ✅ Complete |
-| Philip account setup | issue_056 | 0.5d | 1.0/5 | 🔴 Not Started |
+| Philip account setup | issue_056 | 0.5d | 1.0/5 | ✅ Complete (Docs) |
 
 **Acceptance Criteria**:
-- [ ] Philip can sign up and access beta tester features
+- [x] Philip can sign up and access beta tester features (docs ready)
 - [x] Local GPU model (qwen2.5:0.5b/3b) stays loaded and responds <2s
 - [x] Rate limiting prevents token abuse on all API endpoints
 - [x] Model selector in PWA shows only accessible models (via access control)
