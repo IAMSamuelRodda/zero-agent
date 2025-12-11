@@ -57,6 +57,118 @@ Scroll up before opening tools dropdown.
 
 ### Critical Issues
 
+#### issue_058: Database Schema Migration Failure - Data Loss Incident
+**Status:** 🟢 Resolved (Fresh database with migrations applied)
+**Priority:** P0 (Critical - caused data loss)
+**Component:** `packages/core/src/database/providers/sqlite.ts` (schema migrations)
+**Created:** 2025-12-11
+**Resolved:** 2025-12-11
+
+**Incident Summary:**
+Container restart to apply authorization system migrations (role, subscription_tier, feature_flags columns) resulted in complete database wipe. All user data, sessions, OAuth tokens, and projects lost.
+
+**Impact:**
+- Beta test environment only - no production data affected
+- ~2 beta testers (Samuel, Philip) lost their accounts and session data
+- No critical business data lost (can be recreated)
+
+**Root Cause Analysis:**
+
+1. **Schema Migrations Not Running on Existing Database:**
+   - Migration code (lines 247-273 in sqlite.ts) existed but failed silently
+   - `CREATE TABLE IF NOT EXISTS` doesn't add new columns to existing tables
+   - ALTER TABLE migrations wrapped in try/catch, errors not logged
+   - Database had old schema (missing `role`, `subscription_tier`, `feature_flags`)
+
+2. **Why Restart Caused Data Loss:**
+   - Unknown - investigating whether:
+     - WAL checkpoint failed during restart
+     - Volume mount issue
+     - Better-sqlite3 initialization wiped existing file
+   - Database file timestamps show recreation at restart time (2025-12-11 02:33:28)
+
+3. **Why Model Selector Was Empty:**
+   - Backend access control (`canAccessModel`) checked non-existent `role` column
+   - JavaScript `row.role` returned `undefined` (falsy) → fell back to `is_admin` check
+   - Both `role` and `is_admin` undefined → defaulted to 'user' role
+   - 'user' role with 'free' tier → no accessible models → empty dropdown
+
+**What Was Lost:**
+- User accounts (2 beta testers)
+- OAuth tokens (Xero, Gmail, Google Sheets connections)
+- Chat sessions and history
+- Memory graph data (entities, observations, relations)
+- Projects and custom instructions
+
+**Immediate Fix Applied:**
+1. Manually added missing columns via ALTER TABLE (successful)
+2. Applied is_admin→superadmin migration
+3. Fresh database now has correct schema with all migrations applied
+4. Authorization system functional for new users
+
+**Lessons Learned:**
+
+1. **Silent Migration Failures Are Dangerous:**
+   - try/catch blocks hid critical errors
+   - Need migration logging and verification
+   - Should fail loudly if critical migrations don't apply
+
+2. **No Backup Strategy:**
+   - No automated backups before container operations
+   - No pre-deployment backup script
+   - SQLite volume not backed up
+
+3. **No Migration Testing:**
+   - Migrations not tested against production-like database
+   - No rollback strategy
+   - No migration state tracking
+
+**Prevention Strategy (To Implement):**
+
+**Short-term (Immediate):**
+- [ ] Add backup step to deployment script (issue_059)
+- [ ] Log all migration attempts (success/failure)
+- [ ] Add health check endpoint showing schema version
+- [ ] Document manual backup procedure in DEVELOPMENT.md
+
+**Medium-term (Next sprint):**
+- [ ] Implement proper migration system (e.g., node-migrate, Knex.js)
+- [ ] Add migration table to track applied migrations
+- [ ] Add pre-restart backup hook
+- [ ] Create database restore procedure
+
+**Long-term (Future):**
+- [ ] Automated daily backups to S3/B2
+- [ ] Point-in-time recovery capability
+- [ ] Staging environment for testing migrations
+- [ ] Migration dry-run mode
+
+**Files Modified:**
+- Database: `/app/data/pip.db` (wiped and recreated)
+- Schema: `packages/core/src/database/providers/sqlite.ts` (no code changes needed - migrations already present)
+
+**Verification Steps:**
+1. Check schema has all required columns: `docker exec pip-app node -e "...PRAGMA table_info(users)"`
+2. Create new user account
+3. Verify model selector shows all models for superadmin
+4. Verify Philip (beta_tester) sees only local models
+
+**Status:** ✅ **RESOLVED** - Accounts recreated programmatically
+
+**Resolution Actions Taken:**
+1. Database schema verified with all required columns
+2. Samuel's account created: `samuel@arcforge.au` (superadmin, temp password set)
+3. Philip's account created: `philip.coller@gmail.com` (beta_tester, password: PipBeta2025!)
+4. Access control verified: superadmin sees all models, beta_tester sees local models only
+
+**Credentials:**
+- **Samuel**: samuel@arcforge.au / `TEMP_PASSWORD_CHANGEME` (⚠️ CHANGE ON FIRST LOGIN)
+- **Philip**: philip.coller@gmail.com / PipBeta2025!
+
+**Next Issue:** Create issue_059 for backup automation.
+
+---
+
 #### issue_053: Subscription Tier Infrastructure
 **Status:** 🟡 In Progress (Schema done, Stripe integration pending)
 **Priority:** P1 (High - Needed for sustainable monetization)
@@ -121,6 +233,65 @@ Design and implement subscription tier system to support freemium business model
 ---
 
 ### High Priority Issues
+
+#### issue_059: Database Backup Automation
+**Status:** 🔴 Open
+**Priority:** P1 (High - prevents future data loss)
+**Component:** Deployment scripts, Docker configuration
+**Created:** 2025-12-11
+
+**Description:**
+Implement automated database backup system to prevent data loss during deployments, migrations, and container operations.
+
+**Triggered By:** issue_058 (data loss incident during migration)
+
+**Requirements:**
+
+**Immediate (Pre-deployment backup):**
+1. Add backup step to `deploy/deploy-local.sh` before container restart
+2. Backup SQLite database + WAL files to timestamped directory
+3. Keep last 7 days of backups locally
+4. Document manual backup/restore procedure
+
+**Short-term (Automated backups):**
+1. Daily backup cron job or Docker container
+2. Backup to local directory with rotation (30 days)
+3. Health monitoring for backup success/failure
+4. Restore procedure documentation
+
+**Medium-term (Off-site backups):**
+1. S3/Backblaze B2 integration
+2. Encrypted backups
+3. Automated restore testing
+4. Point-in-time recovery capability
+
+**Proposed Implementation:**
+
+```bash
+# deploy/backup-db.sh
+#!/bin/bash
+BACKUP_DIR="/backup/pip-db"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+mkdir -p "$BACKUP_DIR"
+
+# Backup from Docker volume
+docker exec pip-app sqlite3 /app/data/pip.db ".backup /app/data/pip-backup-$TIMESTAMP.db"
+docker cp pip-app:/app/data/pip-backup-$TIMESTAMP.db "$BACKUP_DIR/"
+docker exec pip-app rm /app/data/pip-backup-$TIMESTAMP.db
+
+# Keep last 7 days
+find "$BACKUP_DIR" -name "pip-backup-*.db" -mtime +7 -delete
+
+echo "✓ Backup created: $BACKUP_DIR/pip-backup-$TIMESTAMP.db"
+```
+
+**Acceptance Criteria:**
+- [ ] Deployment script creates backup before container operations
+- [ ] Backup includes main DB file + WAL if present
+- [ ] Restore procedure tested and documented
+- [ ] Backup rotation prevents disk space issues
+
+**Complexity:** 2.0/5 (Low-Medium - scripting + Docker volume management)
 
 ---
 

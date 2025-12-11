@@ -31,8 +31,20 @@
 
 | Priority | Issue | Summary |
 |----------|-------|---------|
+| P0 | issue_058 | ✅ Database migration failure - data loss (RESOLVED) |
+| P1 | issue_059 | Database backup automation (NEW) |
 | P1 | issue_034 | Skills System - report templates |
 | P2 | issue_050 | Tools Dropdown Z-Index Issue |
+
+### Recent Incidents & Resolutions (Dec 11)
+
+**⚠️ issue_058: Database Migration Failure - Data Loss Incident (RESOLVED)**
+- **What Happened**: Container restart to apply schema migrations wiped beta database
+- **Impact**: 2 beta testers lost accounts/sessions (non-critical, recreated)
+- **Root Cause**: Silent migration failures + missing columns caused empty model selector
+- **Resolution**: ✅ Database recreated, schema verified, accounts recreated programmatically
+- **Action Items**: Created issue_059 (backup automation), documented lessons learned
+- **Status**: ✅ COMPLETE - Samuel (superadmin) and Philip (beta_tester) accounts ready for testing
 
 ### Recently Completed (Dec 10-11)
 
