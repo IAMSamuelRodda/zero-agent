@@ -60,7 +60,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   // Local Ollama models (beta testers only via Tailscale GPU)
   {
     id: 'qwen2.5:0.5b',
-    name: 'Qwen 2.5 0.5B (Local)',
+    name: 'Qwen 2.5 0.5B',
     provider: 'ollama',
     allowedTiers: [], // No tier access - flag only
     allowedFlags: ['beta_tester'],
@@ -68,7 +68,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   },
   {
     id: 'qwen2.5:3b',
-    name: 'Qwen 2.5 3B (Local)',
+    name: 'Qwen 2.5 3B',
     provider: 'ollama',
     allowedTiers: [], // No tier access - flag only
     allowedFlags: ['beta_tester'],
@@ -76,7 +76,7 @@ export const MODEL_CONFIGS: ModelConfig[] = [
   },
   {
     id: 'llama3.2:3b',
-    name: 'Llama 3.2 3B (Local)',
+    name: 'Llama 3.2 3B',
     provider: 'ollama',
     allowedTiers: [],
     allowedFlags: ['beta_tester'],

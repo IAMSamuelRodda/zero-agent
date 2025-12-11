@@ -48,8 +48,8 @@ const MODEL_DESCRIPTIONS: Record<string, string> = {
   'claude-sonnet': 'Smartest for everyday tasks',
   'claude-opus': 'Most capable for complex work',
   'claude-haiku': 'Fastest for quick answers',
-  'qwen': 'Local - fast, private',
-  'llama': 'Local - fast, private',
+  'qwen': 'Fast and private',
+  'llama': 'Fast and private',
   'byom': 'Use your own API key',
 };
 
@@ -313,7 +313,7 @@ function ModelSelector({ isOpen, onClose, currentModel, onModelChange, accessibl
                   {cloudModels.length > 0 && <div className="border-t border-arc-border my-1" />}
                   <div className="px-3 py-1 text-xs text-arc-text-dim flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-green-500" />
-                    <span>Local</span>
+                    <span>Local Models</span>
                   </div>
                   {localModels.map((model) => (
                     <button
@@ -331,8 +331,9 @@ function ModelSelector({ isOpen, onClose, currentModel, onModelChange, accessibl
                 </>
               )}
 
-              {/* BYOM option */}
-              {byomModels.length > 0 && (
+              {/* BYOM option - Hidden during beta testing */}
+              {/* TODO: Enable BYOM with API key input modal */}
+              {false && byomModels.length > 0 && (
                 <>
                   <div className="border-t border-arc-border my-1" />
                   {byomModels.map((model) => (
