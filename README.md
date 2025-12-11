@@ -1,9 +1,9 @@
-# Pip - AI Bookkeeping Assistant
+# Pip - Your Helpful Finance Assistant
 
 > **Purpose**: Project introduction and quick start guide
 > **Lifecycle**: Stable (update when fundamentals change)
 
-AI-powered bookkeeping assistant for Xero, built with Claude and native tool calling.
+Get on top of your finances with simple questions and clear answers, powered by Claude.
 
 **Live Demo**: https://app.pip.arcforge.au
 **MCP Server**: https://mcp.pip.arcforge.au (for Claude.ai/ChatGPT)
@@ -13,18 +13,16 @@ AI-powered bookkeeping assistant for Xero, built with Claude and native tool cal
 
 ## Overview
 
-Pip is a mobile-first Progressive Web App (PWA) that brings natural language interaction to Xero accounting software. Ask questions about your invoices, check unpaid bills, and get insights from your accounting data through conversational AI powered by Claude.
+Pip is a mobile-first Progressive Web App (PWA) that brings all your financial information together in one place. Ask questions about your money, check what's owed, and get clear insights through simple conversation.
 
 **Key Features:**
-- **Conversational Accounting** - Ask questions about invoices, contacts, and financials
-- **Business Context Layer** - Upload business plans/KPIs for context-aware advice
-- **Xero Integration** - Direct connection to your Xero organization
-- **Gmail Integration** - Search emails and attachments for receipts/invoices
-- **Google Sheets** - Read/write spreadsheet data for custom reports
-- **Multi-device Support** - Works on smartphones, tablets, and laptops
-- **Self-Hostable** - Run on your own infrastructure with Docker
-- **LLM Agnostic** - Supports Anthropic Claude or local models via Ollama
-- **MCP Remote Server** - Use Pip from Claude.ai or ChatGPT ($0 LLM cost)
+- **Simple Questions, Clear Answers** - Ask about your money in plain English
+- **Everything in One Place** - Connect your accounting, email, spreadsheets, and more
+- **Actionable Advice** - Get practical insights you can actually use
+- **Works Everywhere** - Smartphone, tablet, or laptop
+- **Own Your Data** - Self-host or use our managed service
+- **Bring Your Own Models** - Use Claude, local models, or ChatGPT
+- **Zero Setup** - Use from Claude.ai or ChatGPT with one click
 
 ---
 
@@ -101,7 +99,7 @@ In any Claude conversation, try:
 | Field | Value |
 |-------|-------|
 | **Name** | `Pip by Arc Forge` |
-| **Description** | `The helpful bookkeeping assistant - connects to Xero for invoices, reports, and financial insights` |
+| **Description** | `Get on top of your finances - simple questions, clear answers` |
 | **MCP Server URL** | `https://mcp.pip.arcforge.au` |
 | **Authentication** | Select `OAuth` |
 | **OAuth Client ID** | `pip-mcp-client` |

@@ -28,7 +28,7 @@ export const GUIDE_TOPICS: GuideTopic[] = [
 export const guideContent: Record<GuideTopic, string> = {
   overview: `# Pip Overview
 
-Pip is an AI bookkeeping assistant for Australian small business owners. It connects to your accounting software (Xero) and other services to help you understand your finances.
+Pip helps you get on top of your finances by connecting all your financial information in one place. Ask simple questions, get clear answers.
 
 ## What Pip Can Do
 

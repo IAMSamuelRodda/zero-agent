@@ -1,26 +1,25 @@
 # Pip - Vision
 
-**Your AI bookkeeping assistant.**
+**Get on top of your finances.**
 
-Ask questions about your business finances and get plain-English answers instantly. Stop digging through accounting software—just ask.
+Ask questions about your money and get plain-English answers instantly. Stop digging through multiple apps—just ask.
 
-*Currently supports Xero. MYOB and QuickBooks planned (modular MCP architecture).*
+*Connects your accounting, email, spreadsheets, and more (modular MCP architecture).*
 
 ---
 
-## Target Persona: The Multi-Hat Business Owner
+## Target Persona: People Who Want Financial Clarity
 
-Pip is designed for **sole traders and small business owners who blur the line between business and personal finances**—people running businesses from their personal accounts, wearing every hat, and needing clarity without complexity.
+Pip is designed for **people who blur the line between business and personal finances**—self-employed folks, freelancers, and side-hustlers who mix their money and need clarity without complexity.
 
-**Primary Avatar**: *Arc Forge Business Planning*
-- Earthworks contractor earning $2,500/day operating heavy machinery
-- Runs business from personal bank account (no separate business account)
-- Mixes business transactions with personal spending
-- Needs to understand: "How much of this is actually mine to spend?"
-- Wants simple answers, not accounting jargon
-- Values time over perfect categorization
+**Example Person**: *Freelance contractor or self-employed tradesperson*
+- Earns good income but mixes it with personal spending
+- Uses one bank account for everything (no separate accounts)
+- Wants to know: "How much can I actually spend?"
+- Needs simple answers, not accounting jargon
+- Values clarity over perfect categorization
 
-**Key Insight**: These users don't want to become accountants. They want someone to tell them "you made $X this week, you can safely spend $Y on personal stuff, and $Z needs to stay for GST/tax."
+**Key Insight**: These people don't want to become accountants. They want someone to tell them "you made $X this week, you can safely spend $Y, and $Z needs to stay for tax."
 
 ---
 
@@ -28,28 +27,28 @@ Pip is designed for **sole traders and small business owners who blur the line b
 
 ### The Problem We Solve
 
-Small business owners operating from personal accounts face a daily question: **"What can I actually spend?"**
+People mixing income and personal spending face a daily question: **"What can I actually spend?"**
 
-Their bank balance lies to them. It includes:
-- Money owed to the ATO (GST, income tax)
-- Upcoming business expenses
-- Client payments that haven't cleared
-- Personal spending mixed with business income
+Your bank balance lies to you. It includes:
+- Money owed to the tax office
+- Upcoming expenses you haven't paid yet
+- Payments that haven't cleared
+- Everything mixed together
 
-**Current solutions fail them:**
-- Xero/MYOB: Designed for accountants, overwhelming UI
-- Separate accounts: Friction, fees, complexity
-- Spreadsheets: Time-consuming, easy to forget
-- Accountants: Expensive, only see them quarterly
+**Current solutions don't work:**
+- Accounting software: Too complicated, designed for accountants
+- Separate accounts: Extra friction, fees, and hassle
+- Spreadsheets: Time-consuming and easy to forget
+- Accountants: Expensive, only help a few times a year
 
 ### What Pip Does
 
 Pip acts as the **intelligent layer** between messy reality and clear understanding:
 
-1. **Understands Context**: Learns the business, typical transactions, spending patterns
-2. **Categorizes Intelligently**: "That $89 at Bunnings? Probably a business expense for earthworks supplies"
-3. **Calculates Reality**: "Your balance is $15,000 but you can safely spend $3,200 personally"
-4. **Speaks Plain English**: No accounting jargon, just answers to real questions
+1. **Understands Your Situation**: Learns your patterns, typical transactions, spending habits
+2. **Categorizes Smartly**: "That $89 at Bunnings? Probably work-related"
+3. **Tells You What's Real**: "Your balance is $15,000 but you can safely spend $3,200"
+4. **Speaks Plain English**: No jargon, just answers to real questions
 
 ### The "Available Balance" Concept
 
@@ -74,8 +73,8 @@ Safe to Spend Today:    $3,200
 
 ## Philosophy
 
-We believe AI assistants should:
-- ✅ **Respect user freedom** - Own your data, choose your AI provider
+We believe helpful finance assistants should:
+- ✅ **Respect user freedom** - Own your data, choose your LLM provider
 - ✅ **Enable privacy** - Self-host on your infrastructure if you want
 - ✅ **Avoid vendor lock-in** - Use Anthropic, OpenAI, local models, or any future LLM
 - ✅ **Charge for value** - Pay for convenience and infrastructure, not for code
@@ -102,15 +101,15 @@ We don't believe in:
 - Pay for convenience, not code access
 
 **Intelligent Financial Layer**:
-- **Transaction Categorization**: AI-powered business vs personal classification
+- **Transaction Categorization**: Intelligent business vs personal classification
 - **Available Balance**: Real-time "what can I spend?" calculations
 - **Tax Reserving**: Automatic GST/income tax set-asides
 - **Plain English Reports**: No accounting jargon
 
-**Xero Integration Expertise**:
-- Deep integration with Xero API (invoices, expenses, bank rec, reporting)
-- Agent workflows optimized for bookkeeping tasks
-- MCP server for extensibility
+**Integration Architecture**:
+- Deep integrations via MCP (accounting, email, spreadsheets)
+- Agent workflows optimized for financial management tasks
+- Extensible connector system for future services
 
 ## Business Model
 
@@ -151,7 +150,7 @@ We don't believe in:
 **Us**: "Here's the code. Use it however you want. We'll run it for you if convenient. If you stop, you can set up your own."
 
 Our competitive advantages:
-1. **Xero integration depth** (hard to replicate)
+1. **Integration depth** (multi-service MCP architecture)
 2. **LLM flexibility** (no vendor lock-in)
 3. **Community trust** (open source = transparent)
 4. **Deployment choice** (self-host OR managed)

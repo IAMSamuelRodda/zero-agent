@@ -2,7 +2,7 @@
   "name": "pip",
   "version": "0.2.0",
   "private": true,
-  "description": "Pip - AI bookkeeping assistant for Xero accounting",
+  "description": "Pip - Get on top of your finances",
   "workspaces": [
     "packages/*",
     "functions/*"

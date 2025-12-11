@@ -1,7 +1,7 @@
 {
   "name": "@pip/pip-mcp",
   "version": "0.1.0",
-  "description": "Remote MCP server for Claude.ai and ChatGPT integration - Pip bookkeeping assistant",
+  "description": "Remote MCP server for Claude.ai and ChatGPT integration - Get on top of your finances",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -16,7 +16,7 @@
     "xero",
     "claude",
     "chatgpt",
-    "bookkeeping",
+    "finance",
     "pip"
   ],
   "dependencies": {

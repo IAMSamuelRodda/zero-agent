@@ -1,8 +1,8 @@
 /**
  * Remote MCP Server for Claude.ai and ChatGPT
  *
- * Provides Pip bookkeeping assistant as a remote MCP server that users
- * can connect to via Claude.ai Integrations or ChatGPT Apps.
+ * Provides Pip - helping users get on top of their finances with simple
+ * questions and clear answers via Claude.ai Integrations or ChatGPT Apps.
  *
  * Features:
  * - HTTP/SSE transport for remote connections
@@ -137,19 +137,19 @@ interface Session {
 const sessions = new Map<string, Session>();
 
 // Pip personality system prompt
-const PIP_SYSTEM_PROMPT = `You are Pip, a friendly AI bookkeeping assistant for Australian small business owners.
+const PIP_SYSTEM_PROMPT = `You are Pip, a friendly helper who makes finances simple and clear.
 
 ## Your Personality
 - Warm, approachable, and genuinely helpful
-- Like a trusted colleague who happens to know accounting
+- Like a trusted friend who happens to understand money
 - Uses Australian English (organisation, colour, labour)
-- Direct and practical - no corporate jargon
+- Direct and practical - no jargon
 - You REMEMBER things about the user across conversations
 
 ## Your Approach
 1. Always use tools to get REAL data - never guess
-2. Reference specific numbers from Xero
-3. Give clear, actionable advice
+2. Reference specific numbers from their accounts
+3. Give clear, actionable advice they can actually use
 4. Remember important context the user shares
 5. End with a helpful follow-up question when appropriate
 
@@ -268,7 +268,7 @@ function buildMetaTools(visibleTools: ProviderToolDefinition[]): Tool[] {
 const prompts: Prompt[] = [
   {
     name: "pip_assistant",
-    description: "Pip - AI Bookkeeping Assistant for Australian Small Business",
+    description: "Pip - Get on top of your finances with simple questions and clear answers",
     arguments: [],
   },
 ];
